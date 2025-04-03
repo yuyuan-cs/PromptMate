@@ -1,37 +1,40 @@
-# 依赖包
-/node_modules
+# 依赖目录
+node_modules/
+dist/
+build/
 
-# 构建输出
-/dist
-/build
-
-# 环境配置
+# 环境变量
 .env
 .env.local
-.env.development
-.env.test
-.env.production
-
-# 系统文件
-.DS_Store
-Thumbs.db
-
-# 编辑器文件
-/.idea
-/.vscode
-*.swp
-*.swo
+.env.development.local
+.env.test.local
+.env.production.local
 
 # 日志文件
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-logs
-*.log
+
+# 编辑器目录和文件
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# 构建输出
+out/
+release/
+
+# 测试覆盖率
+coverage/
 
 # 临时文件
-.tmp
-.temp
+*.log
+*.tmp
+
+# 系统文件
+Thumbs.db
 
 # 用户数据
 /userData 
