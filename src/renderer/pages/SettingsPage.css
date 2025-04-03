@@ -1,0 +1,181 @@
+.settings-page {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.settings-container {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.settings-section {
+  background-color: var(--card-bg);
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.section-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  color: var(--foreground);
+}
+
+.settings-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.settings-row:last-child {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.settings-row label {
+  font-size: 14px;
+  color: var(--foreground);
+}
+
+.settings-row select, 
+.settings-row input[type="text"],
+.settings-row input[type="number"] {
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background-color: var(--background);
+  color: var(--foreground);
+  font-size: 14px;
+  min-width: 200px;
+}
+
+.font-size-control {
+  display: flex;
+  align-items: center;
+  width: 200px;
+}
+
+.font-size-control input[type="range"] {
+  flex: 1;
+  margin-right: 12px;
+}
+
+.font-size-value {
+  font-size: 14px;
+  color: var(--foreground);
+  min-width: 40px;
+  text-align: right;
+}
+
+/* Toggle switch styles */
+.toggle-control {
+  position: relative;
+  display: inline-block;
+}
+
+.toggle-control input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-label {
+  display: block;
+  width: 50px;
+  height: 26px;
+  background-color: var(--border);
+  border-radius: 13px;
+  cursor: pointer;
+  position: relative;
+  transition: background-color 0.2s;
+}
+
+.toggle-label:after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: white;
+  transition: transform 0.2s;
+}
+
+input:checked + .toggle-label {
+  background-color: var(--primary);
+}
+
+input:checked + .toggle-label:after {
+  transform: translateX(24px);
+}
+
+/* Button styles */
+.secondary-button, .danger-button {
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  border: none;
+}
+
+.secondary-button {
+  background-color: var(--secondary);
+  color: white;
+  margin-right: 12px;
+}
+
+.danger-button {
+  background-color: var(--error);
+  color: white;
+}
+
+.settings-footer {
+  display: flex;
+  align-items: center;
+  padding: 16px 0;
+  border-top: 1px solid var(--border);
+  margin-top: 16px;
+}
+
+.save-button {
+  background-color: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 20px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.save-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.save-result {
+  margin-left: 16px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: opacity 0.3s;
+}
+
+.save-result.success {
+  background-color: var(--success);
+  color: white;
+}
+
+.save-result.error {
+  background-color: var(--error);
+  color: white;
+} 

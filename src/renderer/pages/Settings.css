@@ -1,0 +1,40 @@
+.settings {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.settings h1 {
+  font-size: 2em;
+  margin-bottom: 30px;
+  color: #333;
+}
+
+.settings-section {
+  margin-bottom: 30px;
+}
+
+.settings-section h2 {
+  font-size: 1.5em;
+  margin-bottom: 20px;
+  color: #444;
+}
+
+.setting-item {
+  margin-bottom: 15px;
+}
+
+.setting-item label {
+  display: block;
+  margin-bottom: 5px;
+  color: #666;
+}
+
+.setting-item select {
+  width: 100%;
+  max-width: 300px;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1em;
+} 
