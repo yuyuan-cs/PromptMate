@@ -14,7 +14,7 @@ PromptMate/
 │   └── 开发文档.md          # 项目开发文档
 ├── src/                    # 源代码目录
 │   ├── main/               # 主进程代码
-│   │   └── main.js         # 主进程入口文件
+│   │   └── main.cjs         # 主进程入口文件
 │   ├── renderer/           # 渲染进程代码
 │   │   ├── components/     # 组件目录
 │   │   ├── pages/          # 页面目录

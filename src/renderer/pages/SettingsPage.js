@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import './SettingsPage.css';
 
+const { ipcRenderer } = window.require('electron');
+const { dialog } = window.require('@electron/remote');
+
 function SettingsPage({ settings, saveSettings }) {
   const [formValues, setFormValues] = useState(settings);
   const [saving, setSaving] = useState(false);
@@ -44,6 +47,153 @@ function SettingsPage({ settings, saveSettings }) {
       setSaving(false);
       
       // 3秒后隐藏保存结果提示
+      setTimeout(() => {
+        setSaveResult(prev => ({ ...prev, show: false }));
+      }, 3000);
+    }
+  };
+
+  // 导出数据
+  const handleExportData = async () => {
+    try {
+      // 获取所有提示语数据
+      const data = await ipcRenderer.invoke('get-prompts');
+      
+      // 打开保存对话框
+      const { filePath } = await dialog.showSaveDialog({
+        title: '导出提示语',
+        defaultPath: 'promptmate_data.json',
+        filters: [
+          { name: 'JSON文件', extensions: ['json'] }
+        ]
+      });
+      
+      if (filePath) {
+        // 执行导出操作
+        const result = await ipcRenderer.invoke('export-data', filePath, data);
+        if (result.success) {
+          setSaveResult({
+            show: true,
+            success: true,
+            message: '数据导出成功'
+          });
+        } else {
+          setSaveResult({
+            show: true,
+            success: false,
+            message: `导出失败: ${result.error}`
+          });
+        }
+      }
+    } catch (error) {
+      setSaveResult({
+        show: true,
+        success: false,
+        message: `导出数据时出错: ${error.message}`
+      });
+    }
+    
+    // 3秒后隐藏消息
+    setTimeout(() => {
+      setSaveResult(prev => ({ ...prev, show: false }));
+    }, 3000);
+  };
+  
+  // 导入数据
+  const handleImportData = async () => {
+    try {
+      // 打开文件选择对话框
+      const { filePaths } = await dialog.showOpenDialog({
+        title: '导入提示语',
+        filters: [
+          { name: 'JSON文件', extensions: ['json'] }
+        ],
+        properties: ['openFile']
+      });
+      
+      if (filePaths && filePaths.length > 0) {
+        // 执行导入操作
+        const result = await ipcRenderer.invoke('import-data', filePaths[0]);
+        if (result.success) {
+          setSaveResult({
+            show: true,
+            success: true,
+            message: '数据导入成功'
+          });
+        } else {
+          setSaveResult({
+            show: true,
+            success: false,
+            message: `导入失败: ${result.error}`
+          });
+        }
+      }
+    } catch (error) {
+      setSaveResult({
+        show: true,
+        success: false,
+        message: `导入数据时出错: ${error.message}`
+      });
+    }
+    
+    // 3秒后隐藏消息
+    setTimeout(() => {
+      setSaveResult(prev => ({ ...prev, show: false }));
+    }, 3000);
+  };
+  
+  // 重置所有设置
+  const handleResetSettings = async () => {
+    // 确认是否重置
+    const confirmResult = await dialog.showMessageBox({
+      type: 'warning',
+      title: '重置设置',
+      message: '确定要重置所有设置吗？',
+      detail: '此操作将恢复所有设置为默认值，但不会删除您的提示语数据。',
+      buttons: ['取消', '重置'],
+      defaultId: 0,
+      cancelId: 0
+    });
+    
+    // 如果用户确认
+    if (confirmResult.response === 1) {
+      try {
+        // 恢复默认设置
+        const defaultSettings = {
+          theme: 'light',
+          font: 'system-ui',
+          fontSize: 14,
+          alwaysOnTop: false
+        };
+        
+        // 保存默认设置
+        const result = await saveSettings(defaultSettings);
+        
+        if (result) {
+          // 更新表单值
+          setFormValues(defaultSettings);
+          
+          setSaveResult({
+            show: true,
+            success: true,
+            message: '设置已重置'
+          });
+        } else {
+          setSaveResult({
+            show: true,
+            success: false,
+            message: '设置重置失败，请重试'
+          });
+        }
+      } catch (error) {
+        setSaveResult({
+          show: true,
+          success: false,
+          message: `重置设置时出错: ${error.message}`
+        });
+      }
+      
+      // 3秒后隐藏消息
       setTimeout(() => {
         setSaveResult(prev => ({ ...prev, show: false }));
       }, 3000);
@@ -130,12 +280,12 @@ function SettingsPage({ settings, saveSettings }) {
           <h3 className="section-title">数据</h3>
           
           <div className="settings-row">
-            <button className="secondary-button">导出数据</button>
-            <button className="secondary-button">导入数据</button>
+            <button className="secondary-button" onClick={handleExportData}>导出数据</button>
+            <button className="secondary-button" onClick={handleImportData}>导入数据</button>
           </div>
           
           <div className="settings-row">
-            <button className="danger-button">重置所有设置</button>
+            <button className="danger-button" onClick={handleResetSettings}>重置所有设置</button>
           </div>
         </div>
       </div>

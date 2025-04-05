@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import PromptEditor from '../components/PromptEditor';
+import PromptEditor from '../components/PromptEditor.js';
 import { v4 as uuidv4 } from 'uuid';
 import './HomePage.css';
 

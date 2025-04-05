@@ -1,7 +1,7 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { HashRouter } from 'react-router-dom';
-import App from './App';
+import App from './App.js';
 import './index.css';
 
 // 从主进程获取初始设置
@@ -9,6 +9,7 @@ const { ipcRenderer } = window.require('electron');
 
 // 获取初始设置
 async function initApp() {
+  console.log('初始化应用');
   try {
     // 获取应用设置
     const settings = await ipcRenderer.invoke('get-settings');

@@ -21,6 +21,7 @@ yarn-error.log*
 *.swp
 *.swo
 .DS_Store
+package-lock.json
 
 # 构建输出
 out/

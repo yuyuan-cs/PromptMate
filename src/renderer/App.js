@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
-import HomePage from './pages/HomePage';
-import FavoritesPage from './pages/FavoritesPage';
-import CategoriesPage from './pages/CategoriesPage';
-import SettingsPage from './pages/SettingsPage';
-import Sidebar from './components/Sidebar';
-import Layout from './components/Layout';
+import HomePage from './pages/HomePage.js';
+import FavoritesPage from './pages/FavoritesPage.js';
+import CategoriesPage from './pages/CategoriesPage.js';
+import SettingsPage from './pages/SettingsPage.js';
+import Sidebar from './components/Sidebar.js';
+import Layout from './components/Layout.js';
 import './App.css';
 
 const { ipcRenderer } = window.require('electron');

@@ -2,6 +2,9 @@ const { app, BrowserWindow, globalShortcut, ipcMain } = require('electron');
 const path = require('path');
 const fs = require('fs');
 
+// 设置开发环境
+process.env.NODE_ENV = process.env.NODE_ENV || 'development';
+
 let mainWindow;
 
 function createWindow() {
@@ -20,14 +23,12 @@ function createWindow() {
     icon: path.join(__dirname, '../assets/icon.png')
   });
 
-  // 生产环境加载打包后的文件，开发环境加载开发服务器
-  const startUrl = process.env.NODE_ENV === 'development'
-    ? 'http://localhost:3000'
-    : `file://${path.join(__dirname, '../renderer/index.html')}`;
+  // 在开发环境和生产环境中都使用打包后的文件
+  const startUrl = `file://${path.join(__dirname, '../../dist/index.html')}`;
 
   console.log('加载URL:', startUrl);
   console.log('当前目录:', __dirname);
-  console.log('渲染进程路径:', path.join(__dirname, '../renderer/index.html'));
+  console.log('渲染进程路径:', path.join(__dirname, '../../dist/index.html'));
   
   // 打开开发者工具，方便调试
   mainWindow.webContents.openDevTools();

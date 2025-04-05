@@ -1,16 +1,25 @@
-const path = require('path');
-const HtmlWebpackPlugin = require('html-webpack-plugin');
+import path from 'path';
+import { fileURLToPath } from 'url';
+import HtmlWebpackPlugin from 'html-webpack-plugin';
+import MiniCssExtractPlugin from 'mini-css-extract-plugin';
 
-module.exports = {
-  mode: process.env.NODE_ENV || 'development',
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const isDevelopment = process.env.NODE_ENV !== 'production';
+
+export default {
+  mode: isDevelopment ? 'development' : 'production',
   entry: './src/renderer/index.js',
   target: 'electron-renderer',
   output: {
     path: path.resolve(__dirname, 'dist'),
-    filename: 'renderer.js'
+    filename: 'bundle.js',
+    publicPath: './'
   },
   resolve: {
-    extensions: ['.js', '.jsx', '.json']
+    extensions: ['.js', '.jsx', '.json'],
+    fullySpecified: false
   },
   module: {
     rules: [
@@ -26,7 +35,10 @@ module.exports = {
       },
       {
         test: /\.css$/,
-        use: ['style-loader', 'css-loader']
+        use: [
+          isDevelopment ? 'style-loader' : MiniCssExtractPlugin.loader,
+          'css-loader'
+        ]
       },
       {
         test: /\.(png|jpe?g|gif|svg)$/i,
@@ -37,6 +49,9 @@ module.exports = {
   plugins: [
     new HtmlWebpackPlugin({
       template: './src/renderer/index.html'
+    }),
+    new MiniCssExtractPlugin({
+      filename: isDevelopment ? '[name].css' : '[name].[contenthash].css'
     })
   ],
   devServer: {
