@@ -1,78 +1,65 @@
 # PromptMate
 
-PromptMate是一款轻量级桌面应用程序，用于存放和管理用户常用的Prompts，同时预置一组常用Prompts。应用界面追求苹果风格，支持多主题和多字体设置，确保在Windows系统下具有优异的显示效果，并具备全局快捷键唤出及窗口置顶功能。
+PromptMate是一款轻量级桌面应用程序，用于存放和管理用户常用的Prompts。应用采用现代化的设计风格，支持多主题和多字体设置，提供流畅的用户体验。
+
+## 主要特性
+
+1. **提示词管理**
+   - 支持创建、编辑、删除和我的收藏
+   - 支持按分类和标签组织提示词
+   - 提供快速搜索和筛选功能
+   - 支持推荐模板系统
+
+2. **界面定制**
+   - 支持深色/浅色主题切换
+   - 可自定义字体和字号
+   - 支持侧边栏宽度调整和折叠
+   - 响应式布局设计
+
+3. **数据管理**
+   - 本地数据存储
+   - 支持数据导入导出
+   - 支持数据备份与恢复
 
 ## 目录结构
 
 ```
 PromptMate/
-├── doc/                    # 文档目录
-│   ├── README.md           # 项目说明文档
-│   ├── 开发进度.md          # 开发进度文档
-│   ├── API文档.md           # API接口文档
-│   ├── 数据字典.md          # 数据字典文档
-│   └── 开发文档.md          # 项目开发文档
-├── src/                    # 源代码目录
-│   ├── main/               # 主进程代码
-│   │   └── main.cjs         # 主进程入口文件
-│   ├── renderer/           # 渲染进程代码
-│   │   ├── components/     # 组件目录
-│   │   ├── pages/          # 页面目录
-│   │   ├── App.js          # 应用主组件
-│   │   ├── App.css         # 应用主样式
-│   │   ├── index.js        # 渲染进程入口
-│   │   ├── index.css       # 全局样式
-│   │   └── index.html      # HTML模板
-│   ├── assets/             # 资源文件目录
-│   │   ├── icons/          # 图标资源
-│   │   └── fonts/          # 字体资源
-│   └── data/               # 数据目录
-│       └── defaultPrompts.json # 默认提示语数据
-├── package.json            # 项目配置文件
-└── README.md               # 项目根目录说明文件
+├── doc/ # 文档目录
+│ ├── README.md # 项目说明文档
+│ └── 开发进度.md # 开发进度文档
+├── src/ # 源代码目录
+│ ├── components/ # 组件目录
+│ │ ├── ui/ # UI组件
+│ │ ├── PromptList.tsx # 提示词列表组件
+│ │ ├── Sidebar.tsx # 侧边栏组件
+│ │ └── ...
+│ ├── hooks/ # 自定义Hook
+│ │ ├── usePrompts.tsx # 提示词管理Hook
+│ │ ├── useSettings.tsx # 设置管理Hook
+│ │ └── ...
+│ ├── types/ # 类型定义
+│ ├── lib/ # 工具函数
+│ ├── styles/ # 样式文件
+│ └── pages/ # 页面组件
+├── public/ # 静态资源
+└── package.json # 项目配置文件
 ```
 
-## 技术选型
 
-### 前端技术栈
-- **框架**: Electron + React
-- **路由**: React Router
+## 技术栈
+
+- **框架**: React + TypeScript
+- **UI组件**: shadcn/ui
 - **状态管理**: React Hooks
-- **样式**: CSS/SCSS
-- **构建工具**: Webpack
-
-### 后端技术栈
-- **数据存储**: 本地JSON文件
-- **进程通信**: Electron IPC
-
-## 功能特性
-
-1. **Prompts管理**
-   - 支持创建、编辑、删除和分类管理Prompts
-   - 预置常用Prompts模板
-   - 支持标签和分类筛选
-
-2. **主题与字体设置**
-   - 多种预设主题（浅色、深色等）
-   - 多种字体选项
-   - 自定义字体大小
-
-3. **便捷功能**
-   - 全局快捷键唤出（默认Ctrl+Alt+P）
-   - 窗口置顶功能
-   - 快速搜索
-
-4. **数据管理**
-   - 本地数据存储
-   - 数据导入导出
-   - 数据备份与恢复
+- **样式**: Tailwind CSS
+- **构建工具**: Vite
 
 ## 开发环境
 
-- Node.js 14.0+
-- npm 6.0+
-- Electron 19.0+
-- React 18.0+
+- Node.js 16.0+
+- npm 7.0+
+- TypeScript 4.0+
 
 ## 启动命令
 
@@ -81,10 +68,13 @@ PromptMate/
 npm install
 
 # 开发模式启动
-npm start
+npm run dev
 
-# 打包应用
+# 构建项目
 npm run build
+
+# 预览构建结果
+npm run preview
 ```
 
 ## 贡献指南
@@ -95,10 +85,6 @@ npm run build
 4. 推送到分支 (`git push origin feature/amazing-feature`)
 5. 创建Pull Request
 
-## 版本历史
-
-- **v1.0.0** - 初始版本
-
 ## 许可证
 
-[ISC](LICENSE) 
+[MIT](LICENSE)
