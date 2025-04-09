@@ -4,12 +4,20 @@
   "version": "1.0.0",
   "type": "module",
   "main": "dist-electron/main/main.cjs",
+  "author": {
+    "name": "泺源",
+    "email": "yuyuan3162021@163.com"
+  },
+  "description": "PromptMate is a desktop application that allows you to create and manage your prompts.",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",
+    "package": "electron-packager . PromptMate --platform=win32 --arch=x64 --icon=./public/favicon256.ico",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder",
     "electron:dev": "concurrently \"vite\" \"wait-on http://localhost:5173 && electron .\"",
     "electron:build": "vite build && electron-builder",
     "electron:preview": "vite build && electron ."
@@ -75,8 +83,9 @@
     "autoprefixer": "^10.4.20",
     "concurrently": "^8.2.2",
     "cross-env": "^7.0.3",
-    "electron": "^30.0.0",
+    "electron": "^30.5.1",
     "electron-builder": "^24.13.3",
+    "electron-packager": "^17.1.2",
     "eslint": "^9.9.0",
     "eslint-plugin-react-hooks": "^5.1.0-rc.0",
     "eslint-plugin-react-refresh": "^0.4.9",
@@ -91,7 +100,11 @@
     "wait-on": "^8.0.3"
   },
   "build": {
+    "asar": true,
+     "asarUnpack": "**/*.{node,dll}",
+     "npmRebuild": false,
     "appId": "com.promptmate.app",
+    "icon": "./public/favicon.ico",
     "productName": "PromptMate",
     "directories": {
       "output": "release"

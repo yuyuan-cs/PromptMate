@@ -57,7 +57,8 @@ function createWindow() {
     height: 700,
     minWidth: 800,
     minHeight: 600,
-    titleBarStyle: 'hiddenInset',
+    frame: false,
+    titleBarStyle: 'hidden',
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -248,6 +249,7 @@ ipcMain.handle('save-settings', (_, settings) => {
 ipcMain.handle('get-prompts', () => getPrompts());
 ipcMain.handle('save-prompts', (_, promptsData) => savePrompts(promptsData));
 
+// 窗口控制事件
 ipcMain.on('toggle-pin-window', (_, shouldPin) => {
   if (mainWindow) {
     mainWindow.setAlwaysOnTop(shouldPin);
@@ -256,6 +258,28 @@ ipcMain.on('toggle-pin-window', (_, shouldPin) => {
     const settings = getSettings();
     settings.alwaysOnTop = shouldPin;
     saveSettings(settings);
+  }
+});
+
+ipcMain.on('minimize-window', () => {
+  if (mainWindow) {
+    mainWindow.minimize();
+  }
+});
+
+ipcMain.on('maximize-window', () => {
+  if (mainWindow) {
+    if (mainWindow.isMaximized()) {
+      mainWindow.unmaximize();
+    } else {
+      mainWindow.maximize();
+    }
+  }
+});
+
+ipcMain.on('close-window', () => {
+  if (mainWindow) {
+    mainWindow.close();
   }
 });
 

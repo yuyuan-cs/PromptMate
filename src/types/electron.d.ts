@@ -43,6 +43,9 @@ interface ElectronAPI {
 
   // 窗口控制
   togglePinWindow: (shouldPin: boolean) => void;
+  minimize: () => void;
+  maximize: () => void;
+  close: () => void;
 
   // 数据导入导出
   exportData: (options: { filePath: string }) => Promise<{
@@ -55,9 +58,22 @@ interface ElectronAPI {
   }>;
 }
 
+interface ElectronWindow {
+  electron?: {
+    minimize: () => void;
+    maximize: () => void;
+    close: () => void;
+  };
+}
+
 declare global {
   interface Window {
     electronAPI: ElectronAPI;
+    electron?: {
+      minimize: () => void;
+      maximize: () => void;
+      close: () => void;
+    };
   }
 }
 

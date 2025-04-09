@@ -1,83 +1,71 @@
-import require$$0 from "electron";
-import require$$1 from "path";
-import require$$2 from "fs";
-var main = {};
-const { app, BrowserWindow, ipcMain, globalShortcut, Menu } = require$$0;
-const path = require$$1;
-const fs = require$$2;
-const userDataPath = app.getPath("userData");
-const configPath = path.join(userDataPath, "config");
-const promptsPath = path.join(configPath, "prompts.json");
-const settingsPath = path.join(configPath, "settings.json");
-if (!fs.existsSync(configPath)) {
-  fs.mkdirSync(configPath, { recursive: true });
-}
-let mainWindow = null;
-const defaultSettings = {
+import x from "electron";
+import D from "path";
+import F from "fs";
+var j = {};
+const { app: i, BrowserWindow: S, ipcMain: n, globalShortcut: f, Menu: h } = x, a = D, s = F, N = i.getPath("userData"), m = a.join(N, "config"), u = a.join(m, "prompts.json"), p = a.join(m, "settings.json");
+s.existsSync(m) || s.mkdirSync(m, { recursive: !0 });
+let t = null;
+const c = {
   theme: "system",
   font: "system-ui",
   fontSize: 14,
-  alwaysOnTop: false,
+  alwaysOnTop: !1,
   globalShortcut: "CommandOrControl+Alt+P"
-};
-const defaultPrompts = [
+}, g = [
   {
     id: "1",
     title: "简单翻译",
-    content: "请将以下文本翻译成中文:\n\n",
+    content: `请将以下文本翻译成中文:
+
+`,
     category: "翻译",
     tags: ["简体中文", "基础"]
   },
   {
     id: "2",
     title: "代码解释",
-    content: "请解释以下代码的功能和工作原理:\n\n",
+    content: `请解释以下代码的功能和工作原理:
+
+`,
     category: "编程",
     tags: ["代码", "解释"]
   },
   {
     id: "3",
     title: "文章摘要",
-    content: "请为以下文章生成一个简洁的摘要，不超过100字:\n\n",
+    content: `请为以下文章生成一个简洁的摘要，不超过100字:
+
+`,
     category: "写作",
     tags: ["摘要", "总结"]
   }
 ];
-function createWindow() {
-  mainWindow = new BrowserWindow({
+function w() {
+  t = new S({
     width: 1100,
     height: 700,
     minWidth: 800,
     minHeight: 600,
-    titleBarStyle: "hiddenInset",
+    frame: !1,
+    // 隐藏默认窗口边框
+    titleBarStyle: "hidden",
+    // 使用'hidden'而不是'hiddenInset'
     webPreferences: {
-      nodeIntegration: false,
-      contextIsolation: true,
-      preload: path.join(__dirname, "preload.cjs")
+      nodeIntegration: !1,
+      contextIsolation: !0,
+      preload: a.join(__dirname, "preload.cjs")
     }
+  }), process.env.NODE_ENV === "development" ? (t.loadURL("http://localhost:5173"), t.webContents.openDevTools()) : t.loadFile(a.join(__dirname, "../../dist/index.html")), t.on("closed", () => {
+    t = null;
   });
-  const isDev = process.env.NODE_ENV === "development";
-  if (isDev) {
-    mainWindow.loadURL("http://localhost:5173");
-    mainWindow.webContents.openDevTools();
-  } else {
-    mainWindow.loadFile(path.join(__dirname, "../../dist/index.html"));
-  }
-  mainWindow.on("closed", () => {
-    mainWindow = null;
-  });
-  const settings = getSettings();
-  mainWindow.setAlwaysOnTop(settings.alwaysOnTop);
-  registerGlobalShortcut(settings.globalShortcut);
+  const e = l();
+  t.setAlwaysOnTop(e.alwaysOnTop), d(e.globalShortcut);
 }
-app.whenReady().then(() => {
-  createWindow();
-  app.on("activate", () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow();
-    }
+i.whenReady().then(() => {
+  w(), i.on("activate", () => {
+    S.getAllWindows().length === 0 && w();
   });
-  const template = [
+  const o = [
     {
       label: "PromptMate",
       submenu: [
@@ -108,128 +96,95 @@ app.whenReady().then(() => {
         { role: "togglefullscreen" }
       ]
     }
-  ];
-  const menu = Menu.buildFromTemplate(template);
-  Menu.setApplicationMenu(menu);
+  ], e = h.buildFromTemplate(o);
+  h.setApplicationMenu(e);
 });
-app.on("will-quit", () => {
-  globalShortcut.unregisterAll();
+i.on("will-quit", () => {
+  f.unregisterAll();
 });
-app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") {
-    app.quit();
-  }
+i.on("window-all-closed", () => {
+  process.platform !== "darwin" && i.quit();
 });
-function registerGlobalShortcut(shortcut) {
-  globalShortcut.unregisterAll();
-  globalShortcut.register(shortcut, () => {
-    if (mainWindow.isMinimized()) {
-      mainWindow.restore();
-    }
-    mainWindow.focus();
-    if (!mainWindow.isVisible()) {
-      mainWindow.show();
-    }
+function d(o) {
+  f.unregisterAll(), f.register(o, () => {
+    t.isMinimized() && t.restore(), t.focus(), t.isVisible() || t.show();
   });
 }
-function getSettings() {
+function l() {
   try {
-    if (fs.existsSync(settingsPath)) {
-      const settingsData = fs.readFileSync(settingsPath, "utf8");
-      return { ...defaultSettings, ...JSON.parse(settingsData) };
+    if (s.existsSync(p)) {
+      const o = s.readFileSync(p, "utf8");
+      return { ...c, ...JSON.parse(o) };
     }
-    fs.writeFileSync(settingsPath, JSON.stringify(defaultSettings, null, 2));
-    return defaultSettings;
-  } catch (error) {
-    console.error("读取设置出错:", error);
-    return defaultSettings;
+    return s.writeFileSync(p, JSON.stringify(c, null, 2)), c;
+  } catch (o) {
+    return console.error("读取设置出错:", o), c;
   }
 }
-function saveSettings(settings) {
+function y(o) {
   try {
-    fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2));
-    return { success: true };
-  } catch (error) {
-    console.error("保存设置出错:", error);
-    return { success: false, error: error.message };
+    return s.writeFileSync(p, JSON.stringify(o, null, 2)), { success: !0 };
+  } catch (e) {
+    return console.error("保存设置出错:", e), { success: !1, error: e.message };
   }
 }
-function getPrompts() {
+function b() {
   try {
-    if (fs.existsSync(promptsPath)) {
-      const promptsData = fs.readFileSync(promptsPath, "utf8");
-      return { prompts: JSON.parse(promptsData) };
+    if (s.existsSync(u)) {
+      const o = s.readFileSync(u, "utf8");
+      return { prompts: JSON.parse(o) };
     }
-    fs.writeFileSync(promptsPath, JSON.stringify(defaultPrompts, null, 2));
-    return { prompts: defaultPrompts };
-  } catch (error) {
-    console.error("读取提示词出错:", error);
-    return { prompts: defaultPrompts };
+    return s.writeFileSync(u, JSON.stringify(g, null, 2)), { prompts: g };
+  } catch (o) {
+    return console.error("读取提示词出错:", o), { prompts: g };
   }
 }
-function savePrompts(promptsData) {
+function O(o) {
   try {
-    fs.writeFileSync(promptsPath, JSON.stringify(promptsData.prompts, null, 2));
-    return { success: true };
-  } catch (error) {
-    console.error("保存提示词出错:", error);
-    return { success: false, error: error.message };
+    return s.writeFileSync(u, JSON.stringify(o.prompts, null, 2)), { success: !0 };
+  } catch (e) {
+    return console.error("保存提示词出错:", e), { success: !1, error: e.message };
   }
 }
-ipcMain.handle("get-settings", () => getSettings());
-ipcMain.handle("save-settings", (_, settings) => {
-  const result = saveSettings(settings);
-  if (result.success && settings.alwaysOnTop !== void 0 && mainWindow) {
-    mainWindow.setAlwaysOnTop(settings.alwaysOnTop);
-  }
-  if (result.success && settings.globalShortcut && settings.globalShortcut !== getSettings().globalShortcut) {
-    registerGlobalShortcut(settings.globalShortcut);
-  }
-  return result;
+n.handle("get-settings", () => l());
+n.handle("save-settings", (o, e) => {
+  const r = y(e);
+  return r.success && e.alwaysOnTop !== void 0 && t && t.setAlwaysOnTop(e.alwaysOnTop), r.success && e.globalShortcut && e.globalShortcut !== l().globalShortcut && d(e.globalShortcut), r;
 });
-ipcMain.handle("get-prompts", () => getPrompts());
-ipcMain.handle("save-prompts", (_, promptsData) => savePrompts(promptsData));
-ipcMain.on("toggle-pin-window", (_, shouldPin) => {
-  if (mainWindow) {
-    mainWindow.setAlwaysOnTop(shouldPin);
-    const settings = getSettings();
-    settings.alwaysOnTop = shouldPin;
-    saveSettings(settings);
+n.handle("get-prompts", () => b());
+n.handle("save-prompts", (o, e) => O(e));
+n.on("toggle-pin-window", (o, e) => {
+  if (t) {
+    t.setAlwaysOnTop(e);
+    const r = l();
+    r.alwaysOnTop = e, y(r);
   }
 });
-ipcMain.handle("export-data", async (_, { filePath }) => {
+n.on("minimize-window", () => {
+  t && t.minimize();
+});
+n.on("maximize-window", () => {
+  t && (t.isMaximized() ? t.unmaximize() : t.maximize());
+});
+n.on("close-window", () => {
+  t && t.close();
+});
+n.handle("export-data", async (o, { filePath: e }) => {
   try {
-    const settings = getSettings();
-    const { prompts } = getPrompts();
-    const exportData = { settings, prompts };
-    fs.writeFileSync(filePath, JSON.stringify(exportData, null, 2));
-    return { success: true };
-  } catch (error) {
-    console.error("导出数据出错:", error);
-    return { success: false, error: error.message };
+    const r = l(), { prompts: v } = b(), T = { settings: r, prompts: v };
+    return s.writeFileSync(e, JSON.stringify(T, null, 2)), { success: !0 };
+  } catch (r) {
+    return console.error("导出数据出错:", r), { success: !1, error: r.message };
   }
 });
-ipcMain.handle("import-data", async (_, { filePath }) => {
+n.handle("import-data", async (o, { filePath: e }) => {
   try {
-    const importData = JSON.parse(fs.readFileSync(filePath, "utf8"));
-    if (importData.settings) {
-      saveSettings(importData.settings);
-      if (mainWindow && importData.settings.alwaysOnTop !== void 0) {
-        mainWindow.setAlwaysOnTop(importData.settings.alwaysOnTop);
-      }
-      if (importData.settings.globalShortcut) {
-        registerGlobalShortcut(importData.settings.globalShortcut);
-      }
-    }
-    if (importData.prompts) {
-      savePrompts({ prompts: importData.prompts });
-    }
-    return { success: true };
-  } catch (error) {
-    console.error("导入数据出错:", error);
-    return { success: false, error: error.message };
+    const r = JSON.parse(s.readFileSync(e, "utf8"));
+    return r.settings && (y(r.settings), t && r.settings.alwaysOnTop !== void 0 && t.setAlwaysOnTop(r.settings.alwaysOnTop), r.settings.globalShortcut && d(r.settings.globalShortcut)), r.prompts && O({ prompts: r.prompts }), { success: !0 };
+  } catch (r) {
+    return console.error("导入数据出错:", r), { success: !1, error: r.message };
   }
 });
 export {
-  main as default
+  j as default
 };

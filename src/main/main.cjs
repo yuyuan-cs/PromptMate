@@ -57,7 +57,8 @@ function createWindow() {
     height: 700,
     minWidth: 800,
     minHeight: 600,
-    titleBarStyle: 'hiddenInset',
+    frame: false,  // 隐藏默认窗口边框
+    titleBarStyle: 'hidden', // 使用'hidden'而不是'hiddenInset'
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -256,6 +257,28 @@ ipcMain.on('toggle-pin-window', (_, shouldPin) => {
     const settings = getSettings();
     settings.alwaysOnTop = shouldPin;
     saveSettings(settings);
+  }
+});
+
+ipcMain.on('minimize-window', () => {
+  if (mainWindow) {
+    mainWindow.minimize();
+  }
+});
+
+ipcMain.on('maximize-window', () => {
+  if (mainWindow) {
+    if (mainWindow.isMaximized()) {
+      mainWindow.unmaximize();
+    } else {
+      mainWindow.maximize();
+    }
+  }
+});
+
+ipcMain.on('close-window', () => {
+  if (mainWindow) {
+    mainWindow.close();
   }
 });
 

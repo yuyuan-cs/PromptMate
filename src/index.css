@@ -55,7 +55,7 @@
     --input: 220 13% 91%;
     --ring: 224 71.4% 4.1%;
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
 
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 0 0% 26%;
@@ -68,6 +68,11 @@
 
     --app-font: system-ui, sans-serif;
     --app-font-size: 16px;
+    
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
   }
 
   .dark {
@@ -107,6 +112,11 @@
     --sidebar-accent-foreground: 0 0% 95%;
     --sidebar-border: 0 0% 15%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+    
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.15);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -1px rgba(0, 0, 0, 0.15);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.15);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.14);
   }
 }
 
@@ -119,7 +129,16 @@
     @apply bg-background text-foreground;
     font-family: var(--app-font);
     font-size: var(--app-font-size);
+    line-height: 1.5;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+  
+  button {
+    @apply transition-all duration-200;
+  }
+  
+  .card {
+    @apply transition-all duration-200 hover:shadow-md border border-border/40;
   }
 }
 
@@ -130,8 +149,8 @@
   }
 
   .apple-scrollbar::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: 6px;
+    height: 6px;
   }
 
   .apple-scrollbar::-webkit-scrollbar-track {
@@ -139,16 +158,61 @@
   }
 
   .apple-scrollbar::-webkit-scrollbar-thumb {
-    background-color: rgba(0, 0, 0, 0.2);
+    background-color: rgba(0, 0, 0, 0.15);
     border-radius: 10px;
     border: 2px solid transparent;
   }
 
   .dark .apple-scrollbar::-webkit-scrollbar-thumb {
-    background-color: rgba(255, 255, 255, 0.2);
+    background-color: rgba(255, 255, 255, 0.15);
   }
 
   .apple-panel {
-    @apply bg-white dark:bg-black/80 backdrop-blur-xl border border-black/[0.08] dark:border-white/[0.08] rounded-xl;
+    @apply bg-white dark:bg-black/80 backdrop-blur-xl border border-black/[0.08] dark:border-white/[0.08] rounded-xl shadow-md;
+  }
+  
+  .prompt-card {
+    @apply transition-all duration-300 hover:shadow-lg;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  
+  .prompt-card:hover {
+    transform: translateY(-2px) scale(1.01);
+  }
+  
+  .prompt-detail-enter {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  
+  .prompt-detail-enter-active {
+    opacity: 1;
+    transform: scale(1);
+    transition: opacity 200ms, transform 200ms;
+  }
+  
+  .prompt-detail-exit {
+    opacity: 1;
+    transform: scale(1);
+  }
+  
+  .prompt-detail-exit-active {
+    opacity: 0;
+    transform: scale(0.95);
+    transition: opacity 150ms, transform 150ms;
+  }
+  
+  .apple-blur {
+    @apply backdrop-blur-md bg-white/70 dark:bg-black/70;
+  }
+  
+  /* 添加拖拽相关样式 */
+  .titlebar-drag {
+    -webkit-app-region: drag !important;
+    cursor: move;
+  }
+  
+  .titlebar-no-drag {
+    -webkit-app-region: no-drag !important;
   }
 }

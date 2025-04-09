@@ -2,12 +2,12 @@ import { Prompt, Category, Settings } from "../types";
 
 // Default categories
 export const defaultCategories: Category[] = [
-  { id: "general", name: "通用" },
-  { id: "creative", name: "创意生成" },
-  { id: "development", name: "开发编程" },
-  { id: "business", name: "商务沟通" },
-  { id: "education", name: "教育学习" },
-  { id: "productivity", name: "生产力" }
+  { id: "general", name: "通用", icon: "layout" },
+  { id: "creative", name: "创意生成", icon: "palette" },
+  { id: "development", name: "开发编程", icon: "fileText" },
+  { id: "business", name: "商务沟通", icon: "file" },
+  { id: "education", name: "教育学习", icon: "fileUp" },
+  { id: "productivity", name: "生产力", icon: "settings" }
 ];
 
 // Sample prompts

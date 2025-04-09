@@ -57,6 +57,7 @@ function createWindow() {
     height: 700,
     minWidth: 800,
     minHeight: 600,
+    frame: false,  // 隐藏默认窗口边框
     titleBarStyle: 'hiddenInset',
     webPreferences: {
       nodeIntegration: false,

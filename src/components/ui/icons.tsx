@@ -33,7 +33,9 @@ import {
   AlertTriangle,
   FileUp,
   FileDown,
-  File
+  File,
+  Pin,
+  PinOff
 } from "lucide-react";
 
 export const Icons = {
@@ -72,5 +74,7 @@ export const Icons = {
   fileUp: FileUp,
   file: File,
   alertCircle: AlertCircle,
-  alertTriangle: AlertTriangle
+  alertTriangle: AlertTriangle,
+  pin: Pin,
+  pinOff: PinOff
 }; 

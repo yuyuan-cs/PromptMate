@@ -16,15 +16,32 @@ export interface Category {
   icon?: string;
 }
 
+export type ThemeType =
+  | 'light' 
+  | 'dark' 
+  | 'system'
+  | 'blue' 
+  | 'purple' 
+  | 'green' 
+  | 'orange' 
+  | 'red'
+  | 'midnight' 
+  | 'coffee'
+  | 'custom';
+
 export interface Settings {
-  theme: 'light' | 'dark' | 'system';
+  theme: ThemeType;
   font: string;
   fontSize: number;
   alwaysOnTop: boolean;
   shortcut: string;
+  customTheme?: {
+    background: string;
+    foreground: string;
+    primary: string;
+    accent: string;
+  };
 }
-
-export type ThemeType = 'light' | 'dark' | 'system';
 
 export interface RecommendedPrompt {
   id: string;

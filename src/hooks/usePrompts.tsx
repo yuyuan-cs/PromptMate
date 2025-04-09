@@ -32,12 +32,12 @@ function usePromptsState() {
     
     // 初始化默认分类
     const defaultCategories: Category[] = [
-      { id: "creative", name: "创意生成" },
-      { id: "productivity", name: "生产力" },
-      { id: "development", name: "开发编程" },
-      { id: "education", name: "教育学习" },
-      { id: "business", name: "商务沟通" },
-      { id: "general", name: "通用" },
+      { id: "creative", name: "创意生成", icon: "palette" },
+      { id: "productivity", name: "生产力", icon: "settings" },
+      { id: "development", name: "开发编程", icon: "fileText" },
+      { id: "education", name: "教育学习", icon: "fileUp" },
+      { id: "business", name: "商务沟通", icon: "file" },
+      { id: "general", name: "通用", icon: "layout" },
     ];
     
     const loadedCategories = loadCategories();
@@ -87,12 +87,14 @@ function usePromptsState() {
   const allTags = useMemo(() => {
     const tagsSet = new Set<string>();
     
-    displayedPrompts.forEach(prompt => {
+    // 合并所有标签
+    prompts.forEach(prompt => {
       prompt.tags.forEach(tag => tagsSet.add(tag));
     });
     
     return Array.from(tagsSet).sort();
-  }, [displayedPrompts]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [refreshCounter, searchTerm]);
 
   // 过滤提示词基于当前分类、标签和搜索词
   const filteredPrompts = useMemo(() => {
@@ -203,19 +205,35 @@ function usePromptsState() {
   };
 
   const toggleFavorite = (id: string) => {
+    // 获取当前提示词，用于显示提示信息
+    const prompt = prompts.find(p => p.id === id);
+    if (!prompt) return;
+    
+    const willBeFavorite = !prompt.isFavorite;
+    
     setPrompts(prev => 
       prev.map(prompt => 
         prompt.id === id 
-          ? { ...prompt, isFavorite: !prompt.isFavorite } 
+          ? { ...prompt, isFavorite: willBeFavorite } 
           : prompt
       )
     );
+    
+    // 添加提示信息
+    toast({
+      title: willBeFavorite ? "已收藏" : "已取消收藏",
+      description: willBeFavorite 
+        ? `已将"${prompt.title}"添加到收藏` 
+        : `已将"${prompt.title}"从收藏中移除`,
+      variant: "success",
+    });
   };
 
-  const addCategory = (name: string) => {
+  const addCategory = (name: string, icon?: string) => {
     const newCategory = {
       id: name.toLowerCase().replace(/\s+/g, '-'),
-      name
+      name,
+      icon
     };
     
     setCategories(prev => [...prev, newCategory]);
@@ -229,21 +247,21 @@ function usePromptsState() {
     return newCategory;
   };
 
-  const updateCategory = (id: string, name: string) => {
+  const updateCategory = (id: string, name: string, icon?: string) => {
     // 获取旧分类名称用于通知
     const oldCategory = categories.find(cat => cat.id === id);
     
     setCategories(prev => 
       prev.map(category => 
         category.id === id 
-          ? { ...category, name } 
+          ? { ...category, name, icon } 
           : category
       )
     );
     
     toast({
       title: "分类已更新",
-      description: `分类 "${oldCategory?.name || id}" 已更名为 "${name}"`,
+      description: `分类 "${oldCategory?.name || id}" 已更新`,
       variant: "success",
     });
   };
@@ -384,3 +402,5 @@ export function usePrompts() {
   }
   return context;
 }
+
+export type { PromptsContextType };
