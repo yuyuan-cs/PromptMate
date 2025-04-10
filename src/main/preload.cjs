@@ -18,5 +18,23 @@ contextBridge.exposeInMainWorld('electronAPI', {
   
   // 数据导入导出
   exportData: (options) => ipcRenderer.invoke('export-data', options),
-  importData: (options) => ipcRenderer.invoke('import-data', options)
+  importData: (options) => ipcRenderer.invoke('import-data', options),
+  
+  // 应用更新
+  checkForUpdates: () => ipcRenderer.invoke('check-for-updates'),
+  getAppInfo: () => ipcRenderer.invoke('get-app-info'),
+  
+  // 更新事件监听
+  onUpdateAvailable: (callback) => {
+    ipcRenderer.on('update-available', (_, info) => callback(info));
+    return () => ipcRenderer.removeAllListeners('update-available');
+  },
+  onUpdateNotAvailable: (callback) => {
+    ipcRenderer.on('update-not-available', (_, info) => callback(info));
+    return () => ipcRenderer.removeAllListeners('update-not-available');
+  },
+  onUpdateError: (callback) => {
+    ipcRenderer.on('update-error', (_, error) => callback(error));
+    return () => ipcRenderer.removeAllListeners('update-error');
+  }
 }); 

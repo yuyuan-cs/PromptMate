@@ -1,6 +1,7 @@
 const { app, BrowserWindow, ipcMain, globalShortcut, Menu } = require('electron');
 const path = require('path');
 const fs = require('fs');
+const { autoUpdater } = require('electron-updater');
 
 // 应用配置目录
 const userDataPath = app.getPath('userData');
@@ -91,6 +92,29 @@ function createWindow() {
 // 初始化应用
 app.whenReady().then(() => {
   createWindow();
+
+  // 初始化自动更新配置
+  autoUpdater.autoDownload = false;
+  autoUpdater.logger = console;
+  
+  // 自动更新事件处理
+  autoUpdater.on('update-available', (info) => {
+    if (mainWindow) {
+      mainWindow.webContents.send('update-available', info);
+    }
+  });
+  
+  autoUpdater.on('update-not-available', (info) => {
+    if (mainWindow) {
+      mainWindow.webContents.send('update-not-available', info);
+    }
+  });
+  
+  autoUpdater.on('error', (err) => {
+    if (mainWindow) {
+      mainWindow.webContents.send('update-error', err);
+    }
+  });
 
   // MacOS相关设置
   app.on('activate', () => {
@@ -323,5 +347,38 @@ ipcMain.handle('import-data', async (_, { filePath }) => {
   } catch (error) {
     console.error('导入数据出错:', error);
     return { success: false, error: error.message };
+  }
+});
+
+// 添加应用信息和更新检查相关IPC
+ipcMain.handle('get-app-info', () => {
+  return {
+    version: app.getVersion(),
+    name: app.getName(),
+    description: 'PromptMate是一个帮助你创建和管理提示词的桌面应用'
+  };
+});
+
+ipcMain.handle('check-for-updates', async () => {
+  try {
+    const result = await autoUpdater.checkForUpdates();
+    if (result && result.updateInfo) {
+      return {
+        success: true,
+        hasUpdate: result.updateInfo.version !== app.getVersion(),
+        version: result.updateInfo.version
+      };
+    }
+    return {
+      success: true,
+      hasUpdate: false
+    };
+  } catch (error) {
+    console.error('检查更新出错:', error);
+    return {
+      success: false,
+      hasUpdate: false,
+      error: error.message
+    };
   }
 }); 

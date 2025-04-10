@@ -56,6 +56,19 @@ interface ElectronAPI {
     success: boolean;
     error?: string;
   }>;
+  
+  // 应用更新
+  checkForUpdates: () => Promise<{
+    success: boolean;
+    hasUpdate: boolean;
+    version?: string;
+    error?: string;
+  }>;
+  getAppInfo: () => Promise<{
+    version: string;
+    name: string;
+    description: string;
+  }>;
 }
 
 interface ElectronWindow {

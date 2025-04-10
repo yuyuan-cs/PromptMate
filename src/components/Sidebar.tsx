@@ -36,6 +36,7 @@ import * as LucideIcons from "lucide-react";
 import React from "react";
 import { ThemeCustomizer } from "./ThemeCustomizer";
 import { Settings } from "@/types";
+import { About } from './About';
 
 // 侧边栏显示模式类型
 type SidebarMode = "expanded" | "collapsed";
@@ -73,7 +74,7 @@ export function Sidebar({ className }: { className?: string }) {
   const [sidebarWidth, setSidebarWidth] = useState(260);
   const [isDragging, setIsDragging] = useState(false);
   const [sidebarMode, setSidebarMode] = useState<SidebarMode>("expanded");
-  const [settingsPanel, setSettingsPanel] = useState<"appearance" | "data">("appearance");
+  const [settingsPanel, setSettingsPanel] = useState<"appearance" | "data" | "about">("appearance");
   const [showCategoryManager, setShowCategoryManager] = useState(false);
   const [editingCategory, setEditingCategory] = useState<string | null>(null);
   const [editingName, setEditingName] = useState("");
@@ -884,7 +885,7 @@ export function Sidebar({ className }: { className?: string }) {
           </DialogHeader>
           
           {/* 设置导航按钮 */}
-          <div className="grid grid-cols-2 gap-2 mb-4">
+          <div className="grid grid-cols-3 gap-2 mb-4">
             <Button 
               variant={settingsPanel === "appearance" ? "default" : "outline"} 
               onClick={() => setSettingsPanel("appearance")}
@@ -900,6 +901,14 @@ export function Sidebar({ className }: { className?: string }) {
             >
               <Icons.fileJson className="mr-2 h-4 w-4" />
               数据管理
+            </Button>
+            <Button 
+              variant={settingsPanel === "about" ? "default" : "outline"} 
+              onClick={() => setSettingsPanel("about")}
+              className="w-full"
+            >
+              <Icons.info className="mr-2 h-4 w-4" />
+              关于
             </Button>
           </div>
           
@@ -1010,6 +1019,13 @@ export function Sidebar({ className }: { className?: string }) {
                 onDataChanged={handleDataChanged}
               />
             </div>
+          )}
+
+          {/* 关于面板 */}
+          {settingsPanel === "about" && (
+            <ScrollArea className="h-[60vh] pr-4">
+              <About />
+            </ScrollArea>
           )}
         </DialogContent>
       </Dialog>

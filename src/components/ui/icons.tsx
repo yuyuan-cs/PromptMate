@@ -35,7 +35,11 @@ import {
   FileDown,
   File,
   Pin,
-  PinOff
+  PinOff,
+  Info,
+  RefreshCw,
+  Github,
+  Loader
 } from "lucide-react";
 
 export const Icons = {
@@ -76,5 +80,10 @@ export const Icons = {
   alertCircle: AlertCircle,
   alertTriangle: AlertTriangle,
   pin: Pin,
-  pinOff: PinOff
+  pinOff: PinOff,
+  info: Info,
+  refresh: RefreshCw,
+  github: Github,
+  loader: Loader,
+  bot: AlertCircle
 }; 

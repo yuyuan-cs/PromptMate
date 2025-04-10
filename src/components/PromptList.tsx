@@ -2,7 +2,7 @@ import { usePrompts } from "@/hooks/usePrompts";
 import { Button } from "@/components/ui/button";
 import { Plus, Star, Search, X, Copy, Edit, Trash, MoreVertical, Menu } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { useState, useEffect } from "react";
+import { useState, useEffect, memo, useCallback } from "react";
 import { Prompt, Category } from "@/types";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
@@ -28,8 +28,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DialogDescription } from "@/components/ui/dialog";
 
-// 提示词详情查看对话框组件
-function PromptDetailDialog({ 
+// 提示词详情查看对话框组件 (Memoized)
+const PromptDetailDialog = memo(function PromptDetailDialog({ 
   prompt, 
   open, 
   onOpenChange 
@@ -105,9 +105,10 @@ function PromptDetailDialog({
       </DialogContent>
     </Dialog>
   );
-}
+});
 
-export function PromptList({ 
+// PromptList component (Memoized)
+export const PromptList = memo(function PromptList({ 
   onToggleSidebar,
   contentTitle
 }: { 
@@ -177,11 +178,11 @@ export function PromptList({
     });
   }, [activeCategory, showFavorites, showRecommended, searchTerm, selectedTag, filteredPrompts, prompts, contentTitle, localRefreshKey]);
 
-  const handlePromptClick = (prompt: Prompt) => {
+  const handlePromptClick = useCallback((prompt: Prompt) => {
     setSelectedPrompt(prompt);
-  };
+  }, [setSelectedPrompt]);
   
-  const handleCreatePrompt = () => {
+  const handleCreatePrompt = useCallback(() => {
     if (!newPromptTitle.trim() || !newPromptContent.trim()) {
       toast({
         title: "错误",
@@ -207,15 +208,15 @@ export function PromptList({
       variant: "success",
     });
     
-    // 重置表单
+    // Reset form
     setNewPromptTitle("");
     setNewPromptContent("");
     setNewPromptCategory("general");
     setNewPromptTags("");
     setShowNewPromptDialog(false);
-  };
+  }, [newPromptTitle, newPromptContent, newPromptCategory, newPromptTags, addPrompt, toast]);
   
-  const handleAddFromRecommended = (prompt: Prompt) => {
+  const handleAddFromRecommended = useCallback((prompt: Prompt) => {
     const newPrompt = addFromRecommended(prompt);
     setSelectedPrompt(newPrompt);
     setShowRecommended(false);
@@ -225,74 +226,36 @@ export function PromptList({
       description: "推荐模板已添加到您的提示词库",
       variant: "success",
     });
-  };
+  }, [addFromRecommended, setSelectedPrompt, setShowRecommended, toast]);
 
-  const handleCopyPrompt = (
-    eventOrContent: React.MouseEvent | string, 
-    prompt?: Prompt
-  ) => {
-    // 如果第一个参数是事件，则使用prompt.content
-    // 如果第一个参数是字符串，则直接使用它
-    let content: string;
-    
-    if (typeof eventOrContent === 'string') {
-      content = eventOrContent;
-    } else {
-      eventOrContent.stopPropagation();
-      content = prompt?.content || '';
-    }
-    
-    navigator.clipboard.writeText(content)
-      .then(() => {
-        toast({
-          title: "复制成功",
-          description: "提示词内容已复制到剪贴板",
-          variant: "success",
-        });
-      })
-      .catch(() => {
-        toast({
-          title: "复制失败",
-          description: "无法复制到剪贴板，请手动复制",
-          variant: "destructive",
-        });
-    });
-  };
+  const handleCopyPrompt = useCallback((content: string) => {
+      navigator.clipboard.writeText(content)
+        .then(() => {
+          toast({
+            title: "复制成功",
+            description: "提示词内容已复制到剪贴板",
+            variant: "success",
+          });
+        })
+        .catch(() => {
+          toast({
+            title: "复制失败",
+            description: "无法复制到剪贴板，请手动复制",
+            variant: "destructive",
+          });
+      });
+    }, [toast]);
 
-  function formatDate(dateString: string) {
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat('zh-CN', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
-    }).format(date);
-  }
+  const handleOpenEditDialog = useCallback((prompt: Prompt) => {
+      setPromptToEdit(prompt);
+      setEditPromptTitle(prompt.title);
+      setEditPromptContent(prompt.content);
+      setEditPromptCategory(prompt.category);
+      setEditPromptTags(prompt.tags.join(", "));
+      setShowEditPromptDialog(true);
+    }, []);
 
-  // 修改打开编辑对话框函数支持直接传递prompt
-  const handleOpenEditDialog = (
-    eventOrPrompt: React.MouseEvent | Prompt,
-    promptFromEvent?: Prompt
-  ) => {
-    let prompt: Prompt;
-    
-    if ('stopPropagation' in eventOrPrompt) {
-      eventOrPrompt.stopPropagation();
-      if (!promptFromEvent) return;
-      prompt = promptFromEvent;
-    } else {
-      prompt = eventOrPrompt;
-    }
-    
-    setPromptToEdit(prompt);
-    setEditPromptTitle(prompt.title);
-    setEditPromptContent(prompt.content);
-    setEditPromptCategory(prompt.category);
-    setEditPromptTags(prompt.tags.join(", "));
-    setShowEditPromptDialog(true);
-  };
-
-  // 确认编辑提示词
-  const handleEditPrompt = () => {
+  const handleEditPrompt = useCallback(() => {
     if (!promptToEdit) return;
     
     if (!editPromptTitle.trim() || !editPromptContent.trim()) {
@@ -321,29 +284,14 @@ export function PromptList({
     
     setShowEditPromptDialog(false);
     setPromptToEdit(null);
-  };
+  }, [promptToEdit, editPromptTitle, editPromptContent, editPromptCategory, editPromptTags, updatePrompt, toast]);
 
-  // 修改打开删除对话框函数支持直接传递prompt
-  const handleOpenDeleteDialog = (
-    eventOrPrompt: React.MouseEvent | Prompt,
-    promptFromEvent?: Prompt
-  ) => {
-    let prompt: Prompt;
-    
-    if ('stopPropagation' in eventOrPrompt) {
-      eventOrPrompt.stopPropagation();
-      if (!promptFromEvent) return;
-      prompt = promptFromEvent;
-    } else {
-      prompt = eventOrPrompt;
-    }
-    
+  const handleOpenDeleteDialog = useCallback((prompt: Prompt) => {
     setPromptToDelete(prompt);
     setShowDeletePromptDialog(true);
-  };
+  }, []);
 
-  // 确认删除提示词
-  const handleDeletePrompt = () => {
+  const handleDeletePrompt = useCallback(() => {
     if (!promptToDelete) return;
     
     deletePrompt(promptToDelete.id);
@@ -356,18 +304,28 @@ export function PromptList({
     
     setShowDeletePromptDialog(false);
     setPromptToDelete(null);
-  };
+  }, [promptToDelete, deletePrompt, toast]);
 
-  // 查看提示词详情 (修改点击逻辑)
-  const handleViewPromptDetail = (prompt: Prompt) => {
-    if (selectedPrompt?.id === prompt.id) {
-      // 如果点击的是当前已选中的卡片，则取消选中 (关闭编辑器)
-      setSelectedPrompt(null);
-    } else {
-      // 否则，选中新的卡片 (打开编辑器)
-      setSelectedPrompt(prompt);
-    }
-  };
+  const handleViewPromptDetail = useCallback((prompt: Prompt) => {
+    setSelectedPrompt(currentSelected => currentSelected?.id === prompt.id ? null : prompt);
+  }, [setSelectedPrompt]);
+
+  const handleToggleFavorite = useCallback((e: React.MouseEvent, promptId: string) => {
+    e.stopPropagation();
+    toggleFavorite(promptId);
+  }, [toggleFavorite]);
+
+  const handleTagClick = useCallback((e: React.MouseEvent, tag: string | null) => {
+    e.stopPropagation();
+    setSelectedTag(currentTag => tag === currentTag ? null : tag);
+  }, [setSelectedTag]);
+
+  const handleNewDialogClose = useCallback(() => setShowNewPromptDialog(false), []);
+  const handleEditDialogClose = useCallback(() => setShowEditPromptDialog(false), []);
+  const handleEditDialogSave = useCallback(() => handleEditPrompt(), [handleEditPrompt]);
+  const handleDeleteDialogClose = useCallback(() => setShowDeletePromptDialog(false), []);
+  const handleDeleteDialogConfirm = useCallback(() => handleDeletePrompt(), [handleDeletePrompt]);
+  const handleDetailDialogClose = useCallback(() => setShowDetailDialog(false), []);
 
   return (
     <div className="flex flex-col h-full">
@@ -398,7 +356,7 @@ export function PromptList({
             <Badge 
               variant={selectedTag === null ? "default" : "outline"} 
               className="cursor-pointer px-3 py-1 text-sm"
-              onClick={() => setSelectedTag(null)}
+              onClick={(e) => handleTagClick(e, null)}
             >
               全部
             </Badge>
@@ -407,7 +365,7 @@ export function PromptList({
                 key={tag}
                 variant={selectedTag === tag ? "default" : "outline"} 
                 className="cursor-pointer px-3 py-1 text-sm"
-                onClick={() => setSelectedTag(tag === selectedTag ? null : tag)}
+                onClick={(e) => handleTagClick(e, tag)}
               >
                 {tag}
               </Badge>
@@ -509,7 +467,7 @@ export function PromptList({
                               if (showRecommended) {
                                 handleAddFromRecommended(prompt);
                               } else {
-                                toggleFavorite(prompt.id);
+                                handleToggleFavorite(e, prompt.id);
                               }
                             }}>
                               {showRecommended ? (
@@ -563,10 +521,7 @@ export function PromptList({
                           key={tag} 
                           variant="secondary" 
                           className="cursor-pointer"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedTag(tag === selectedTag ? null : tag);
-                          }}
+                          onClick={(e) => handleTagClick(e, tag)}
                         >
                           {tag}
                         </Badge>
@@ -578,10 +533,7 @@ export function PromptList({
                           variant="ghost"
                           size="icon"
                           className="h-8 w-8"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            toggleFavorite(prompt.id);
-                          }}
+                          onClick={(e) => handleToggleFavorite(e, prompt.id)}
                         title={prompt.isFavorite ? "取消收藏" : "收藏"}
                       >
                         {prompt.isFavorite ? (
@@ -657,7 +609,7 @@ export function PromptList({
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowNewPromptDialog(false)}>
+            <Button variant="outline" onClick={handleNewDialogClose}>
               取消
             </Button>
             <Button onClick={handleCreatePrompt}>
@@ -731,10 +683,10 @@ export function PromptList({
           </ScrollArea>
           {/* 底部工具栏 */}  
           <DialogFooter className="mt-4 pt-4 border-t">
-            <Button variant="outline" onClick={() => setShowEditPromptDialog(false)}>
+            <Button variant="outline" onClick={handleEditDialogClose}>
               取消
             </Button>
-            <Button onClick={handleEditPrompt}>保存</Button>
+            <Button onClick={handleEditDialogSave}>保存</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -749,10 +701,10 @@ export function PromptList({
             您确定要删除提示词 "{promptToDelete?.title}" 吗？此操作无法撤销。
           </p>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowDeletePromptDialog(false)}>
+            <Button variant="outline" onClick={handleDeleteDialogClose}>
               取消
             </Button>
-            <Button variant="destructive" onClick={handleDeletePrompt}>
+            <Button variant="destructive" onClick={handleDeleteDialogConfirm}>
               删除
             </Button>
           </DialogFooter>
@@ -767,4 +719,4 @@ export function PromptList({
       />
     </div>
   );
-}
+});
