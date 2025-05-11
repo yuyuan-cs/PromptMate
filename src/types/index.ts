@@ -8,6 +8,13 @@ export interface Prompt {
   createdAt: string;
   updatedAt: string;
   description?: string;
+  images?: PromptImage[];
+}
+
+export interface PromptImage {
+  id: string;
+  data: string; // Base64编码的图片数据
+  caption?: string; // 图片说明
 }
 
 export interface Category {

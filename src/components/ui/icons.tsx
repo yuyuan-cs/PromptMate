@@ -39,7 +39,9 @@ import {
   Info,
   RefreshCw,
   Github,
-  Loader
+  Loader,
+  MoveVertical,
+  Image
 } from "lucide-react";
 
 export const Icons = {
@@ -85,5 +87,7 @@ export const Icons = {
   refresh: RefreshCw,
   github: Github,
   loader: Loader,
-  bot: AlertCircle
+  bot: AlertCircle,
+  moveVertical: MoveVertical,
+  image: Image
 }; 

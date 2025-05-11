@@ -59,7 +59,8 @@ function createWindow() {
     minWidth: 800,
     minHeight: 600,
     frame: false,  // 隐藏默认窗口边框
-    titleBarStyle: 'hidden', // 使用'hidden'而不是'hiddenInset'
+    titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'hidden', // 在 macOS 上使用 hiddenInset
+    trafficLightPosition: { x: 20, y: 20 }, // 设置 macOS 窗口控制按钮位置
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,

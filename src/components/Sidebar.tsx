@@ -37,6 +37,7 @@ import React from "react";
 import { ThemeCustomizer } from "./ThemeCustomizer";
 import { Settings } from "@/types";
 import { About } from './About';
+import { aiIcons, getIconComponent } from "@/lib/icons";
 
 // 侧边栏显示模式类型
 type SidebarMode = "expanded" | "collapsed";
@@ -59,7 +60,8 @@ export function Sidebar({ className }: { className?: string }) {
     resetAllFilters,
     forceRefresh,
     updateCategory,
-    deleteCategory
+    deleteCategory,
+    updateCategoriesOrder
   } = usePrompts();
   
   const { settings, toggleTheme, updateSettings, availableFonts } = useSettings();
@@ -284,9 +286,9 @@ export function Sidebar({ className }: { className?: string }) {
     
     // 根据模式自动调整宽度
     if (newMode === "collapsed") {
-      setSidebarWidth(60);
+      setSidebarWidth(50);
     } else {
-      setSidebarWidth(260);
+      setSidebarWidth(180);
     }
     
     // 重置所有tooltip的状态，防止收起侧边栏时所有tooltip都显示
@@ -339,11 +341,23 @@ export function Sidebar({ className }: { className?: string }) {
   const handleKeyDown = (e: React.KeyboardEvent, category: Category) => {
     if (e.key === "F2") {
       e.preventDefault();
-      setEditingCategory(category.id);
-      setEditingName(category.name);
+      handleEditCategory(category);
     } else if (e.key === "Escape") {
       setEditingCategory(null);
     }
+  };
+
+  // 选择一个分类进行编辑
+  const handleEditCategory = (category: Category) => {
+    // 如果侧边栏是折叠状态，自动展开
+    if (sidebarMode === "collapsed") {
+      setSidebarMode("expanded");
+      setSidebarWidth(180);
+    }
+
+    setEditingCategory(category.id);
+    setEditingName(category.name);
+    setEditingIcon(category.icon || "");
   };
 
   // 添加重命名处理函数
@@ -376,29 +390,12 @@ export function Sidebar({ className }: { className?: string }) {
     return () => clearTimeout(timer);
   }, [iconSearch]);
 
-  // AI相关图标列表
-  const aiIcons = [
-    "Brain", "Cpu", "Bot", "Robot", "MessageSquare", "MessageCircle", 
-    "MessageSquarePlus", "MessageSquareText", "MessageSquareCode", 
-    "Code", "Code2", "Terminal", "Command", "Keyboard", "Laptop", 
-    "Monitor", "Server", "Database", "Network", "Cloud", "CloudLightning", 
-    "CloudCog", "CloudDownload", "CloudUpload", "FileText", "FileCode", 
-    "FileJson", "FileSpreadsheet", "FileDatabase", "FileSearch", 
-    "Search", "SearchCode", "SearchCheck", "SearchX", "Lightbulb", 
-    "LightbulbOff", "Zap", "ZapOff", "Sparkles", "Star", "StarHalf", 
-    "Book", "BookOpen", "BookMarked", "BookText", "BookType", 
-    "BookUser", "BookKey", "BookLock", "BookCheck", "BookX", 
-    "BookPlus", "BookMinus", "BookOpenText", "BookOpenCheck", 
-    "BookOpenCode", "BookOpenUser", "BookOpenKey", "BookOpenLock", 
-    "BookOpenX", "BookOpenPlus", "BookOpenMinus"
-  ];
-
   // 过滤并限制显示的图标数量
   const filteredIcons = useMemo(() => {
     return aiIcons
       .filter(name => name.toLowerCase().includes(debouncedSearch.toLowerCase()))
       .slice(0, 50);
-  }, [debouncedSearch, aiIcons]);
+  }, [debouncedSearch]);
 
   // 应用自定义主题
   const applyCustomTheme = () => {
@@ -409,19 +406,111 @@ export function Sidebar({ className }: { className?: string }) {
     setShowThemeCustomizer(false);
   };
 
+  // 拖拽状态
+  const [draggedCategory, setDraggedCategory] = useState<string | null>(null);
+  const [dragOverCategory, setDragOverCategory] = useState<string | null>(null);
+
+  // 处理拖拽开始
+  const handleDragStart = (e: React.DragEvent<HTMLDivElement>, categoryId: string) => {
+    e.dataTransfer.setData('text/plain', categoryId);
+    setDraggedCategory(categoryId);
+    
+    // 设置拖拽图像
+    if (e.currentTarget.firstChild instanceof HTMLElement) {
+      e.dataTransfer.setDragImage(e.currentTarget.firstChild, 20, 20);
+    }
+  };
+
+  // 处理拖拽结束
+  const handleDragEnd = () => {
+    setDraggedCategory(null);
+    setDragOverCategory(null);
+  };
+
+  // 处理拖拽悬停
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>, categoryId: string) => {
+    e.preventDefault();
+    if (draggedCategory === categoryId) return;
+    setDragOverCategory(categoryId);
+  };
+
+  // 处理拖拽离开
+  const handleDragLeave = () => {
+    setDragOverCategory(null);
+  };
+
+  // 处理放置
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>, targetCategoryId: string) => {
+    e.preventDefault();
+    const draggedCategoryId = e.dataTransfer.getData('text/plain');
+    
+    if (draggedCategoryId === targetCategoryId) return;
+    
+    // 找到拖拽的分类和目标分类的索引
+    const draggedIndex = categories.findIndex(cat => cat.id === draggedCategoryId);
+    const targetIndex = categories.findIndex(cat => cat.id === targetCategoryId);
+    
+    if (draggedIndex === -1 || targetIndex === -1) return;
+    
+    // 创建新的分类数组并调整顺序
+    const newCategories = [...categories];
+    const [movedCategory] = newCategories.splice(draggedIndex, 1);
+    
+    // 关键修复：计算正确的插入位置
+    // 当目标索引大于拖拽索引时，由于我们已经移除了一个元素，目标索引需要减1
+    let insertIndex = targetIndex;
+    if (targetIndex > draggedIndex) {
+      insertIndex = targetIndex - 1;
+    }
+    
+    newCategories.splice(insertIndex, 0, movedCategory);
+    
+    // 更新分类顺序
+    updateCategoriesOrder(newCategories);
+    
+    // 重置拖拽状态
+    setDraggedCategory(null);
+    setDragOverCategory(null);
+  };
+
+  // 处理拖拽到末尾
+  const handleDropToEnd = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const draggedCategoryId = e.dataTransfer.getData('text/plain');
+    const draggedIndex = categories.findIndex(cat => cat.id === draggedCategoryId);
+    
+    if (draggedIndex === -1) return;
+    
+    // 创建新的分类数组并调整顺序
+    const newCategories = [...categories];
+    const [movedCategory] = newCategories.splice(draggedIndex, 1);
+    
+    // 插入到末尾
+    newCategories.push(movedCategory);
+    
+    // 更新分类顺序
+    updateCategoriesOrder(newCategories);
+    
+    // 重置拖拽状态
+    setDraggedCategory(null);
+    setDragOverCategory(null);
+  };
+
+  // 侧边栏组件
   return (
+    /* 侧边栏 */
     <div
       ref={sidebarRef}
       style={{ width: `${sidebarWidth}px` }}
       className={cn(
         "h-full border-r relative transition-all duration-300 flex flex-col apple-blur shrink-0",
-        isCollapsed && "w-[80px]",
+        isCollapsed && "w-[60px]",
         className
       )}
     >
       {/* 拖拽手柄 */}
       <div
-        className="absolute -right-3 top-1/2 transform -translate-y-1/2 w-6 h-12 bg-muted/30 border border-border rounded-full flex items-center justify-center cursor-col-resize hover:bg-muted/50 transition-colors z-10 opacity-0 hover:opacity-100"
+        className="absolute -right-3 top-1/2 transform -translate-y-1/2 w-4 h-8 bg-muted/30 border border-border rounded-full flex items-center justify-center cursor-col-resize hover:bg-muted/50 transition-colors z-10 opacity-0 hover:opacity-100"
         onMouseDown={handleMouseDown}
         title="调整侧边栏宽度"
       >
@@ -476,8 +565,10 @@ export function Sidebar({ className }: { className?: string }) {
                       <Button
                         variant="ghost"
                         className={cn(
-                          "w-full justify-start rounded-xl group",
-                          isCollapsed && "justify-center px-2"
+                          "rounded-xl group hover:scale-105 transition-transform",
+                          isCollapsed
+                            ? "h-9 w-9 p-0 mx-auto flex items-center justify-center"
+                            : "w-full justify-start py-1 px-3"
                         )}
                         onClick={handleAllPromptsClick}
                       >
@@ -499,11 +590,15 @@ export function Sidebar({ className }: { className?: string }) {
                       <Button
                         variant={showFavorites ? "default" : "ghost"}
                         className={cn(
-                          "w-full justify-start rounded-xl group",
-                          isCollapsed && "justify-center px-2"
+                          "rounded-xl group hover:scale-105 transition-transform",
+                          showFavorites ? "" : (activeCategory === null && !showRecommended ? "" : "hover:bg-accent hover:text-accent-foreground"),
+                          isCollapsed
+                            ? "h-9 w-9 p-0 mx-auto flex items-center justify-center"
+                            : "w-full justify-start py-1 px-3"
                         )}
+                        size="sm"
                         onClick={handleFavoritesClick}
-                      >
+                        >
                         <Icons.starFilled className="h-4 w-4" />
                         {!isCollapsed && "收藏提示词"}
                       </Button>
@@ -522,8 +617,11 @@ export function Sidebar({ className }: { className?: string }) {
                       <Button
                         variant={showRecommended ? "default" : "ghost"}
                         className={cn(
-                          "w-full justify-start rounded-xl group",
-                          isCollapsed && "justify-center px-2"
+                          "rounded-xl group hover:scale-105 transition-transform",
+                          showRecommended ? "" : (activeCategory === null && !showFavorites ? "" : "hover:bg-accent hover:text-accent-foreground"),
+                          isCollapsed
+                            ? "h-9 w-9 p-0 mx-auto flex items-center justify-center"
+                            : "w-full justify-start py-1 px-3"
                         )}
                         onClick={handleRecommendedClick}
                       >
@@ -542,7 +640,7 @@ export function Sidebar({ className }: { className?: string }) {
             </div>
             
             {/* 分类列表 */}
-            <div className="mt-6 w-full">
+            <div className="mt-6 ">
               {/* 分类列表标题 */}
               <div className={cn(
                 "flex items-center justify-between mb-2 px-2 w-full",
@@ -563,11 +661,10 @@ export function Sidebar({ className }: { className?: string }) {
                         size="icon"
                         onClick={() => setShowCategoryManager(true)}
                         className={cn(
-                          "rounded-full h-7 w-8",
+                          "rounded-full h-7 w-7 hover:scale-105 color transition-transform",
                           isCollapsed ? "mx-auto" : "ml-auto"
                         )}
                       >
-                        {/* 管理分类 */}
                         <Icons.folderPlus className="h-4 w-4" />
                       </Button>
                     </TooltipTrigger>
@@ -579,8 +676,7 @@ export function Sidebar({ className }: { className?: string }) {
               </div>
               {/* 分类列表 */}
               <ScrollArea className={cn(
-                "h-[calc(100vh-200px)] px-1",
-                isCollapsed ? "" : "pr-4"
+                "h-[calc(100vh-200px)]"
               )}>
                 {/* 分类列表 */}
                 <div className="space-y-1">
@@ -591,30 +687,41 @@ export function Sidebar({ className }: { className?: string }) {
                           <ContextMenu>
                             <ContextMenuTrigger asChild>
                               <div
-                                className="w-full"
+                                className={cn(
+                                  "w-full",
+                                  draggedCategory === category.id && "opacity-50",
+                                  dragOverCategory === category.id && "border-t-2 border-primary"
+                                )}
                                 onKeyDown={(e) => handleKeyDown(e, category)}
                                 tabIndex={0}
+                                draggable={editingCategory !== category.id}
+                                onDragStart={(e) => handleDragStart(e, category.id)}
+                                onDragEnd={handleDragEnd}
+                                onDragOver={(e) => handleDragOver(e, category.id)}
+                                onDragLeave={handleDragLeave}
+                                onDrop={(e) => handleDrop(e, category.id)}
                               >
                                 {editingCategory === category.id ? (
-                                  <div className="flex items-center gap-2 p-2">
-                                    <div className="flex items-center gap-2 flex-1">
+                                  <div className="flex flex-col p-1 space-y-2">
+                                    {/* 第一行：图标选择和文字输入 */}
+                                    <div className="flex items-center gap-2 w-full">
                                       <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
                                           <Button
                                             variant="ghost"
                                             size="icon"
-                                            className="h-8 w-8"
+                                            className="h-8 w-8 shrink-0 hover:scale-105 transition-transform"
                                           >
                                             <CategoryIcon iconName={editingIcon || category.icon} />
                                           </Button>
                                         </DropdownMenuTrigger>
-                                        <DropdownMenuContent>
-                                          <div className="w-[300px] p-2">
+                                        <DropdownMenuContent className="w-[300px] p-2" align="start" side="right" sideOffset={5}>
+                                          <div className="w-full p-2">
                                             <Input
                                               placeholder="搜索图标..."
                                               value={iconSearch}
                                               onChange={(e) => setIconSearch(e.target.value)}
-                                              className="mb-2"
+                                              className="mb-1 h-6"
                                             />
                                             <div className="grid grid-cols-6 gap-2 max-h-[300px] overflow-y-auto">
                                               {filteredIcons.map(name => (
@@ -622,19 +729,20 @@ export function Sidebar({ className }: { className?: string }) {
                                                   key={name}
                                                   variant="ghost"
                                                   size="icon"
-                                                  className="h-8 w-8"
+                                                  className="h-8 w-8 hover:bg-muted/50"
                                                   onClick={() => {
                                                     setEditingIcon(name);
                                                     setShowIconPicker(false);
                                                   }}
                                                 >
-                                                  <CategoryIcon iconName={name} className="h-4 w-4" />
+                                                  {React.createElement(getIconComponent(name), { className: "h-4 w-4" })}
                                                 </Button>
                                               ))}
                                             </div>
                                           </div>
                                         </DropdownMenuContent>
                                       </DropdownMenu>
+                                      {/* 编辑分类名称 */}
                                       <Input
                                         value={editingName}
                                         onChange={(e) => setEditingName(e.target.value)}
@@ -647,25 +755,31 @@ export function Sidebar({ className }: { className?: string }) {
                                         }}
                                         onBlur={() => handleRename(category.id)}
                                         autoFocus
-                                        className="h-8 flex-1"
+                                        className="h-8 w-full min-w-0"
                                       />
                                     </div>
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      onClick={() => handleRename(category.id)}
-                                      className="h-8 w-8"
-                                    >
-                                      <Icons.check className="h-4 w-4" />
-                                    </Button>
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      onClick={() => setEditingCategory(null)}
-                                      className="h-8 w-8"
-                                    >
-                                      <Icons.x className="h-4 w-4" />
-                                    </Button>
+                                    
+                                    {/* 第二行：操作按钮 */}
+                                    <div className="flex justify-center gap-0.5 w-auto px-6">
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => setEditingCategory(null)}
+                                        className="h-6 hover:scale-105 transition-transform"
+                                      >
+                                        <Icons.x className="h-4 w-4" />
+                                        取消
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => handleRename(category.id)}
+                                        className="h-6 hover:scale-105 transition-transform"
+                                      >
+                                        <Icons.check className="h-4 w-4" />
+                                        确定
+                                      </Button>
+                                    </div>
                                   </div>
                                 ) : (
                                   <TooltipProvider delayDuration={100}>
@@ -675,9 +789,11 @@ export function Sidebar({ className }: { className?: string }) {
                                         <Button
                                           variant={activeCategory === category.id ? "default" : "ghost"}
                                           className={cn(
-                                            "w-full justify-start rounded-xl group py-2", 
-                                            isCollapsed && "justify-center px-2",
-                                            activeCategory === category.id ? "bg-primary/10 text-primary hover:bg-primary/15" : ""
+                                            "rounded-xl group hover:scale-105 transition-transform",
+                                            activeCategory === category.id ? "bg-primary/10 text-primary hover:bg-primary/15" : "hover:bg-muted/50",
+                                            isCollapsed
+                                              ? "h-9 w-9 p-0 mx-auto flex items-center justify-center"
+                                              : "w-full justify-start py-1 px-3"
                                           )}
                                           onClick={() => handleCategoryClick(category.id)}
                                         >
@@ -685,12 +801,10 @@ export function Sidebar({ className }: { className?: string }) {
                                           <CategoryIcon iconName={category.icon} />
                                           {/* 分类名称 */}
                                           {!isCollapsed && category.name}
-                                          {/* 分类提示词数量 */}
-                                          {/* {!isCollapsed && (
-                                            <span className="ml-auto text-xs opacity-70 rounded-full bg-muted/50 px-1.5 py-0.5 min-w-[20px] text-center">
-                                              {promptCounts[category.id] || 0}
-                                            </span>
-                                          )} */}
+                                          {/* 拖拽提示图标 */}
+                                          {!isCollapsed && (
+                                            <Icons.moveVertical className="ml-auto h-3 w-3 opacity-0 group-hover:opacity-50" />
+                                          )}
                                         </Button>
                                       </TooltipTrigger>
                                       {isCollapsed && (
@@ -704,11 +818,7 @@ export function Sidebar({ className }: { className?: string }) {
                               </div>
                             </ContextMenuTrigger>
                             <ContextMenuContent>
-                              <ContextMenuItem onClick={() => {
-                                setEditingCategory(category.id);
-                                setEditingName(category.name);
-                                setEditingIcon(category.icon || "");
-                              }}>
+                              <ContextMenuItem onClick={() => handleEditCategory(category)}>
                                 编辑
                               </ContextMenuItem>
                               <ContextMenuItem 
@@ -728,6 +838,22 @@ export function Sidebar({ className }: { className?: string }) {
                       </Tooltip>
                     </TooltipProvider>
                   ))}
+                  
+                  {/* 列表末尾的拖拽区域 */}
+                  {draggedCategory && (
+                    <div 
+                      className={cn(
+                        "h-8 w-full rounded-md border-0 border-dashed border-primary/20",
+                        dragOverCategory === "end" && "border-primary bg-primary/5"
+                      )}
+                      onDragOver={(e) => {
+                        e.preventDefault();
+                        setDragOverCategory("end");
+                      }}
+                      onDragLeave={() => setDragOverCategory(null)}
+                      onDrop={handleDropToEnd}
+                    />
+                  )}
                 </div>
               </ScrollArea>
             </div>
@@ -738,7 +864,7 @@ export function Sidebar({ className }: { className?: string }) {
       {/* 底部按钮 */}
       <div className={cn(
         "border-t p-3 shrink-0",
-        isCollapsed ? "space-y-2" : "flex items-center justify-between"
+        isCollapsed ? "space-y-2 h-auto" : "flex items-center h-10 justify-between"
       )}>
         <TooltipProvider delayDuration={100}>
           <Tooltip>
@@ -749,7 +875,7 @@ export function Sidebar({ className }: { className?: string }) {
                 onClick={toggleTheme}
                 className={cn(
                   "rounded-full h-8 w-8",
-                  isCollapsed ? "w-full justify-center" : ""
+                  isCollapsed ? "mx-auto" : ""
                 )}
               >
                 {settings.theme === 'dark' ? (
@@ -766,7 +892,7 @@ export function Sidebar({ className }: { className?: string }) {
         </TooltipProvider>
         
         
-
+        {/* 新建提示词 */}
         <TooltipProvider delayDuration={100}>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -774,8 +900,8 @@ export function Sidebar({ className }: { className?: string }) {
                 variant="ghost"
                 size="icon"
                 className={cn(
-                  "rounded-full h-8 w-8 bg-primary/10 text-primary hover:bg-primary/20",
-                  isCollapsed ? "w-full justify-center" : ""
+                  "rounded-full h-8 w-8 bg-primary/10 text-primary hover:bg-primary/20 hover:scale-95 transition-transform",
+                  isCollapsed ? "mx-auto" : ""
                 )}
                 onClick={() => setShowNewPromptDialog(true)}
               >
@@ -799,8 +925,8 @@ export function Sidebar({ className }: { className?: string }) {
                   setShowSettings(true);
                 }}
                 className={cn(
-                  "rounded-full h-8 w-8",
-                  isCollapsed ? "w-full justify-center" : ""
+                  "rounded-full h-8 w-8 hover:scale-95 transition-transform",
+                  isCollapsed ? "mx-auto" : ""
                 )}
               >
                 <Icons.settings className="h-4 w-4" />
@@ -916,22 +1042,6 @@ export function Sidebar({ className }: { className?: string }) {
           {settingsPanel === "appearance" && (
             <ScrollArea className="h-[60vh] pr-4">
               <div className="py-2 space-y-6">
-                {/* 侧边栏设置 */}
-                <div className="space-y-2">
-                  <Label htmlFor="sidebar-mode">侧边栏模式</Label>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">仅图标模式</span>
-                    <Switch
-                      id="sidebar-mode"
-                      checked={sidebarMode === "expanded"}
-                      onCheckedChange={(checked) => {
-                        setSidebarMode(checked ? "expanded" : "collapsed");
-                        setSidebarWidth(checked ? 280 : 80);
-                      }}
-                    />
-                    <span className="text-sm">完整模式</span>
-                  </div>
-                </div>
                 
                 {/* 字体设置 */}
                 <div className="space-y-2">

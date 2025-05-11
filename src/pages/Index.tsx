@@ -60,6 +60,7 @@ function ContentArea({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
           key={viewKey}
           onToggleSidebar={onToggleSidebar} 
           contentTitle={`搜索结果: "${searchTerm}"`}
+          isEditPanelOpen={!!selectedPrompt}
         />
       );
     }
@@ -71,6 +72,7 @@ function ContentArea({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
           key={viewKey}
           onToggleSidebar={onToggleSidebar} 
           contentTitle="推荐模板"
+          isEditPanelOpen={!!selectedPrompt}
         />
       );
     }
@@ -82,6 +84,7 @@ function ContentArea({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
           key={viewKey}
           onToggleSidebar={onToggleSidebar} 
           contentTitle="收藏提示词"
+          isEditPanelOpen={!!selectedPrompt}
         />
       );
     }
@@ -94,6 +97,7 @@ function ContentArea({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
           key={viewKey}
           onToggleSidebar={onToggleSidebar} 
           contentTitle={`分类: ${categoryName}`}
+          isEditPanelOpen={!!selectedPrompt}
         />
       );
     }
@@ -104,6 +108,7 @@ function ContentArea({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
         key={viewKey}
         onToggleSidebar={onToggleSidebar} 
         contentTitle="全部提示词"
+        isEditPanelOpen={!!selectedPrompt}
       />
     );
   };
@@ -111,13 +116,13 @@ function ContentArea({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
   return (
     <div className="flex flex-1 overflow-hidden">
       {/* 左侧内容区域 */}
-      <div className={`h-full transition-all duration-300 ${selectedPrompt ? "w-full md:w-2/3" : "w-full"}`}>
+      <div className={`h-full transition-all duration-300 ${selectedPrompt ? "w-full md:w-1/2" : "w-full"}`}>
         {renderCurrentView()}
       </div>
 
       {/* 提示词编辑器 */}
       {selectedPrompt && (
-        <div className={`h-full border-l fixed md:relative right-0 top-[64px] bottom-0 z-10 bg-background md:z-0 w-full md:w-1/3 transition-all duration-300 ${showEditor ? "translate-x-0" : "translate-x-full md:translate-x-0"}`}>
+        <div className={`h-full border-l fixed md:relative right-0 top-[64px] bottom-0 z-10 bg-background md:z-0 w-full md:w-1/2 transition-all duration-300 ${showEditor ? "translate-x-0" : "translate-x-full md:translate-x-0"}`}>
           <PromptEditor />
         </div>
       )}

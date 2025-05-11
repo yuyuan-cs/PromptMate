@@ -9,7 +9,7 @@ export function CategoryView({
   categoryId: string;
   onToggleSidebar?: () => void;
 }) {
-  const { setActiveCategory, setShowFavorites, setShowRecommended, categories } = usePrompts();
+  const { setActiveCategory, setShowFavorites, setShowRecommended, categories, selectedPrompt } = usePrompts();
   
   // 确保正确的状态
   useEffect(() => {
@@ -24,6 +24,7 @@ export function CategoryView({
     <PromptList 
       onToggleSidebar={onToggleSidebar} 
       contentTitle={`分类: ${categoryName}`} 
+      isEditPanelOpen={!!selectedPrompt}
     />
   );
 } 

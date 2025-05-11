@@ -8,6 +8,5 @@ description:
 globs: 
 alwaysApply: true
 ---
-- 命令运行环境为windows系统的powershell
 - 每完成一次操作，均需更新 [开发进度.md](mdc:doc/开发进度.md) 文档
 - 修改时不要更改其他功能

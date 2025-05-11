@@ -2,8 +2,8 @@ import { usePrompts } from "@/hooks/usePrompts";
 import { Button } from "@/components/ui/button";
 import { Plus, Star, Search, X, Copy, Edit, Trash, MoreVertical, Menu } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { useState, useEffect, memo, useCallback } from "react";
-import { Prompt, Category } from "@/types";
+import { useState, useEffect, memo, useCallback, useRef } from "react";
+import { Prompt, Category, PromptImage } from "@/types";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -27,6 +27,12 @@ import { ViewBadge } from "./category/ViewBadge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DialogDescription } from "@/components/ui/dialog";
+import { generateId } from "@/lib/data";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 // 提示词详情查看对话框组件 (Memoized)
 const PromptDetailDialog = memo(function PromptDetailDialog({ 
@@ -87,8 +93,35 @@ const PromptDetailDialog = memo(function PromptDetailDialog({
           <div className="p-4 rounded-lg bg-muted/30 whitespace-pre-wrap">
             {prompt.content}
           </div>
+          
+          {/* 显示图片 */}
+          {prompt.images && prompt.images.length > 0 && (
+            <div className="mt-4 space-y-2">
+              <h3 className="text-sm font-medium px-1">参考图片</h3>
+              <div className="grid grid-cols-2 gap-2 p-1">
+                {prompt.images.map((image, index) => (
+                  <div 
+                    key={image.id} 
+                    className="border rounded-md overflow-hidden"
+                  >
+                    <img 
+                      src={image.data} 
+                      alt={image.caption || `图片 ${index + 1}`} 
+                      className="w-full h-32 object-cover"
+                    />
+                    {image.caption && (
+                      <div className="p-2 text-xs text-muted-foreground">
+                        {image.caption}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          
           {prompt.tags.length > 0 && (
-            <div className="mt-4 flex flex-wrap gap-2">
+            <div className="mt-4 flex flex-wrap gap-2 px-1">
               {prompt.tags.map(tag => (
                 <Badge key={tag} variant="secondary" className="text-xs">
                   {tag}
@@ -110,10 +143,12 @@ const PromptDetailDialog = memo(function PromptDetailDialog({
 // PromptList component (Memoized)
 export const PromptList = memo(function PromptList({ 
   onToggleSidebar,
-  contentTitle
+  contentTitle,
+  isEditPanelOpen = false
 }: { 
   onToggleSidebar?: () => void;
   contentTitle?: string;
+  isEditPanelOpen?: boolean;
 }) {
   const { toast } = useToast();
   const {
@@ -158,6 +193,11 @@ export const PromptList = memo(function PromptList({
   const [localRefreshKey, setLocalRefreshKey] = useState(0);
   const [detailPrompt, setDetailPrompt] = useState<Prompt | null>(null);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
+  // 图片上传相关状态
+  const [newPromptImages, setNewPromptImages] = useState<PromptImage[]>([]);
+  const [selectedNewImageIndex, setSelectedNewImageIndex] = useState<number | null>(null);
+  const [newImageCaption, setNewImageCaption] = useState("");
+  const newFileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setLocalRefreshKey(prev => prev + 1);
@@ -182,6 +222,76 @@ export const PromptList = memo(function PromptList({
     setSelectedPrompt(prompt);
   }, [setSelectedPrompt]);
   
+  // 处理图片上传
+  const handleNewImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    
+    const file = files[0];
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: "格式错误",
+        description: "请上传图片文件",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (file.size > 5 * 1024 * 1024) { // 5MB限制
+      toast({
+        title: "文件过大",
+        description: "图片大小不能超过5MB",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const result = e.target?.result as string;
+      const newImage: PromptImage = {
+        id: generateId(),
+        data: result,
+        caption: ""
+      };
+      setNewPromptImages(prev => [...prev, newImage]);
+      setSelectedNewImageIndex(newPromptImages.length);
+    };
+    reader.readAsDataURL(file);
+    
+    // 清空文件输入以允许重复选择相同文件
+    if (newFileInputRef.current) {
+      newFileInputRef.current.value = "";
+    }
+  };
+  
+  // 删除图片
+  const handleDeleteNewImage = (index: number) => {
+    setNewPromptImages(prev => prev.filter((_, i) => i !== index));
+    if (selectedNewImageIndex === index) {
+      setSelectedNewImageIndex(null);
+      setNewImageCaption("");
+    } else if (selectedNewImageIndex !== null && selectedNewImageIndex > index) {
+      setSelectedNewImageIndex(selectedNewImageIndex - 1);
+    }
+  };
+  
+  // 更新图片说明
+  const handleUpdateNewCaption = (index: number, caption: string) => {
+    setNewPromptImages(prev => 
+      prev.map((img, i) => 
+        i === index ? {...img, caption} : img
+      )
+    );
+  };
+  
+  // 选择图片进行编辑
+  const handleSelectNewImage = (index: number) => {
+    setSelectedNewImageIndex(index);
+    setNewImageCaption(newPromptImages[index].caption || "");
+  };
+  
+  // 创建提示词
   const handleCreatePrompt = useCallback(() => {
     if (!newPromptTitle.trim() || !newPromptContent.trim()) {
       toast({
@@ -200,6 +310,7 @@ export const PromptList = memo(function PromptList({
       category: newPromptCategory,
       tags,
       isFavorite: false,
+      images: newPromptImages.length > 0 ? newPromptImages : undefined
     });
     
     toast({
@@ -213,9 +324,13 @@ export const PromptList = memo(function PromptList({
     setNewPromptContent("");
     setNewPromptCategory("general");
     setNewPromptTags("");
+    setNewPromptImages([]);
+    setSelectedNewImageIndex(null);
+    setNewImageCaption("");
     setShowNewPromptDialog(false);
-  }, [newPromptTitle, newPromptContent, newPromptCategory, newPromptTags, addPrompt, toast]);
+  }, [newPromptTitle, newPromptContent, newPromptCategory, newPromptTags, newPromptImages, addPrompt, toast]);
   
+  // 从推荐模板添加提示词
   const handleAddFromRecommended = useCallback((prompt: Prompt) => {
     const newPrompt = addFromRecommended(prompt);
     setSelectedPrompt(newPrompt);
@@ -228,11 +343,13 @@ export const PromptList = memo(function PromptList({
     });
   }, [addFromRecommended, setSelectedPrompt, setShowRecommended, toast]);
 
+  // 复制提示词
   const handleCopyPrompt = useCallback((content: string) => {
+    const copyPromptContent = (content: string) => {
       navigator.clipboard.writeText(content)
         .then(() => {
           toast({
-            title: "复制成功",
+            title: "复制成功", 
             description: "提示词内容已复制到剪贴板",
             variant: "success",
           });
@@ -240,12 +357,15 @@ export const PromptList = memo(function PromptList({
         .catch(() => {
           toast({
             title: "复制失败",
-            description: "无法复制到剪贴板，请手动复制",
+            description: "无法复制到剪贴板，请手动复制", 
             variant: "destructive",
           });
-      });
-    }, [toast]);
+        });
+    };
+    copyPromptContent(content);
+  }, [toast]);
 
+  // 打开编辑对话框
   const handleOpenEditDialog = useCallback((prompt: Prompt) => {
       setPromptToEdit(prompt);
       setEditPromptTitle(prompt.title);
@@ -255,6 +375,7 @@ export const PromptList = memo(function PromptList({
       setShowEditPromptDialog(true);
     }, []);
 
+  // 编辑提示词
   const handleEditPrompt = useCallback(() => {
     if (!promptToEdit) return;
     
@@ -291,6 +412,7 @@ export const PromptList = memo(function PromptList({
     setShowDeletePromptDialog(true);
   }, []);
 
+  // 删除提示词
   const handleDeletePrompt = useCallback(() => {
     if (!promptToDelete) return;
     
@@ -306,29 +428,47 @@ export const PromptList = memo(function PromptList({
     setPromptToDelete(null);
   }, [promptToDelete, deletePrompt, toast]);
 
+  // 查看提示词详情
   const handleViewPromptDetail = useCallback((prompt: Prompt) => {
     setSelectedPrompt(currentSelected => currentSelected?.id === prompt.id ? null : prompt);
   }, [setSelectedPrompt]);
 
+  // 切换收藏状态
   const handleToggleFavorite = useCallback((e: React.MouseEvent, promptId: string) => {
     e.stopPropagation();
     toggleFavorite(promptId);
   }, [toggleFavorite]);
 
+  // 标签点击
   const handleTagClick = useCallback((e: React.MouseEvent, tag: string | null) => {
     e.stopPropagation();
     setSelectedTag(currentTag => tag === currentTag ? null : tag);
   }, [setSelectedTag]);
 
-  const handleNewDialogClose = useCallback(() => setShowNewPromptDialog(false), []);
+  // 处理新建对话框关闭
+  const handleNewDialogClose = useCallback(() => {
+    setShowNewPromptDialog(false);
+    setNewPromptTitle("");
+    setNewPromptContent("");
+    setNewPromptCategory("general");
+    setNewPromptTags("");
+    setNewPromptImages([]);
+    setSelectedNewImageIndex(null);
+    setNewImageCaption("");
+  }, []);
+
+  // 编辑对话框关闭
   const handleEditDialogClose = useCallback(() => setShowEditPromptDialog(false), []);
+
+  // 编辑对话框保存
   const handleEditDialogSave = useCallback(() => handleEditPrompt(), [handleEditPrompt]);
+
   const handleDeleteDialogClose = useCallback(() => setShowDeletePromptDialog(false), []);
   const handleDeleteDialogConfirm = useCallback(() => handleDeletePrompt(), [handleDeletePrompt]);
   const handleDetailDialogClose = useCallback(() => setShowDetailDialog(false), []);
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full"> 
       
       {/* 当前分类/模式指示器 */}
       <div className="bg-muted/30 px-4 py-2 text-sm flex items-center">
@@ -342,11 +482,11 @@ export const PromptList = memo(function PromptList({
         <span className="ml-auto text-muted-foreground">找到 {filteredPrompts.length} 个提示词</span>
         
         {/* 添加当前视图类型显示 */}
-        {contentTitle && (
+        {/* {contentTitle && (
           <Badge variant="outline" className="ml-2 bg-purple-50 text-purple-700 border-purple-200">
             <Icons.fileText className="h-3 w-3 mr-1" /> {contentTitle}
           </Badge>
-        )}
+        )} */}
       </div>
 
       {/* 标签过滤器 */}
@@ -415,19 +555,31 @@ export const PromptList = memo(function PromptList({
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            // 提示词列表
+            <div className={`grid grid-cols-1 ${isEditPanelOpen ? '' : 'md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3'} gap-4`}>
               {filteredPrompts.map((prompt) => (
                 <Card 
                   key={prompt.id}
-                  className={`prompt-card cursor-pointer hover:shadow-md transition-shadow ${
-                    selectedPrompt?.id === prompt.id ? "ring-2 ring-primary" : ""
-                  }`}
+                  className={cn(
+                    "prompt-card cursor-pointer transition-all duration-200 ease-in-out rounded-md p-0.5 min-w-[280px]",
+                    "focus-visible:ring-1  focus-visible:ring-offset-0 focus-visible:shadow-lg",
+                    selectedPrompt?.id === prompt.id 
+                      ? "ring-0.2 ring-primary/20 shadow-xl border-primary/25 bg-primary/1"
+                      : "border border-transparent hover:border-primary/10 hover:shadow-lg"
+                  )}
                   onClick={() => handleViewPromptDetail(prompt)}
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      handleViewPromptDetail(prompt);
+                    }
+                  }}
                 >
                   <CardHeader className="pb-2">
                     <div className="flex justify-between items-start">
-                      <CardTitle className="text-lg">{prompt.title}</CardTitle>
-                    <div className="flex">
+                      <CardTitle className="text-lg line-clamp-1">{prompt.title}</CardTitle>
+                    <div className="flex flex-shrink-0">
                         <Button
                           variant="ghost"
                           size="icon"
@@ -509,30 +661,35 @@ export const PromptList = memo(function PromptList({
                   </CardHeader>
 
                   <CardContent className="pb-2">
-                    <div className="text-sm text-muted-foreground line-clamp-3">
+                    <div className="text-sm text-muted-foreground line-clamp-3 h-[4.5em]">
                       {prompt.content}
                     </div>
                   </CardContent>
 
                   <CardFooter className="pt-0 flex flex-wrap items-center justify-between gap-2">
-                    <div className="flex flex-wrap gap-2">
-                      {prompt.tags.map((tag) => (
+                    <div className="flex flex-wrap gap-2 max-w-[calc(100%-40px)] overflow-hidden">
+                      {prompt.tags.slice(0, 3).map((tag) => (
                         <Badge 
                           key={tag} 
                           variant="secondary" 
-                          className="cursor-pointer"
+                          className="cursor-pointer text-nowrap"
                           onClick={(e) => handleTagClick(e, tag)}
                         >
                           {tag}
                         </Badge>
                       ))}
+                      {prompt.tags.length > 3 && (
+                        <Badge variant="outline" className="cursor-pointer">
+                          +{prompt.tags.length - 3}
+                        </Badge>
+                      )}
                     </div>
                     
                       {!showRecommended && (
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8"
+                          className="h-8 w-8 flex-shrink-0"
                           onClick={(e) => handleToggleFavorite(e, prompt.id)}
                         title={prompt.isFavorite ? "取消收藏" : "收藏"}
                       >
@@ -553,62 +710,152 @@ export const PromptList = memo(function PromptList({
       
       {/* 创建新提示词对话框 */}
       <Dialog open={showNewPromptDialog} onOpenChange={setShowNewPromptDialog}>
-        <DialogContent className={isMobile ? "w-[90vw] max-w-[90vw]" : ""}>
+        <DialogContent className={cn(
+          "max-h-[90vh] flex flex-col",
+          isMobile ? "w-[90vw] max-w-[90vw]" : ""
+        )}>
           <DialogHeader>
             <DialogTitle>创建新提示词</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="title">标题</Label>
-              <Input
-                id="title"
-                placeholder="输入提示词标题"
-                value={newPromptTitle}
-                onChange={(e) => setNewPromptTitle(e.target.value)}
-              />
+          <ScrollArea className="flex-1 max-h-[calc(90vh-130px)] overflow-auto">
+            <div className="space-y-4 py-4 px-1">
+              <div className="space-y-2">
+                <Label htmlFor="title">标题</Label>
+                <Input
+                  id="title"
+                  placeholder="输入提示词标题"
+                  value={newPromptTitle}
+                  onChange={(e) => setNewPromptTitle(e.target.value)}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="content">内容</Label>
+                <Textarea
+                  id="content"
+                  placeholder="输入提示词内容"
+                  className="min-h-[150px]"
+                  value={newPromptContent}
+                  onChange={(e) => setNewPromptContent(e.target.value)}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="category">分类</Label>
+                <Select
+                  value={newPromptCategory}
+                  onValueChange={setNewPromptCategory}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="选择分类" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map(category => (
+                      <SelectItem key={category.id} value={category.id}>
+                        {category.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="tags">标签（用逗号分隔）</Label>
+                <Input
+                  id="tags"
+                  placeholder="输入标签，用逗号分隔"
+                  value={newPromptTags}
+                  onChange={(e) => setNewPromptTags(e.target.value)}
+                />
+              </div>
+              
+              {/* 图片上传区域 */}
+              <div className="space-y-2 pt-2 border-t">
+                <div className="flex items-center justify-between">
+                  <Label>参考图片</Label>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => newFileInputRef.current?.click()}
+                    type="button"
+                  >
+                    <Icons.image className="h-4 w-4 mr-2" />
+                    添加图片
+                  </Button>
+                  <input
+                    type="file"
+                    ref={newFileInputRef}
+                    className="hidden"
+                    accept="image/*"
+                    onChange={handleNewImageUpload}
+                  />
+                </div>
+                
+                {/* 图片预览区域 */}
+                {newPromptImages.length > 0 && (
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-3 gap-2">
+                      {newPromptImages.map((image, index) => (
+                        <div 
+                          key={image.id} 
+                          className={`relative border rounded-md overflow-hidden cursor-pointer
+                          ${selectedNewImageIndex === index ? 'ring-2 ring-primary' : ''}
+                          group`}
+                          onClick={() => handleSelectNewImage(index)}
+                        >
+                          <img 
+                            src={image.data} 
+                            alt={image.caption || `图片 ${index + 1}`} 
+                            className="w-full h-28 object-cover"
+                          />
+                          <div className="absolute bottom-0 left-0 right-0 p-1 text-xs bg-black/60 text-white truncate">
+                            {image.caption || `图片 ${index + 1}`}
+                          </div>
+                          <button 
+                            className="absolute top-1 right-1 bg-black/60 rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteNewImage(index);
+                            }}
+                            type="button"
+                          >
+                            <X className="h-3 w-3 text-white" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                    
+                    {/* 图片编辑区域 */}
+                    {selectedNewImageIndex !== null && (
+                      <div className="rounded-md p-3 bg-muted/50">
+                        <p className="text-sm font-medium mb-2">图片说明</p>
+                        <div className="flex gap-2">
+                          <Input
+                            value={newImageCaption}
+                            onChange={(e) => setNewImageCaption(e.target.value)}
+                            placeholder="添加图片说明"
+                            className="flex-1"
+                          />
+                          <Button 
+                            size="sm"
+                            onClick={() => {
+                              handleUpdateNewCaption(selectedNewImageIndex, newImageCaption);
+                              setSelectedNewImageIndex(null);
+                              setNewImageCaption("");
+                            }}
+                            type="button"
+                          >
+                            保存
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="content">内容</Label>
-              <Textarea
-                id="content"
-                placeholder="输入提示词内容"
-                className="min-h-[150px]"
-                value={newPromptContent}
-                onChange={(e) => setNewPromptContent(e.target.value)}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="category">分类</Label>
-              <Select
-                value={newPromptCategory}
-                onValueChange={setNewPromptCategory}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="选择分类" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map(category => (
-                    <SelectItem key={category.id} value={category.id}>
-                      {category.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="tags">标签（用逗号分隔）</Label>
-              <Input
-                id="tags"
-                placeholder="输入标签，用逗号分隔"
-                value={newPromptTags}
-                onChange={(e) => setNewPromptTags(e.target.value)}
-              />
-            </div>
-          </div>
-          <DialogFooter>
+          </ScrollArea>
+          <DialogFooter className="mt-4 pt-4 border-t">
             <Button variant="outline" onClick={handleNewDialogClose}>
               取消
             </Button>

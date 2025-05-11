@@ -3,7 +3,7 @@ import { usePrompts } from "@/hooks/usePrompts";
 import { useEffect } from "react";
 
 export function AllPromptsView({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
-  const { setActiveCategory, setShowFavorites, setShowRecommended } = usePrompts();
+  const { setActiveCategory, setShowFavorites, setShowRecommended, selectedPrompt } = usePrompts();
   
   // 确保正确的状态
   useEffect(() => {
@@ -16,6 +16,7 @@ export function AllPromptsView({ onToggleSidebar }: { onToggleSidebar?: () => vo
     <PromptList 
       onToggleSidebar={onToggleSidebar} 
       contentTitle="我的提示词库" 
+      isEditPanelOpen={!!selectedPrompt}
     />
   );
 } 

@@ -3,7 +3,7 @@ import { usePrompts } from "@/hooks/usePrompts";
 import { useEffect } from "react";
 
 export function FavoritesView({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
-  const { setActiveCategory, setShowFavorites, setShowRecommended } = usePrompts();
+  const { setActiveCategory, setShowFavorites, setShowRecommended, selectedPrompt } = usePrompts();
   
   // 确保正确的状态
   useEffect(() => {
@@ -16,6 +16,7 @@ export function FavoritesView({ onToggleSidebar }: { onToggleSidebar?: () => voi
     <PromptList 
       onToggleSidebar={onToggleSidebar} 
       contentTitle="我的收藏" 
+      isEditPanelOpen={!!selectedPrompt}
     />
   );
 } 

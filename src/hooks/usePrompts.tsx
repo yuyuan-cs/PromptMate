@@ -188,13 +188,20 @@ function usePromptsState() {
   };
 
   const updatePrompt = (id: string, promptData: Partial<Prompt>) => {
-    setPrompts(prev => 
-      prev.map(prompt => 
-        prompt.id === id 
-          ? { ...prompt, ...promptData, updatedAt: new Date().toISOString() } 
-          : prompt
-      )
-    );
+    setPrompts(prevPrompts => {
+      const newPrompts = prevPrompts.map(p => {
+        if (p.id === id) {
+          const updatedPrompt = { ...p, ...promptData, updatedAt: new Date().toISOString() };
+          // 如果当前选中的提示词就是正在更新的这个，那么也更新 selectedPrompt 状态
+          if (selectedPrompt && selectedPrompt.id === id) {
+            setSelectedPrompt(updatedPrompt);
+          }
+          return updatedPrompt;
+        }
+        return p;
+      });
+      return newPrompts;
+    });
   };
 
   const deletePrompt = (id: string) => {
@@ -297,6 +304,17 @@ function usePromptsState() {
     });
   };
 
+  // 更新分类顺序
+  const updateCategoriesOrder = (reorderedCategories: Category[]) => {
+    setCategories(reorderedCategories);
+    
+    toast({
+      title: "分类顺序已更新",
+      description: "分类顺序已成功更新",
+      variant: "success",
+    });
+  };
+
   // 获取指定提示词
   const getPrompt = (id: string) => {
     return prompts.find(p => p.id === id) || null;
@@ -375,6 +393,7 @@ function usePromptsState() {
     addCategory,
     updateCategory,
     deleteCategory,
+    updateCategoriesOrder,
     getPrompt,
     copyPromptContent,
     resetAllFilters,
