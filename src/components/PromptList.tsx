@@ -33,6 +33,12 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { 
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger
+} from "@/components/ui/context-menu";
 
 // 提示词详情查看对话框组件 (Memoized)
 const PromptDetailDialog = memo(function PromptDetailDialog({ 
@@ -173,7 +179,9 @@ export const PromptList = memo(function PromptList({
     selectedTag,
     setSelectedTag,
     refreshCounter,
-    addFromRecommended
+    addFromRecommended,
+    copyPromptContent,
+    deleteTag
   } = usePrompts();
   
   const isMobile = useMediaQuery("(max-width: 640px)");
@@ -198,6 +206,56 @@ export const PromptList = memo(function PromptList({
   const [selectedNewImageIndex, setSelectedNewImageIndex] = useState<number | null>(null);
   const [newImageCaption, setNewImageCaption] = useState("");
   const newFileInputRef = useRef<HTMLInputElement>(null);
+  const [editDialogImages, setEditDialogImages] = useState<PromptImage[]>([]);
+  const [selectedEditDialogImageIndex, setSelectedEditDialogImageIndex] = useState<number | null>(null);
+  const [editDialogImageCaption, setEditDialogImageCaption] = useState("");
+  const editDialogFileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleEditDialogImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    const file = files[0];
+    if (!file.type.startsWith('image/')) {
+      toast({ title: "格式错误", description: "请上传图片文件", variant: "destructive" });
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) { // 5MB限制
+      toast({ title: "文件过大", description: "图片大小不能超过5MB", variant: "destructive" });
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const result = event.target?.result as string;
+      const newImage: PromptImage = { id: generateId(), data: result, caption: "" };
+      setEditDialogImages(prev => [...prev, newImage]);
+    };
+    reader.readAsDataURL(file);
+    if (editDialogFileInputRef.current) {
+      editDialogFileInputRef.current.value = "";
+    }
+  };
+
+  const handleDeleteEditDialogImage = (index: number) => {
+    setEditDialogImages(prev => prev.filter((_, i) => i !== index));
+    if (selectedEditDialogImageIndex === index) {
+      setSelectedEditDialogImageIndex(null);
+      setEditDialogImageCaption("");
+    } else if (selectedEditDialogImageIndex !== null && selectedEditDialogImageIndex > index) {
+      setSelectedEditDialogImageIndex(prevIdx => prevIdx !== null ? prevIdx - 1 : null);
+    }
+  };
+
+  const handleUpdateEditDialogCaption = (index: number, caption: string) => {
+    setEditDialogImages(prev =>
+      prev.map((img, i) => (i === index ? { ...img, caption } : img))
+    );
+  };
+
+  const handleSelectEditDialogImage = (index: number) => {
+    setSelectedEditDialogImageIndex(index);
+    setEditDialogImageCaption(editDialogImages[index]?.caption || "");
+  };
+
 
   useEffect(() => {
     setLocalRefreshKey(prev => prev + 1);
@@ -372,6 +430,9 @@ export const PromptList = memo(function PromptList({
       setEditPromptContent(prompt.content);
       setEditPromptCategory(prompt.category);
       setEditPromptTags(prompt.tags.join(", "));
+      setEditDialogImages(prompt.images || []);
+      setSelectedEditDialogImageIndex(null);
+      setEditDialogImageCaption("");
       setShowEditPromptDialog(true);
     }, []);
 
@@ -388,14 +449,17 @@ export const PromptList = memo(function PromptList({
       return;
     }
     
-    const tags = editPromptTags.split(",").map(tag => tag.trim()).filter(Boolean);
+    // 修改标签处理逻辑，支持中英文逗号和分号
+    const tags = editPromptTags.split(/[,，;；]/).map(tag => tag.trim()).filter(Boolean);
     
     updatePrompt(promptToEdit.id, {
       title: editPromptTitle,
       content: editPromptContent,
       category: editPromptCategory,
       tags,
+      images: editDialogImages.length > 0 ? editDialogImages : undefined,
     });
+
     
     toast({
       title: "更新成功",
@@ -405,7 +469,14 @@ export const PromptList = memo(function PromptList({
     
     setShowEditPromptDialog(false);
     setPromptToEdit(null);
-  }, [promptToEdit, editPromptTitle, editPromptContent, editPromptCategory, editPromptTags, updatePrompt, toast]);
+    setEditDialogImages([]);
+    setSelectedEditDialogImageIndex(null);
+    setEditDialogImageCaption("");
+  }, [
+    promptToEdit, editPromptTitle, editPromptContent, editPromptCategory, 
+    editPromptTags, updatePrompt, toast, editDialogImages, 
+    selectedEditDialogImageIndex, editDialogImageCaption
+  ]);
 
   const handleOpenDeleteDialog = useCallback((prompt: Prompt) => {
     setPromptToDelete(prompt);
@@ -458,7 +529,12 @@ export const PromptList = memo(function PromptList({
   }, []);
 
   // 编辑对话框关闭
-  const handleEditDialogClose = useCallback(() => setShowEditPromptDialog(false), []);
+  const handleEditDialogClose = useCallback(() => {
+    setShowEditPromptDialog(false);
+    setEditDialogImages([]);
+    setSelectedEditDialogImageIndex(null);
+    setEditDialogImageCaption("");
+  }, []);
 
   // 编辑对话框保存
   const handleEditDialogSave = useCallback(() => handleEditPrompt(), [handleEditPrompt]);
@@ -466,6 +542,34 @@ export const PromptList = memo(function PromptList({
   const handleDeleteDialogClose = useCallback(() => setShowDeletePromptDialog(false), []);
   const handleDeleteDialogConfirm = useCallback(() => handleDeletePrompt(), [handleDeletePrompt]);
   const handleDetailDialogClose = useCallback(() => setShowDetailDialog(false), []);
+
+  // 添加标签到编辑提示词
+  const handleAddTagToEdit = useCallback((tag: string) => {
+    const currentTags = editPromptTags.split(/[,，;；]/).map(t => t.trim()).filter(Boolean);
+    
+    // 检查标签是否已存在
+    if (!currentTags.includes(tag)) {
+      // 如果当前已有标签，则添加逗号和新标签
+      const newTagsString = currentTags.length > 0 
+        ? `${editPromptTags.trim()}${editPromptTags.trim().endsWith(',') ? ' ' : ', '}${tag}` 
+        : tag;
+      
+      setEditPromptTags(newTagsString);
+    }
+  }, [editPromptTags]);
+
+  // 处理右键菜单删除标签
+  const handleDeleteTag = (tag: string) => {
+    // 显示确认对话框
+    if (window.confirm(`确定要删除标签 "${tag}" 吗？此操作将从所有提示词中移除该标签。`)) {
+      deleteTag(tag);
+      toast({
+        title: "删除成功",
+        description: `标签 "${tag}" 已从所有提示词中删除`,
+        variant: "success",
+      });
+    }
+  };
 
   return (
     <div className="flex flex-col h-full"> 
@@ -495,20 +599,36 @@ export const PromptList = memo(function PromptList({
           <div className="flex flex-wrap gap-2">
             <Badge 
               variant={selectedTag === null ? "default" : "outline"} 
-              className="cursor-pointer px-3 py-1 text-sm"
+              className="cursor-pointer text-xs px-2 py-0.5"
               onClick={(e) => handleTagClick(e, null)}
             >
               全部
             </Badge>
             {allTags.map(tag => (
-              <Badge 
-                key={tag}
-                variant={selectedTag === tag ? "default" : "outline"} 
-                className="cursor-pointer px-3 py-1 text-sm"
-                onClick={(e) => handleTagClick(e, tag)}
-              >
-                {tag}
-              </Badge>
+              <ContextMenu key={tag}>
+                <ContextMenuTrigger>
+                  <Badge 
+                    variant={selectedTag === tag ? "default" : "outline"} 
+                    className="cursor-pointer text-xs px-2 py-0.5"
+                    onClick={(e) => handleTagClick(e, tag)}
+                  >
+                    {tag}
+                  </Badge>
+                </ContextMenuTrigger>
+                <ContextMenuContent>
+                  <ContextMenuItem onClick={() => handleTagClick(null, tag)}>
+                    <Icons.fileText className="mr-2 h-4 w-4" />
+                    按此标签筛选
+                  </ContextMenuItem>
+                  <ContextMenuItem 
+                    onClick={() => handleDeleteTag(tag)}
+                    className="text-destructive focus:text-destructive"
+                  >
+                    <Icons.trash className="mr-2 h-4 w-4" />
+                    删除此标签
+                  </ContextMenuItem>
+                </ContextMenuContent>
+              </ContextMenu>
             ))}
           </div>
         </div>
@@ -667,19 +787,35 @@ export const PromptList = memo(function PromptList({
                   </CardContent>
 
                   <CardFooter className="pt-0 flex flex-wrap items-center justify-between gap-2">
-                    <div className="flex flex-wrap gap-2 max-w-[calc(100%-40px)] overflow-hidden">
+                    <div className="flex flex-wrap gap-2 text-[8px] max-w-[calc(100%-40px)] overflow-hidden">
                       {prompt.tags.slice(0, 3).map((tag) => (
-                        <Badge 
-                          key={tag} 
-                          variant="secondary" 
-                          className="cursor-pointer text-nowrap"
-                          onClick={(e) => handleTagClick(e, tag)}
-                        >
-                          {tag}
-                        </Badge>
+                        <ContextMenu key={tag}>
+                          <ContextMenuTrigger>
+                            <Badge 
+                              variant="secondary" 
+                              className="cursor-pointer text-nowrap text-[8px] py-0 px-1.5 font-normal h-5 bg-secondary/70"
+                              onClick={(e) => handleTagClick(e, tag)}
+                            >
+                              {tag}
+                            </Badge>
+                          </ContextMenuTrigger>
+                          <ContextMenuContent>
+                            <ContextMenuItem onClick={() => handleTagClick(null, tag)}>
+                              <Icons.fileText className="mr-2 h-4 w-4" />
+                              按此标签筛选
+                            </ContextMenuItem>
+                            <ContextMenuItem 
+                              onClick={() => handleDeleteTag(tag)}
+                              className="text-destructive focus:text-destructive"
+                            >
+                              <Icons.trash className="mr-2 h-4 w-4" />
+                              删除此标签
+                            </ContextMenuItem>
+                          </ContextMenuContent>
+                        </ContextMenu>
                       ))}
                       {prompt.tags.length > 3 && (
-                        <Badge variant="outline" className="cursor-pointer">
+                        <Badge variant="outline" className="cursor-pointer text-[10px] py-0 px-1.5 font-normal h-5">
                           +{prompt.tags.length - 3}
                         </Badge>
                       )}
@@ -919,15 +1055,125 @@ export const PromptList = memo(function PromptList({
               </div>
               {/* 标签 */}  
               <div className="space-y-2">
-                <Label htmlFor="edit-tags">标签（用逗号分隔）</Label>
-                <Input
-                  id="edit-tags"
-                  value={editPromptTags}
-                  onChange={(e) => setEditPromptTags(e.target.value)}
-                />
+                <Label htmlFor="edit-tags">标签（用逗号、分号分隔）</Label>
+                <div className="space-y-2">
+                  <Input
+                    id="edit-tags"
+                    value={editPromptTags}
+                    onChange={(e) => setEditPromptTags(e.target.value)}
+                    placeholder="输入标签，用逗号、分号分隔"
+                  />
+                  
+                  {/* 显示现有标签供选择 */}
+                  {allTags && allTags.length > 0 && (
+                    <div className="mt-2">
+                      <Label className="text-xs text-muted-foreground mb-1 block">选择已有标签</Label>
+                      <div className="flex flex-wrap gap-1.5 max-h-[80px] overflow-y-auto p-1">
+                        {allTags.map(tag => (
+                          <Badge 
+                            key={tag}
+                            variant="outline" 
+                            className="cursor-pointer px-2 py-0.5 text-[10px] font-normal hover:bg-primary/10"
+                            onClick={() => handleAddTagToEdit(tag)}
+                          >
+                            {tag}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          </ScrollArea>
+              <div className="space-y-2 pt-4 border-t">
+                 <div className="flex items-center justify-between">
+                   <Label htmlFor="edit-dialog-images">参考图片</Label> {/* Added htmlFor for accessibility */}
+                   <Button
+                     variant="outline"
+                     size="sm"
+                     onClick={() => editDialogFileInputRef.current?.click()}
+                     type="button"
+                   >
+                     <Icons.image className="h-4 w-4 mr-2" />
+                     添加图片
+                   </Button>
+                   <input
+                     type="file"
+                     id="edit-dialog-images" // Added id
+                     ref={editDialogFileInputRef}
+                     className="hidden"
+                     accept="image/*"
+                     multiple={false} // Explicitly single file for simplicity here
+                     onChange={handleEditDialogImageUpload}
+                   />
+                 </div>
+
+                 {editDialogImages.length > 0 && (
+                   <div className="space-y-3">
+                     <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                       {editDialogImages.map((image, index) => (
+                         <div
+                           key={image.id}
+                           className={`relative border rounded-md overflow-hidden cursor-pointer group ${
+                             selectedEditDialogImageIndex === index ? 'ring-2 ring-primary' : ''
+                           }`}
+                           onClick={() => handleSelectEditDialogImage(index)}
+                         >
+                           <img
+                             src={image.data}
+                             alt={image.caption || `图片 ${index + 1}`}
+                             className="w-full h-24 sm:h-28 object-cover"
+                           />
+                           <div className="absolute bottom-0 left-0 right-0 p-1 text-xs bg-black/60 text-white truncate">
+                             {image.caption || `图片 ${index + 1}`}
+                           </div>
+                           <button
+                             className="absolute top-1 right-1 bg-black/60 rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                             onClick={(e) => { e.stopPropagation(); handleDeleteEditDialogImage(index); }}
+                             type="button"
+                             title="删除图片"
+                           >
+                             <X className="h-3 w-3 text-white" />
+                           </button>
+                         </div>
+                       ))}
+                     </div>
+
+                     {selectedEditDialogImageIndex !== null && editDialogImages[selectedEditDialogImageIndex] && (
+                       <div className="rounded-md p-3 bg-muted/50">
+                         <p className="text-sm font-medium mb-2">编辑图片说明 (图片 {selectedEditDialogImageIndex + 1})</p>
+                         <div className="flex gap-2">
+                           <Input
+                             value={editDialogImageCaption}
+                             onChange={(e) => setEditDialogImageCaption(e.target.value)} // Local state update
+                             placeholder="添加图片说明"
+                             className="flex-1"
+                           />
+                           <Button
+                             size="sm"
+                             onClick={() => {
+                               if (selectedEditDialogImageIndex !== null) {
+                                 handleUpdateEditDialogCaption(selectedEditDialogImageIndex, editDialogImageCaption);
+                                 toast({ title: "图片说明已暂存", description: "点击下方「保存更改」以应用到提示词。" });
+                                 // Optional: deselect after updating caption locally
+                                 // setSelectedEditDialogImageIndex(null);
+                                 // setEditDialogImageCaption("");
+                               }
+                             }}
+                             type="button"
+                           >
+                             更新说明
+                           </Button>
+                         </div>
+                       </div>
+                     )}
+                   </div>
+                 )}
+               </div>
+               {/* ---- END: Image Management UI for Edit Dialog ---- */}
+
+               
+            </div> {/* This is the closing div for space-y-4 py-4 px-1 */}
+           </ScrollArea>
           {/* 底部工具栏 */}  
           <DialogFooter className="mt-4 pt-4 border-t">
             <Button variant="outline" onClick={handleEditDialogClose}>

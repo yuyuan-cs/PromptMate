@@ -38,6 +38,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { Badge } from "@/components/ui/badge";
 
 export function PromptEditor() {
   const { toast } = useToast();
@@ -52,7 +53,8 @@ export function PromptEditor() {
     showRecommended,
     addFromRecommended,
     setShowRecommended,
-    copyPromptContent
+    copyPromptContent,
+    allTags
   } = usePrompts();
   
   const [title, setTitle] = useState(selectedPrompt?.title || "");
@@ -79,6 +81,21 @@ export function PromptEditor() {
     // 调用全局状态更新
     toggleFavorite(selectedPrompt.id);
   }, [isFavorite, selectedPrompt, toggleFavorite]);
+
+  // 添加标签
+  const handleAddTag = useCallback((tag: string) => {
+    const currentTags = tags.split(/[,，;；]/).map(t => t.trim()).filter(Boolean);
+    
+    // 检查标签是否已存在
+    if (!currentTags.includes(tag)) {
+      // 如果当前已有标签，则添加逗号和新标签
+      const newTagsString = currentTags.length > 0 
+        ? `${tags.trim()}${tags.trim().endsWith(',') ? ' ' : ', '}${tag}` 
+        : tag;
+      
+      setTags(newTagsString);
+    }
+  }, [tags]);
 
   // 处理复制提示词内容
   const handleCopyPrompt = useCallback((content: string) => {
@@ -189,30 +206,43 @@ export function PromptEditor() {
     }
   };
   
-  // 更新图片说明
-  const handleUpdateCaption = (index: number, caption: string) => {
-    setImages(prev => 
-      prev.map((img, i) => 
-        i === index ? {...img, caption} : img
-      )
-    );
-  };
-  
+    // 更新图片说明 - 直接修改主 images 状态
+    const handleUpdateCaption = useCallback((index: number, newCaption: string) => {
+      setImages(prevImages =>
+        prevImages.map((img, i) =>
+          i === index ? { ...img, caption: newCaption } : img
+        )
+      );
+      // `hasChanges` 将会因为 `images` 状态的改变而由对应的 useEffect 自动更新
+    }, []); // 保持依赖项为空或根据 ESLint 调整，核心是它能正确更新 setImages
+
   // 选择图片进行编辑
   const handleSelectImage = (index: number) => {
     setSelectedImageIndex(index);
-    setImageCaption(images[index].caption || "");
+    setImageCaption(images[index]?.caption || "");
   };
 
   //保存提示词
   const handleSave = () => {
     if (!selectedPrompt) return;
     
+    const payload = {
+      title,
+      content,
+      category,
+      tags: tags.split(/[,，;；]/).map((tag) => tag.trim()).filter(Boolean),
+      images // This is PromptEditor's 'images' state
+    };
+    // ---- DEBUG LOG 1 ----
+    console.log('[PromptEditor] handleSave - payload to updatePrompt:', payload);
+    // 为了更清晰地看到如果直接转JSON会怎样，可以额外加一个（可选）
+    // console.log('[PromptEditor] handleSave - payload (stringified):', JSON.stringify(payload, null, 2));
+
     updatePrompt(selectedPrompt.id, {
       title,
       content,
       category,
-      tags: tags.split(",").map((tag) => tag.trim()).filter(Boolean),
+      tags: tags.split(/[,，;；]/).map((tag) => tag.trim()).filter(Boolean),
       images
     });
     
@@ -281,20 +311,10 @@ export function PromptEditor() {
     // 整个编辑器容器
     <div className="flex flex-col h-[calc(100%-var(--header-height))]">
       {/* 顶部工具栏 */}
-      <div className="flex flex-col h-10 sm:flex-row justify-between items-start sm:items-center p-2 md:p-2 border-b gap-1">
+      <div className="flex flex-col h-10 sm:flex-row justify-between items-start sm:items-center p-2 md:p-2 border-b gap-1 sticky top-0 bg-background z-10">
+        
         {/* 左侧工具栏 */}
         <div className="flex flex-wrap gap-1 items-center w-full sm:w-auto justify-center">
-          
-          {/* 添加收起按钮 */}
-          {/* <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={handleClose}
-            className="ml-0 md:ml-2 h-8 w-8 md:h-9 md:w-9 flex-shrink-0"
-            title="收起编辑面板"
-          >
-            <ChevronRight className="h-4 w-4 md:h-5 md:w-5" />
-          </Button> */}
 
           {/* 分类选择器 */}
           {!showRecommended && (
@@ -356,25 +376,32 @@ export function PromptEditor() {
           )}
           {/* 编辑/完成编辑按钮 (非推荐模式) */}
           {!showRecommended && (
-            isEditing ? (
+            <>
+            {isEditing ? (
+            <>
+              {/* 完成编辑按钮 */}
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => setIsEditing(false)}
+                      onClick={handleSave}
+                      disabled={!hasChanges}
                       className="h-6 w-6 flex items-center justify-center text-green-600 hover:text-green-700"
+                      title="保存更改"
                     >
-                      <Check className="h-4 w-4 md:h-5 md:w-5" />
+                      <Icons.check className="h-4 w-4 md:h-5 md:w-5" />
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>完成编辑</p>
+                    <p>保存更改</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
+            </>
             ) : (
+              // 编辑按钮
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -392,8 +419,9 @@ export function PromptEditor() {
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
-            )
-          )}
+            )}
+          </>
+        )}
 
           
           
@@ -427,7 +455,7 @@ export function PromptEditor() {
             </TooltipProvider>
           )}
           {/* 保存和删除按钮 */}         
-          {!showRecommended && isEditing && (
+          {/* {!showRecommended && isEditing && (
             <TooltipProvider>
                 <Tooltip>
                     <TooltipTrigger asChild>
@@ -436,7 +464,7 @@ export function PromptEditor() {
                         size="icon"
                         onClick={handleSave}
                         disabled={!hasChanges}
-                        className="h-6 w-6"
+                        className="h-6 w-6 text-green-600"
                         >
                         <Save className="h-4 w-4 md:h-5 md:w-5" />
                         </Button>
@@ -446,7 +474,7 @@ export function PromptEditor() {
                     </TooltipContent>
                 </Tooltip>
             </TooltipProvider>
-          )}
+          )} */}
 
           {!showRecommended && (
             <TooltipProvider>
@@ -471,7 +499,12 @@ export function PromptEditor() {
           
         </div>
       </div>
-
+      {/* Global Unsaved Changes Notification Bar - Placed directly after the toolbar */}
+      {isEditing && hasChanges && (
+          <div className="bg-yellow-100 gap-10 border-b border-yellow-300 text-yellow-700 px-3 py-1.5 text-xs text-center">
+             您有未保存的更改。
+          </div>
+      )}
       <ScrollArea className="flex-1 overflow-auto">
         <div className="p-3 md:p-6 space-y-4">
           {/* 只读模式标题 */}
@@ -554,14 +587,35 @@ export function PromptEditor() {
 
               <div className="grid gap-2">
                 <label htmlFor="tags" className="text-sm font-medium">
-                  标签（用逗号分隔）
+                  标签（用逗号、分号分隔）
                 </label>
-                <Input
-                  id="tags"
-                  value={tags}
-                  onChange={(e) => setTags(e.target.value)}
-                  placeholder="标签1, 标签2, 标签3"
-                />
+                <div className="space-y-2">
+                  <Input
+                    id="tags"
+                    value={tags}
+                    onChange={(e) => setTags(e.target.value)}
+                    placeholder="标签1, 标签2, 标签3"
+                  />
+                  
+                  {/* 显示现有标签供选择 */}
+                  {allTags && allTags.length > 0 && (
+                    <div className="mt-2">
+                      <label className="text-xs text-muted-foreground mb-1 block">选择已有标签</label>
+                      <div className="flex flex-wrap gap-1.5 max-h-[80px] overflow-y-auto p-1">
+                        {allTags.map(tag => (
+                          <Badge 
+                            key={tag}
+                            variant="outline" 
+                            className="cursor-pointer px-2 py-0.5 text-[10px] font-normal hover:bg-primary/10"
+                            onClick={() => handleAddTag(tag)}
+                          >
+                            {tag}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* 图片管理区域 */}
@@ -697,7 +751,7 @@ export function PromptEditor() {
                 {selectedPrompt.tags.map((tag) => (
                   <div
                     key={tag}
-                    className="bg-muted/80 text-muted-foreground px-2 py-1 rounded-md text-xs"
+                    className="bg-muted/80 text-muted-foreground px-1.5 py-0.5 rounded-md text-[10px] font-normal"
                   >
                     {tag}
                   </div>

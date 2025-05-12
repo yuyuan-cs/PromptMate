@@ -38,6 +38,10 @@ import { ThemeCustomizer } from "./ThemeCustomizer";
 import { Settings } from "@/types";
 import { About } from './About';
 import { aiIcons, getIconComponent } from "@/lib/icons";
+import { generateId } from "@/lib/data";
+import { PromptImage } from "@/types";
+import { X } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 // 侧边栏显示模式类型
 type SidebarMode = "expanded" | "collapsed";
@@ -61,7 +65,8 @@ export function Sidebar({ className }: { className?: string }) {
     forceRefresh,
     updateCategory,
     deleteCategory,
-    updateCategoriesOrder
+    updateCategoriesOrder,
+    allTags
   } = usePrompts();
   
   const { settings, toggleTheme, updateSettings, availableFonts } = useSettings();
@@ -73,7 +78,7 @@ export function Sidebar({ className }: { className?: string }) {
   const [newPromptContent, setNewPromptContent] = useState("");
   const [newPromptCategory, setNewPromptCategory] = useState("");
   const [newPromptTags, setNewPromptTags] = useState("");
-  const [sidebarWidth, setSidebarWidth] = useState(260);
+  const [sidebarWidth, setSidebarWidth] = useState(180); // 默认180px
   const [isDragging, setIsDragging] = useState(false);
   const [sidebarMode, setSidebarMode] = useState<SidebarMode>("expanded");
   const [settingsPanel, setSettingsPanel] = useState<"appearance" | "data" | "about">("appearance");
@@ -110,6 +115,12 @@ export function Sidebar({ className }: { className?: string }) {
   const startXRef = useRef<number>(0);
   const startWidthRef = useRef<number>(0);
   const [showNewPromptDialog, setShowNewPromptDialog] = useState(false);
+  
+  // 添加图片相关状态
+  const [newPromptImages, setNewPromptImages] = useState<PromptImage[]>([]);
+  const [selectedNewImageIndex, setSelectedNewImageIndex] = useState<number | null>(null);
+  const [newImageCaption, setNewImageCaption] = useState("");
+  const newFileInputRef = useRef<HTMLInputElement>(null);
 
   // 计算每个分类下的提示词数量
   const promptCounts = prompts.reduce((acc, prompt) => {
@@ -296,6 +307,76 @@ export function Sidebar({ className }: { className?: string }) {
 
   const isCollapsed = sidebarMode === "collapsed";
 
+  // 添加图片上传功能
+  const handleNewImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    
+    const file = files[0];
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: "格式错误",
+        description: "请上传图片文件",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (file.size > 5 * 1024 * 1024) { // 5MB限制
+      toast({
+        title: "文件过大",
+        description: "图片大小不能超过5MB",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const result = e.target?.result as string;
+      const newImage: PromptImage = {
+        id: generateId(),
+        data: result,
+        caption: ""
+      };
+      setNewPromptImages(prev => [...prev, newImage]);
+      setSelectedNewImageIndex(newPromptImages.length);
+      setNewImageCaption("");
+    };
+    reader.readAsDataURL(file);
+    
+    // 清空文件输入以允许重复选择相同文件
+    if (newFileInputRef.current) {
+      newFileInputRef.current.value = "";
+    }
+  };
+  
+  // 删除图片
+  const handleDeleteNewImage = (index: number) => {
+    setNewPromptImages(prev => prev.filter((_, i) => i !== index));
+    if (selectedNewImageIndex === index) {
+      setSelectedNewImageIndex(null);
+      setNewImageCaption("");
+    } else if (selectedNewImageIndex !== null && selectedNewImageIndex > index) {
+      setSelectedNewImageIndex(selectedNewImageIndex - 1);
+    }
+  };
+  
+  // 更新图片说明
+  const handleUpdateNewCaption = (index: number, caption: string) => {
+    setNewPromptImages(prev => 
+      prev.map((img, i) => 
+        i === index ? {...img, caption} : img
+      )
+    );
+  };
+  
+  // 选择图片进行编辑
+  const handleSelectNewImage = (index: number) => {
+    setSelectedNewImageIndex(index);
+    setNewImageCaption(newPromptImages[index].caption || "");
+  };
+
   // 处理创建新提示词
   const handleCreatePrompt = () => {
     if (!newPromptTitle.trim() || !newPromptContent.trim()) {
@@ -307,7 +388,8 @@ export function Sidebar({ className }: { className?: string }) {
       return;
     }
     
-    const tags = newPromptTags.split(",").map(tag => tag.trim()).filter(Boolean);
+    // 修改标签处理逻辑，确保正确分割
+    const tags = newPromptTags.split(/[,，;；]/).map(tag => tag.trim()).filter(Boolean);
     
     addPrompt({
       title: newPromptTitle,
@@ -315,6 +397,7 @@ export function Sidebar({ className }: { className?: string }) {
       category: newPromptCategory || activeCategory || categories[0]?.id || "general",
       tags,
       isFavorite: false,
+      images: newPromptImages, // 添加图片数据
     });
     
     toast({
@@ -328,13 +411,34 @@ export function Sidebar({ className }: { className?: string }) {
     setNewPromptContent("");
     setNewPromptCategory("");
     setNewPromptTags("");
+    setNewPromptImages([]);
+    setSelectedNewImageIndex(null);
+    setNewImageCaption("");
     setShowNewPromptDialog(false);
   };
 
   // 打开新建提示词对话框
   const openNewPromptDialog = () => {
     setNewPromptCategory(activeCategory || categories[0]?.id || "general");
+    setNewPromptImages([]);
+    setSelectedNewImageIndex(null);
+    setNewImageCaption("");
     setShowNewPromptDialog(true);
+  };
+
+  // 添加标签选择功能
+  const handleAddTag = (tag: string) => {
+    const currentTags = newPromptTags.split(/[,，;；]/).map(t => t.trim()).filter(Boolean);
+    
+    // 检查标签是否已存在
+    if (!currentTags.includes(tag)) {
+      // 如果当前已有标签，则添加逗号和新标签
+      const newTagsString = currentTags.length > 0 
+        ? `${newPromptTags.trim()}${newPromptTags.trim().endsWith(',') ? ' ' : ', '}${tag}` 
+        : tag;
+      
+      setNewPromptTags(newTagsString);
+    }
   };
 
   // 添加键盘事件处理函数
@@ -496,375 +600,370 @@ export function Sidebar({ className }: { className?: string }) {
     setDragOverCategory(null);
   };
 
-  // 侧边栏组件
+  // 渲染侧边栏
   return (
-    /* 侧边栏 */
-    <div
+    <div 
       ref={sidebarRef}
-      style={{ width: `${sidebarWidth}px` }}
       className={cn(
-        "h-full border-r relative transition-all duration-300 flex flex-col apple-blur shrink-0",
+        "h-full border-r relative transition-all duration-300 flex-shrink-0 bg-background flex flex-col",
         isCollapsed && "w-[60px]",
         className
       )}
+      style={!isCollapsed ? { width: `${sidebarWidth}px` } : undefined}
     >
-      {/* 拖拽手柄 */}
+      {/* 拖拽调整区域 - 整个右边缘 */}
       <div
-        className="absolute -right-3 top-1/2 transform -translate-y-1/2 w-4 h-8 bg-muted/30 border border-border rounded-full flex items-center justify-center cursor-col-resize hover:bg-muted/50 transition-colors z-10 opacity-0 hover:opacity-100"
+        className="absolute top-0 right-0 w-4 h-full cursor-col-resize z-30"
         onMouseDown={handleMouseDown}
-        title="调整侧边栏宽度"
-      >
-        <div className="w-1 h-4 bg-muted-foreground/30 rounded-full" />
+        style={{transform: 'translateX(2px)'}}
+      />
+
+      {/* 顶部标题和按钮 */}
+      <div className={cn(
+        "flex items-center justify-between py-3 flex-shrink-0",
+        isCollapsed ? "px-2" : "px-4"
+      )}>
+        {!isCollapsed && (
+          <h2 className="text-lg font-medium">
+            PromptMate
+          </h2>
+        )}
+        <TooltipProvider delayDuration={100}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={toggleSidebarMode}
+                className={cn(
+                  "rounded-full",
+                  isCollapsed ? "mx-auto" : "ml-auto"
+                )}
+              >
+                <Icons.chevronLeft
+                  className={`h-4 w-4 transition-transform duration-200 ${
+                    isCollapsed ? "rotate-180" : ""
+                  }`}
+                />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="right">
+              {isCollapsed ? "展开侧边栏" : "收起侧边栏"}
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
 
-      <div className="h-full overflow-hidden flex-1">
-        <ScrollArea className="h-full">
-          <div className={cn(
-            "h-full",
-            isCollapsed ? "px-1" : "px-4"
-          )}>
-            {/* 顶部按钮 */}
-            <div className="flex items-center justify-between py-3">
+      {/* 中间内容区域 */}
+      <ScrollArea className="flex-1">
+        <div className={cn(
+          "h-full pb-4", 
+          isCollapsed ? "px-2" : "px-4"
+        )}>
+          {/* 按钮组 */}
+          <div className="py-3">
+            <div className="space-y-1">
+              <TooltipProvider delayDuration={100}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      className={cn(
+                        "rounded-xl group hover:scale-105 transition-transform",
+                        isCollapsed
+                          ? "h-9 w-9 p-0 mx-auto flex items-center justify-center"
+                          : "w-full justify-start py-1 px-3"
+                      )}
+                      onClick={handleAllPromptsClick}
+                    >
+                      <Icons.layout className="h-4 w-4" />
+                      {!isCollapsed && "全部提示词"}
+                    </Button>
+                  </TooltipTrigger>
+                  {isCollapsed && (
+                    <TooltipContent side="right">
+                      全部提示词
+                    </TooltipContent>
+                  )}
+                </Tooltip>
+              </TooltipProvider>
+
+              <TooltipProvider delayDuration={100}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant={showFavorites ? "default" : "ghost"}
+                      className={cn(
+                        "rounded-xl group hover:scale-105 transition-transform",
+                        showFavorites ? "" : (activeCategory === null && !showRecommended ? "" : "hover:bg-accent hover:text-accent-foreground"),
+                        isCollapsed
+                          ? "h-9 w-9 p-0 mx-auto flex items-center justify-center"
+                          : "w-full justify-start py-1 px-3"
+                      )}
+                      size="sm"
+                      onClick={handleFavoritesClick}
+                      >
+                      <Icons.starFilled className="h-4 w-4" />
+                      {!isCollapsed && "收藏提示词"}
+                    </Button>
+                  </TooltipTrigger>
+                  {isCollapsed && (
+                    <TooltipContent side="right">
+                      收藏提示词
+                    </TooltipContent>
+                  )}
+                </Tooltip>
+              </TooltipProvider>
+
+              <TooltipProvider delayDuration={100}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant={showRecommended ? "default" : "ghost"}
+                      className={cn(
+                        "rounded-xl group hover:scale-105 transition-transform",
+                        showRecommended ? "" : (activeCategory === null && !showFavorites ? "" : "hover:bg-accent hover:text-accent-foreground"),
+                        isCollapsed
+                          ? "h-9 w-9 p-0 mx-auto flex items-center justify-center"
+                          : "w-full justify-start py-1 px-3"
+                      )}
+                      onClick={handleRecommendedClick}
+                    >
+                      <Icons.gift className="h-4 w-4" />
+                      {!isCollapsed && "推荐模板"}
+                    </Button>
+                  </TooltipTrigger>
+                  {isCollapsed && (
+                    <TooltipContent side="right">
+                      推荐模板
+                    </TooltipContent>
+                  )}
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+          </div>
+          
+          {/* 分类列表 */}
+          <div className="mt-6">
+            {/* 分类列表标题 */}
+            <div className={cn(
+              "flex items-center justify-between mb-2 px-2 w-full",
+              isCollapsed ? "justify-center" : ""
+            )}>
+
               {!isCollapsed && (
-                <h2 className="text-lg font-medium">
-                  PromptMate
+                <h2 className="text-sm font-medium text-muted-foreground">
+                  分类
                 </h2>
               )}
+              {/* 管理分类 */}
               <TooltipProvider delayDuration={100}>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={toggleSidebarMode}
+                      onClick={() => setShowCategoryManager(true)}
                       className={cn(
-                        "rounded-full",
+                        "rounded-full h-7 w-7 hover:scale-105 color transition-transform",
                         isCollapsed ? "mx-auto" : "ml-auto"
                       )}
                     >
-                      <Icons.chevronLeft
-                        className={`h-4 w-4 transition-transform duration-200 ${
-                          isCollapsed ? "rotate-180" : ""
-                        }`}
-                      />
+                      <Icons.folderPlus className="h-4 w-4" />
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent side="right">
-                    {isCollapsed ? "展开侧边栏" : "收起侧边栏"}
+                    管理分类
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
             </div>
-
-            {/* 按钮组 */}
-            <div className="py-3">
-              <div className="space-y-1">
-                <TooltipProvider delayDuration={100}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        className={cn(
-                          "rounded-xl group hover:scale-105 transition-transform",
-                          isCollapsed
-                            ? "h-9 w-9 p-0 mx-auto flex items-center justify-center"
-                            : "w-full justify-start py-1 px-3"
-                        )}
-                        onClick={handleAllPromptsClick}
-                      >
-                        <Icons.layout className="h-4 w-4" />
-                        {!isCollapsed && "全部提示词"}
-                      </Button>
-                    </TooltipTrigger>
-                    {isCollapsed && (
-                      <TooltipContent side="right">
-                        全部提示词
-                      </TooltipContent>
-                    )}
-                  </Tooltip>
-                </TooltipProvider>
-
-                <TooltipProvider delayDuration={100}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant={showFavorites ? "default" : "ghost"}
-                        className={cn(
-                          "rounded-xl group hover:scale-105 transition-transform",
-                          showFavorites ? "" : (activeCategory === null && !showRecommended ? "" : "hover:bg-accent hover:text-accent-foreground"),
-                          isCollapsed
-                            ? "h-9 w-9 p-0 mx-auto flex items-center justify-center"
-                            : "w-full justify-start py-1 px-3"
-                        )}
-                        size="sm"
-                        onClick={handleFavoritesClick}
-                        >
-                        <Icons.starFilled className="h-4 w-4" />
-                        {!isCollapsed && "收藏提示词"}
-                      </Button>
-                    </TooltipTrigger>
-                    {isCollapsed && (
-                      <TooltipContent side="right">
-                        收藏提示词
-                      </TooltipContent>
-                    )}
-                  </Tooltip>
-                </TooltipProvider>
-
-                <TooltipProvider delayDuration={100}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant={showRecommended ? "default" : "ghost"}
-                        className={cn(
-                          "rounded-xl group hover:scale-105 transition-transform",
-                          showRecommended ? "" : (activeCategory === null && !showFavorites ? "" : "hover:bg-accent hover:text-accent-foreground"),
-                          isCollapsed
-                            ? "h-9 w-9 p-0 mx-auto flex items-center justify-center"
-                            : "w-full justify-start py-1 px-3"
-                        )}
-                        onClick={handleRecommendedClick}
-                      >
-                        <Icons.gift className="h-4 w-4" />
-                        {!isCollapsed && "推荐模板"}
-                      </Button>
-                    </TooltipTrigger>
-                    {isCollapsed && (
-                      <TooltipContent side="right">
-                        推荐模板
-                      </TooltipContent>
-                    )}
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
-            </div>
             
-            {/* 分类列表 */}
-            <div className="mt-6 ">
-              {/* 分类列表标题 */}
-              <div className={cn(
-                "flex items-center justify-between mb-2 px-2 w-full",
-                isCollapsed ? "justify-center" : ""
-              )}>
-
-                {!isCollapsed && (
-                  <h2 className="text-sm font-medium text-muted-foreground">
-                    分类
-                  </h2>
-                )}
-                {/* 管理分类 */}
-                <TooltipProvider delayDuration={100}>
+            {/* 分类列表内容 */}
+            <div className="space-y-1">
+              {categories.map((category) => (
+                <TooltipProvider key={category.id} delayDuration={100}>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setShowCategoryManager(true)}
-                        className={cn(
-                          "rounded-full h-7 w-7 hover:scale-105 color transition-transform",
-                          isCollapsed ? "mx-auto" : "ml-auto"
-                        )}
-                      >
-                        <Icons.folderPlus className="h-4 w-4" />
-                      </Button>
+                      <ContextMenu>
+                        <ContextMenuTrigger asChild>
+                          <div
+                            className={cn(
+                              "w-full",
+                              draggedCategory === category.id && "opacity-50",
+                              dragOverCategory === category.id && "border-t-2 border-primary"
+                            )}
+                            onKeyDown={(e) => handleKeyDown(e, category)}
+                            tabIndex={0}
+                            draggable={editingCategory !== category.id}
+                            onDragStart={(e) => handleDragStart(e, category.id)}
+                            onDragEnd={handleDragEnd}
+                            onDragOver={(e) => handleDragOver(e, category.id)}
+                            onDragLeave={handleDragLeave}
+                            onDrop={(e) => handleDrop(e, category.id)}
+                          >
+                            {editingCategory === category.id ? (
+                              <div className="flex flex-col p-1 space-y-2">
+                                {/* 第一行：图标选择和文字输入 */}
+                                <div className="flex items-center gap-2 w-full">
+                                  <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-8 w-8 shrink-0 hover:scale-105 transition-transform"
+                                      >
+                                        <CategoryIcon iconName={editingIcon || category.icon} />
+                                      </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent className="w-[300px] p-2" align="start" side="right" sideOffset={5}>
+                                      <div className="w-full p-2">
+                                        <Input
+                                          placeholder="搜索图标..."
+                                          value={iconSearch}
+                                          onChange={(e) => setIconSearch(e.target.value)}
+                                          className="mb-1 h-6"
+                                        />
+                                        <div className="grid grid-cols-6 gap-2 max-h-[300px] overflow-y-auto">
+                                          {filteredIcons.map(name => (
+                                            <Button
+                                              key={name}
+                                              variant="ghost"
+                                              size="icon"
+                                              className="h-8 w-8 hover:bg-muted/50"
+                                              onClick={() => {
+                                                setEditingIcon(name);
+                                                setShowIconPicker(false);
+                                              }}
+                                            >
+                                              {React.createElement(getIconComponent(name), { className: "h-4 w-4" })}
+                                            </Button>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    </DropdownMenuContent>
+                                  </DropdownMenu>
+                                  {/* 编辑分类名称 */}
+                                  <Input
+                                    value={editingName}
+                                    onChange={(e) => setEditingName(e.target.value)}
+                                    onKeyDown={(e) => {
+                                      if (e.key === "Enter") {
+                                        handleRename(category.id);
+                                      } else if (e.key === "Escape") {
+                                        setEditingCategory(null);
+                                      }
+                                    }}
+                                    onBlur={() => handleRename(category.id)}
+                                    autoFocus
+                                    className="h-8 w-full min-w-0"
+                                  />
+                                </div>
+                                
+                                {/* 第二行：操作按钮 */}
+                                <div className="flex justify-center gap-0.5 w-auto px-6">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => setEditingCategory(null)}
+                                    className="h-6 hover:scale-105 transition-transform"
+                                  >
+                                    <Icons.x className="h-4 w-4" />
+                                    取消
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleRename(category.id)}
+                                    className="h-6 hover:scale-105 transition-transform"
+                                  >
+                                    <Icons.check className="h-4 w-4" />
+                                    确定
+                                  </Button>
+                                </div>
+                              </div>
+                            ) : (
+                              <TooltipProvider delayDuration={100}>
+                                {/* 分类名称 */}
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant={activeCategory === category.id ? "default" : "ghost"}
+                                      className={cn(
+                                        "rounded-xl group hover:scale-105 transition-transform",
+                                        activeCategory === category.id ? "bg-primary/10 text-primary hover:bg-primary/15" : "hover:bg-muted/50",
+                                        isCollapsed
+                                          ? "h-9 w-9 p-0 mx-auto flex items-center justify-center"
+                                          : "w-full justify-start py-1 px-3"
+                                      )}
+                                      onClick={() => handleCategoryClick(category.id)}
+                                    >
+                                      {/* 分类图标 */}
+                                      <CategoryIcon iconName={category.icon} />
+                                      {/* 分类名称 */}
+                                      {!isCollapsed && category.name}
+                                      {/* 拖拽提示图标 */}
+                                      {!isCollapsed && (
+                                        <Icons.moveVertical className="ml-auto h-3 w-3 opacity-0 group-hover:opacity-50" />
+                                      )}
+                                    </Button>
+                                  </TooltipTrigger>
+                                  {isCollapsed && (
+                                    <TooltipContent side="right">
+                                      {category.name}
+                                    </TooltipContent>
+                                  )}
+                                </Tooltip>
+                              </TooltipProvider>
+                            )}
+                          </div>
+                        </ContextMenuTrigger>
+                        <ContextMenuContent>
+                          <ContextMenuItem onClick={() => handleEditCategory(category)}>
+                            编辑
+                          </ContextMenuItem>
+                          <ContextMenuItem 
+                            className="text-destructive"
+                            onClick={() => handleDelete(category.id)}
+                          >
+                            删除
+                          </ContextMenuItem>
+                        </ContextMenuContent>
+                      </ContextMenu>
                     </TooltipTrigger>
-                    <TooltipContent side="right">
-                      管理分类
-                    </TooltipContent>
+                    {isCollapsed && (
+                      <TooltipContent side="right">
+                        {category.name}
+                      </TooltipContent>
+                    )}
                   </Tooltip>
                 </TooltipProvider>
-              </div>
-              {/* 分类列表 */}
-              <ScrollArea className={cn(
-                "h-[calc(100vh-200px)]"
-              )}>
-                {/* 分类列表 */}
-                <div className="space-y-1">
-                  {categories.map((category) => (
-                    <TooltipProvider key={category.id} delayDuration={100}>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <ContextMenu>
-                            <ContextMenuTrigger asChild>
-                              <div
-                                className={cn(
-                                  "w-full",
-                                  draggedCategory === category.id && "opacity-50",
-                                  dragOverCategory === category.id && "border-t-2 border-primary"
-                                )}
-                                onKeyDown={(e) => handleKeyDown(e, category)}
-                                tabIndex={0}
-                                draggable={editingCategory !== category.id}
-                                onDragStart={(e) => handleDragStart(e, category.id)}
-                                onDragEnd={handleDragEnd}
-                                onDragOver={(e) => handleDragOver(e, category.id)}
-                                onDragLeave={handleDragLeave}
-                                onDrop={(e) => handleDrop(e, category.id)}
-                              >
-                                {editingCategory === category.id ? (
-                                  <div className="flex flex-col p-1 space-y-2">
-                                    {/* 第一行：图标选择和文字输入 */}
-                                    <div className="flex items-center gap-2 w-full">
-                                      <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                          <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="h-8 w-8 shrink-0 hover:scale-105 transition-transform"
-                                          >
-                                            <CategoryIcon iconName={editingIcon || category.icon} />
-                                          </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent className="w-[300px] p-2" align="start" side="right" sideOffset={5}>
-                                          <div className="w-full p-2">
-                                            <Input
-                                              placeholder="搜索图标..."
-                                              value={iconSearch}
-                                              onChange={(e) => setIconSearch(e.target.value)}
-                                              className="mb-1 h-6"
-                                            />
-                                            <div className="grid grid-cols-6 gap-2 max-h-[300px] overflow-y-auto">
-                                              {filteredIcons.map(name => (
-                                                <Button
-                                                  key={name}
-                                                  variant="ghost"
-                                                  size="icon"
-                                                  className="h-8 w-8 hover:bg-muted/50"
-                                                  onClick={() => {
-                                                    setEditingIcon(name);
-                                                    setShowIconPicker(false);
-                                                  }}
-                                                >
-                                                  {React.createElement(getIconComponent(name), { className: "h-4 w-4" })}
-                                                </Button>
-                                              ))}
-                                            </div>
-                                          </div>
-                                        </DropdownMenuContent>
-                                      </DropdownMenu>
-                                      {/* 编辑分类名称 */}
-                                      <Input
-                                        value={editingName}
-                                        onChange={(e) => setEditingName(e.target.value)}
-                                        onKeyDown={(e) => {
-                                          if (e.key === "Enter") {
-                                            handleRename(category.id);
-                                          } else if (e.key === "Escape") {
-                                            setEditingCategory(null);
-                                          }
-                                        }}
-                                        onBlur={() => handleRename(category.id)}
-                                        autoFocus
-                                        className="h-8 w-full min-w-0"
-                                      />
-                                    </div>
-                                    
-                                    {/* 第二行：操作按钮 */}
-                                    <div className="flex justify-center gap-0.5 w-auto px-6">
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => setEditingCategory(null)}
-                                        className="h-6 hover:scale-105 transition-transform"
-                                      >
-                                        <Icons.x className="h-4 w-4" />
-                                        取消
-                                      </Button>
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => handleRename(category.id)}
-                                        className="h-6 hover:scale-105 transition-transform"
-                                      >
-                                        <Icons.check className="h-4 w-4" />
-                                        确定
-                                      </Button>
-                                    </div>
-                                  </div>
-                                ) : (
-                                  <TooltipProvider delayDuration={100}>
-                                    {/* 分类名称 */}
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        <Button
-                                          variant={activeCategory === category.id ? "default" : "ghost"}
-                                          className={cn(
-                                            "rounded-xl group hover:scale-105 transition-transform",
-                                            activeCategory === category.id ? "bg-primary/10 text-primary hover:bg-primary/15" : "hover:bg-muted/50",
-                                            isCollapsed
-                                              ? "h-9 w-9 p-0 mx-auto flex items-center justify-center"
-                                              : "w-full justify-start py-1 px-3"
-                                          )}
-                                          onClick={() => handleCategoryClick(category.id)}
-                                        >
-                                          {/* 分类图标 */}
-                                          <CategoryIcon iconName={category.icon} />
-                                          {/* 分类名称 */}
-                                          {!isCollapsed && category.name}
-                                          {/* 拖拽提示图标 */}
-                                          {!isCollapsed && (
-                                            <Icons.moveVertical className="ml-auto h-3 w-3 opacity-0 group-hover:opacity-50" />
-                                          )}
-                                        </Button>
-                                      </TooltipTrigger>
-                                      {isCollapsed && (
-                                        <TooltipContent side="right">
-                                          {category.name}
-                                        </TooltipContent>
-                                      )}
-                                    </Tooltip>
-                                  </TooltipProvider>
-                                )}
-                              </div>
-                            </ContextMenuTrigger>
-                            <ContextMenuContent>
-                              <ContextMenuItem onClick={() => handleEditCategory(category)}>
-                                编辑
-                              </ContextMenuItem>
-                              <ContextMenuItem 
-                                className="text-destructive"
-                                onClick={() => handleDelete(category.id)}
-                              >
-                                删除
-                              </ContextMenuItem>
-                            </ContextMenuContent>
-                          </ContextMenu>
-                        </TooltipTrigger>
-                        {isCollapsed && (
-                          <TooltipContent side="right">
-                            {category.name}
-                          </TooltipContent>
-                        )}
-                      </Tooltip>
-                    </TooltipProvider>
-                  ))}
-                  
-                  {/* 列表末尾的拖拽区域 */}
-                  {draggedCategory && (
-                    <div 
-                      className={cn(
-                        "h-8 w-full rounded-md border-0 border-dashed border-primary/20",
-                        dragOverCategory === "end" && "border-primary bg-primary/5"
-                      )}
-                      onDragOver={(e) => {
-                        e.preventDefault();
-                        setDragOverCategory("end");
-                      }}
-                      onDragLeave={() => setDragOverCategory(null)}
-                      onDrop={handleDropToEnd}
-                    />
+              ))}
+              
+              {/* 列表末尾的拖拽区域 */}
+              {draggedCategory && (
+                <div 
+                  className={cn(
+                    "h-8 w-full rounded-md border-0 border-dashed border-primary/20",
+                    dragOverCategory === "end" && "border-primary bg-primary/5"
                   )}
-                </div>
-              </ScrollArea>
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      setDragOverCategory("end");
+                    }}
+                    onDragLeave={() => setDragOverCategory(null)}
+                    onDrop={handleDropToEnd}
+                />
+              )}
             </div>
           </div>
-        </ScrollArea>
-      </div>
+        </div>
+      </ScrollArea>
 
       {/* 底部按钮 */}
       <div className={cn(
-        "border-t p-3 shrink-0",
-        isCollapsed ? "space-y-2 h-auto" : "flex items-center h-10 justify-between"
+        "border-t p-3 flex-shrink-0 mt-auto bg-background",
+        isCollapsed ? "space-y-2 h-auto flex flex-col items-center" : "flex items-center h-12 justify-between"
       )}>
         <TooltipProvider delayDuration={100}>
           <Tooltip>
@@ -913,7 +1012,8 @@ export function Sidebar({ className }: { className?: string }) {
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
-
+        
+        {/* 设置 */}
         <TooltipProvider delayDuration={100}>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -940,60 +1040,182 @@ export function Sidebar({ className }: { className?: string }) {
       </div>
 
       {/* 对话框组件 */}
-      <Dialog open={showNewPromptDialog} onOpenChange={setShowNewPromptDialog}>
-        <DialogContent>
+      <Dialog open={showNewPromptDialog} onOpenChange={(open) => {
+        if (!open) {
+          // 关闭对话框时重置所有状态
+          setNewPromptTitle("");
+          setNewPromptContent("");
+          setNewPromptCategory("");
+          setNewPromptTags("");
+          setNewPromptImages([]);
+          setSelectedNewImageIndex(null);
+          setNewImageCaption("");
+        }
+        setShowNewPromptDialog(open);
+      }}>
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] flex flex-col">
           <DialogHeader>
             <DialogTitle>新建提示词</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="title">标题</Label>
-              <Input 
-                id="title" 
-                placeholder="请输入提示词标题" 
-                value={newPromptTitle}
-                onChange={(e) => setNewPromptTitle(e.target.value)}
-              />
+          <ScrollArea className="flex-1 max-h-[calc(90vh-130px)] overflow-auto">
+            <div className="space-y-4 py-4 px-1">
+              <div className="space-y-2">
+                <Label htmlFor="title">标题</Label>
+                <Input 
+                  id="title" 
+                  placeholder="请输入提示词标题" 
+                  value={newPromptTitle}
+                  onChange={(e) => setNewPromptTitle(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="content">内容</Label>
+                <Textarea 
+                  id="content" 
+                  placeholder="请输入提示词内容" 
+                  className="h-[200px]"
+                  value={newPromptContent}
+                  onChange={(e) => setNewPromptContent(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="category">分类</Label>
+                <Select 
+                  value={newPromptCategory || activeCategory || categories[0]?.id || "general"}
+                  onValueChange={setNewPromptCategory}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="选择分类" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map(category => (
+                      <SelectItem key={category.id} value={category.id}>
+                        {category.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="tags">标签</Label>
+                <div className="space-y-2">
+                  <Input
+                    id="tags" 
+                    placeholder="输入标签，用逗号、分号分隔"
+                    value={newPromptTags}
+                    onChange={(e) => setNewPromptTags(e.target.value)}
+                  />
+                  
+                  {/* 显示现有标签供选择 */}
+                  {allTags && allTags.length > 0 && (
+                    <div className="mt-2">
+                      <Label className="text-xs text-muted-foreground mb-1 block">选择已有标签</Label>
+                      <div className="flex flex-wrap gap-1.5 max-h-[80px] overflow-y-auto p-1">
+                        {allTags.map(tag => (
+                          <Badge 
+                            key={tag}
+                            variant="outline" 
+                            className="cursor-pointer px-2 py-0.5 text-[8px] font-normal hover:bg-primary/10"
+                            onClick={() => handleAddTag(tag)}
+                          >
+                            {tag}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              {/* 图片上传区域 */}
+              <div className="space-y-2 pt-2 border-t">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="newPromptImages">参考图片</Label>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => newFileInputRef.current?.click()}
+                    type="button"
+                  >
+                    <Icons.image className="h-4 w-4 mr-2" />
+                    添加图片
+                  </Button>
+                  <input
+                    type="file"
+                    id="newPromptImages"
+                    ref={newFileInputRef}
+                    className="hidden"
+                    accept="image/*"
+                    onChange={handleNewImageUpload}
+                  />
+                </div>
+                
+                {/* 图片预览区域 */}
+                {newPromptImages.length > 0 && (
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-3 gap-2">
+                      {newPromptImages.map((image, index) => (
+                        <div 
+                          key={image.id} 
+                          className={`relative border rounded-md overflow-hidden cursor-pointer
+                          ${selectedNewImageIndex === index ? 'ring-2 ring-primary' : ''}
+                          group`}
+                          onClick={() => handleSelectNewImage(index)}
+                        >
+                          <img 
+                            src={image.data} 
+                            alt={image.caption || `图片 ${index + 1}`} 
+                            className="w-full h-28 object-cover"
+                          />
+                          <div className="absolute bottom-0 left-0 right-0 p-1 text-xs bg-black/60 text-white truncate">
+                            {image.caption || `图片 ${index + 1}`}
+                          </div>
+                          <button 
+                            className="absolute top-1 right-1 bg-black/60 rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteNewImage(index);
+                            }}
+                            type="button"
+                          >
+                            <X className="h-3 w-3 text-white" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                    
+                    {/* 图片编辑区域 */}
+                    {selectedNewImageIndex !== null && (
+                      <div className="rounded-md p-3 bg-muted/50">
+                        <p className="text-sm font-medium mb-2">图片说明</p>
+                        <div className="flex gap-2">
+                          <Input
+                            value={newImageCaption}
+                            onChange={(e) => setNewImageCaption(e.target.value)}
+                            placeholder="添加图片说明"
+                            className="flex-1"
+                          />
+                          <Button 
+                            size="sm"
+                            onClick={() => {
+                              handleUpdateNewCaption(selectedNewImageIndex, newImageCaption);
+                              setSelectedNewImageIndex(null);
+                              setNewImageCaption("");
+                            }}
+                            type="button"
+                          >
+                            保存
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="content">内容</Label>
-              <Textarea 
-                id="content" 
-                placeholder="请输入提示词内容" 
-                className="h-[200px]"
-                value={newPromptContent}
-                onChange={(e) => setNewPromptContent(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="category">分类</Label>
-              <Select 
-                value={newPromptCategory || activeCategory || categories[0]?.id || "general"}
-                onValueChange={setNewPromptCategory}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="选择分类" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map(category => (
-                    <SelectItem key={category.id} value={category.id}>
-                      {category.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="tags">标签</Label>
-              <Input
-                id="tags" 
-                placeholder="输入标签，用逗号分隔"
-                value={newPromptTags}
-                onChange={(e) => setNewPromptTags(e.target.value)}
-              />
-            </div>
-          </div>
-          <DialogFooter>
+          </ScrollArea>
+          
+          <DialogFooter className="mt-4 pt-4 border-t">
             <Button variant="outline" onClick={() => setShowNewPromptDialog(false)}>取消</Button>
             <Button onClick={handleCreatePrompt}>创建</Button>
           </DialogFooter>

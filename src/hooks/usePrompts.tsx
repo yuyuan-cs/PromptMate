@@ -53,6 +53,12 @@ function usePromptsState() {
 
   // 保存提示词当它们变化时
   useEffect(() => {
+    // 确保这里是您实际的保存逻辑，之前的代码是 if (prompts.length > 0)
+     // 如果您的逻辑不同，请将日志放在调用 savePrompts 之前即可
+     // ---- DEBUG LOG 4 ----
+     console.log('[usePrompts] useEffect[prompts] - prompts array just before savePrompts:', prompts);
+     // console.log('[usePrompts] useEffect[prompts] - prompts array (stringified):', JSON.stringify(prompts, null, 2));
+
     if (prompts.length > 0) {
       savePrompts(prompts);
     }
@@ -188,6 +194,10 @@ function usePromptsState() {
   };
 
   const updatePrompt = (id: string, promptData: Partial<Prompt>) => {
+     // ---- DEBUG LOG 2 ----
+     console.log('[usePrompts] updatePrompt - received promptData:', promptData);
+     // console.log('[usePrompts] updatePrompt - received promptData (stringified):', JSON.stringify(promptData, null, 2));
+
     setPrompts(prevPrompts => {
       const newPrompts = prevPrompts.map(p => {
         if (p.id === id) {
@@ -367,6 +377,45 @@ function usePromptsState() {
     });
   };
 
+  // 添加删除标签功能
+  const deleteTag = (tagToDelete: string) => {
+    // 1. 从所有提示词中删除该标签
+    setPrompts(prevPrompts => {
+      const updatedPrompts = prevPrompts.map(prompt => {
+        if (prompt.tags.includes(tagToDelete)) {
+          // 创建一个不包含要删除标签的新标签数组
+          const updatedTags = prompt.tags.filter(tag => tag !== tagToDelete);
+          
+          // 如果当前选中的提示词包含该标签，同步更新selectedPrompt
+          if (selectedPrompt && selectedPrompt.id === prompt.id) {
+            setSelectedPrompt({
+              ...selectedPrompt,
+              tags: updatedTags,
+              updatedAt: new Date().toISOString()
+            });
+          }
+          
+          return {
+            ...prompt,
+            tags: updatedTags,
+            updatedAt: new Date().toISOString()
+          };
+        }
+        return prompt;
+      });
+      
+      return updatedPrompts;
+    });
+    
+    // 2. 如果当前选中的标签就是被删除的标签，重置标签筛选
+    if (selectedTag === tagToDelete) {
+      setSelectedTag(null);
+    }
+    
+    // 3. 强制刷新以更新UI
+    forceRefresh();
+  };
+
   return {
     prompts,
     selectedPrompt,
@@ -398,7 +447,8 @@ function usePromptsState() {
     copyPromptContent,
     resetAllFilters,
     forceRefresh,
-    refreshCounter
+    refreshCounter,
+    deleteTag
   };
 }
 

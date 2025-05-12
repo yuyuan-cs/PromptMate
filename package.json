@@ -15,9 +15,14 @@
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",
-    "package": "electron-packager . PromptMate --platform=win32 --arch=x64 --icon=./public/favicon256.ico",
+    "package": "electron-packager . PromptMate --platform=win32 --arch=x64 --icon=./public/fav_512x512.ico",
     "pack": "electron-builder --dir",
     "dist": "electron-builder",
+    "dist:win": "electron-builder --win --x64 --config.electronDownload.mirror=https://npmmirror.com/mirrors/electron/",
+    "dist:mac-intel": "electron-builder --mac --x64 --config.electronDownload.mirror=https://npmmirror.com/mirrors/electron/",
+    "dist:mac-arm": "electron-builder --mac --arm64 --config.electronDownload.mirror=https://npmmirror.com/mirrors/electron/",
+    "dist:mac": "electron-builder --mac --universal --config.electronDownload.mirror=https://npmmirror.com/mirrors/electron/",
+    "dist:all": "electron-builder -mw --x64 --arm64 --universal --config.electronDownload.mirror=https://npmmirror.com/mirrors/electron/",
     "electron:dev": "concurrently \"vite\" \"wait-on http://localhost:5173 && electron .\"",
     "electron:build": "vite build && electron-builder",
     "electron:preview": "vite build && electron ."
@@ -101,8 +106,11 @@
     "asarUnpack": "**/*.{node,dll}",
     "npmRebuild": false,
     "appId": "com.promptmate.app",
-    "icon": "./public/favicon.ico",
+    "icon": "./public/fav_512x512.ico",
     "productName": "PromptMate",
+    "electronDownload": {
+      "mirror": "https://npmmirror.com/mirrors/electron/"
+    },
     "directories": {
       "output": "release"
     },
@@ -118,15 +126,29 @@
     "mac": {
       "category": "public.app-category.productivity",
       "target": [
-        "dmg",
-        "zip"
-      ]
+        {
+          "target": "dmg",
+          "arch": ["x64", "arm64", "universal"]
+        },
+        {
+          "target": "zip",
+          "arch": ["x64", "arm64", "universal"]
+        }
+      ],
+      "artifactName": "${productName}-${version}-${arch}.${ext}"
     },
     "win": {
       "target": [
-        "nsis",
-        "portable"
-      ]
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        },
+        {
+          "target": "portable",
+          "arch": ["x64"]
+        }
+      ],
+      "artifactName": "${productName}-${version}-${arch}.${ext}"
     },
     "linux": {
       "target": [
