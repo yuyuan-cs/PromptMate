@@ -331,7 +331,8 @@ export const loadSettings = (): Settings => {
   try {
     const saved = localStorage.getItem(STORAGE_KEYS.SETTINGS);
     if (saved) {
-      return JSON.parse(saved);
+      // 合并默认设置和本地设置，防止缺字段
+      return { ...defaultSettings, ...JSON.parse(saved) };
     }
     return defaultSettings;
   } catch (error) {

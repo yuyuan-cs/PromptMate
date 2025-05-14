@@ -681,11 +681,11 @@ export const PromptList = memo(function PromptList({
                 <Card 
                   key={prompt.id}
                   className={cn(
-                    "prompt-card cursor-pointer transition-all duration-200 ease-in-out rounded-md p-0.5 min-w-[280px]",
+                    "prompt-card cursor-pointer border transition-all duration-200 ease-in-out rounded-md p-0.5 min-w-[280px]",
                     "focus-visible:ring-1  focus-visible:ring-offset-0 focus-visible:shadow-lg",
                     selectedPrompt?.id === prompt.id 
                       ? "ring-0.2 ring-primary/20 shadow-xl border-primary/25 bg-primary/1"
-                      : "border border-transparent hover:border-primary/10 hover:shadow-lg"
+                      : "border border-transparent hover:border-primary/30 hover:shadow-lg"
                   )}
                   onClick={() => handleViewPromptDetail(prompt)}
                   tabIndex={0}

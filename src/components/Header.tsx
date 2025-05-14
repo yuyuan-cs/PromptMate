@@ -65,7 +65,7 @@ export function Header() {
   return (
         /* 头部容器 */
     <div 
-      className={`flex flex-col md:flex-row items-center backdrop-blur-sm bg-background/80 border-b px-4 py-2 md:py-2 md:h-8 sticky top-0 z-10 titlebar-drag ${
+      className={`flex flex-col md:flex-row items-center backdrop-blur-sm bg-background/80 border-b px-4 py-2 md:py-2 md:h-10 sticky top-0 z-10 titlebar-drag ${
         isMac ? 'pl-20' : ''
       }`}
       style={{ WebkitAppRegion: 'drag' } as DraggableStyle}
@@ -82,7 +82,7 @@ export function Header() {
           <Input
             type="search"
             placeholder="搜索提示词..."
-              className="w-full pl-10 titlebar-no-drag h-6 !text-[12px] focus-visible:ring-1 focus-visible:ring-ring/50"
+              className="w-full pl-10 titlebar-no-drag h-8 !text-[14px] focus-visible:ring-1 focus-visible:ring-ring/50"
             onChange={(e) => setSearchTerm(e.target.value)}
           />
           <Icons.search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-3 w-3 text-muted-foreground" />

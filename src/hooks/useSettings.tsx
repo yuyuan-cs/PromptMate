@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Settings, ThemeType } from '../types';
 import { loadSettings, saveSettings } from '../lib/data';
 import { useToast } from '@/hooks/use-toast';
@@ -17,15 +17,25 @@ const FONT_FAMILIES = {
 };
 // 设置主题
 export function useSettings() {
-  const [settings, setSettings] = useState<Settings>(loadSettings());
+  // 加载初始设置时确保字体大小有默认值
+  const initialSettings = loadSettings();
+  if (!initialSettings.fontSize) {
+    initialSettings.fontSize = 14; // 确保有默认字体大小
+  }
+  
+  const [settings, setSettings] = useState<Settings>(initialSettings);
   const [systemTheme, setSystemTheme] = useState<'light' | 'dark'>('light');
   const { toast } = useToast();
-
-  // 加载设置
+  
+  // 使用 ref 保存上一次的 fontSize，用于恢复可能被错误重置的值
+  const lastValidFontSizeRef = useRef<number>(settings.fontSize || 14);
+  
+  // 当 fontSize 有效值变化时更新 ref
   useEffect(() => {
-    const savedSettings = loadSettings();
-    setSettings(savedSettings);
-  }, []);
+    if (settings.fontSize && settings.fontSize !== 14) {
+      lastValidFontSizeRef.current = settings.fontSize;
+    }
+  }, [settings.fontSize]);
 
   // 检测系统主题
   useEffect(() => {
@@ -88,6 +98,15 @@ export function useSettings() {
 
   // 应用字体和字体大小
   const applyFont = useCallback((fontName: string, fontSize: number) => {
+    // 添加调试日志，查看调用时的字体大小
+    console.log(`应用字体设置: fontName=${fontName}, fontSize=${fontSize}`);
+    
+    // 如果传入的字体大小是默认值但我们有更好的值，则使用之前保存的值
+    if (fontSize === 14 && lastValidFontSizeRef.current !== 14) {
+      console.log(`检测到fontSize被重置，恢复为: ${lastValidFontSizeRef.current}`);
+      fontSize = lastValidFontSizeRef.current;
+    }
+    
     const fontFamily = FONT_FAMILIES[fontName as keyof typeof FONT_FAMILIES] || fontName;
     
     // 设置CSS变量
@@ -120,16 +139,33 @@ export function useSettings() {
     if (!document.getElementById('font-override-style')) {
       document.head.appendChild(styleElement);
     }
-  }, []);
+    
+    // 如果fontSize不是14且和当前settings不同，确保更新settings
+    if (fontSize !== 14 && settings.fontSize !== fontSize) {
+      setSettings(prev => ({...prev, fontSize}));
+    }
+  }, [settings.fontSize]);
 
   // 保存设置
   useEffect(() => {
-    saveSettings(settings);
-    applyTheme(settings.theme);
-    applyFont(settings.font, settings.fontSize);
+    // 添加日志，查看每次保存时的设置对象
+    console.log('保存设置:', settings);
+    
+    // 检查是否需要恢复字体大小
+    let settingsToSave = settings;
+    if (settings.fontSize === 14 && lastValidFontSizeRef.current !== 14) {
+      settingsToSave = {...settings, fontSize: lastValidFontSizeRef.current};
+      setSettings(settingsToSave);
+    }
+    
+    saveSettings(settingsToSave);
+    applyTheme(settingsToSave.theme);
+    applyFont(settingsToSave.font, settingsToSave.fontSize);
   }, [settings, applyTheme, applyFont]);
 
   const updateSettings = (newSettings: Partial<Settings>) => {
+    console.log('更新设置，传入:', newSettings, '当前:', settings);
+    
     // 检查字体是否变更
     if (newSettings.font && newSettings.font !== settings.font) {
       toast({
@@ -146,9 +182,30 @@ export function useSettings() {
         description: `当前大小: ${newSettings.fontSize}px`,
         variant: "success",
       });
+      
+      // 更新最后有效的字体大小引用
+      lastValidFontSizeRef.current = newSettings.fontSize;
     }
     
-    setSettings(prev => ({ ...prev, ...newSettings }));
+    // 修改更新逻辑，防止字体大小被意外重置
+    setSettings(prev => {
+      // 确保保留字体大小，特殊处理theme或font更新的情况
+      let updatedSettings: Settings;
+      
+      if ((newSettings.theme || newSettings.font) && !newSettings.fontSize) {
+        // 如果只更新了theme或font，确保fontSize保持不变
+        updatedSettings = { 
+          ...prev, 
+          ...newSettings,
+          fontSize: prev.fontSize || lastValidFontSizeRef.current
+        };
+      } else {
+        updatedSettings = { ...prev, ...newSettings };
+      }
+      
+      console.log('更新后的设置:', updatedSettings);
+      return updatedSettings;
+    });
   };
 
   // 切换主题

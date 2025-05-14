@@ -144,7 +144,8 @@
   }
   /* 输入框样式 */
   input {
-    @apply text-[12px] !important;
+    /* @apply text-[12px] !important; */
+    font-size: var(--app-font-size) !important;
   }
   
   input:focus {
