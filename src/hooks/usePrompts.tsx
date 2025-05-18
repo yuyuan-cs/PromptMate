@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, createContext, useContext, ReactNode } from 'react';
+import { useState, useEffect, useMemo, createContext, useContext, ReactNode, useRef, useCallback } from 'react';
 import { Prompt, Category } from '../types';
 import { loadPrompts, savePrompts, loadCategories, saveCategories, generateId } from '../lib/data';
 import { recommendedPrompts } from '../data/recommendedPrompts';
@@ -21,9 +21,37 @@ function usePromptsState() {
   // 添加刷新计数器
   const [refreshCounter, setRefreshCounter] = useState(0);
   const { toast } = useToast();
+  
+  // 添加标记未保存更改的状态
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  
+  // 添加一个回调函数引用，用于检查是否有未保存的更改
+  const checkUnsavedChangesCallback = useRef<((newPromptId: string | null) => boolean) | null>(null);
+
+  // 设置检查未保存更改的回调函数
+  const setCheckUnsavedChangesCallback = useCallback((callback: (newPromptId: string | null) => boolean) => {
+    checkUnsavedChangesCallback.current = callback;
+  }, []);
 
   // 强制刷新函数
   const forceRefresh = () => setRefreshCounter(prev => prev + 1);
+  
+  // 安全版本的setSelectedPrompt，会在切换前检查未保存的更改
+  const safeSetSelectedPrompt = useCallback((newPrompt: Prompt | null) => {
+    // 如果有检查未保存更改的回调函数，则执行它
+    if (checkUnsavedChangesCallback.current) {
+      const newPromptId = newPrompt ? newPrompt.id : null;
+      const canProceed = checkUnsavedChangesCallback.current(newPromptId);
+      
+      // 如果不能安全切换，则中止切换
+      if (!canProceed) {
+        return;
+      }
+    }
+    
+    // 可以安全切换，执行原始的setSelectedPrompt
+    setSelectedPrompt(newPrompt);
+  }, []);
 
   useEffect(() => {
     console.log('Loading prompts and categories from storage');
@@ -419,7 +447,7 @@ function usePromptsState() {
   return {
     prompts,
     selectedPrompt,
-    setSelectedPrompt,
+    setSelectedPrompt: safeSetSelectedPrompt,
     toggleFavorite,
     searchTerm,
     setSearchTerm,
@@ -448,7 +476,9 @@ function usePromptsState() {
     resetAllFilters,
     forceRefresh,
     refreshCounter,
-    deleteTag
+    deleteTag,
+    setCheckUnsavedChangesCallback,
+    hasUnsavedChanges
   };
 }
 

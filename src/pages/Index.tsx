@@ -122,7 +122,7 @@ function ContentArea({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
 
       {/* 提示词编辑器 */}
       {selectedPrompt && (
-        <div className={`h-full border-l fixed md:relative right-0 top-[64px] bottom-0 z-10 bg-background md:z-0 w-full md:w-1/2 transition-all duration-300 ${showEditor ? "translate-x-0" : "translate-x-full md:translate-x-0"}`}>
+        <div className={`min-h-[150vh] h-full border-l fixed md:relative right-0 top-[64px] bottom-0 z-10 bg-background md:z-0 w-full md:w-1/2 transition-all duration-300 overflow-auto ${showEditor ? "translate-x-0" : "translate-x-full md:translate-x-0"}`}>
           <PromptEditor />
         </div>
       )}

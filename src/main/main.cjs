@@ -1,7 +1,24 @@
-const { app, BrowserWindow, ipcMain, globalShortcut, Menu } = require('electron');
+const { app, BrowserWindow, ipcMain, globalShortcut, Menu, dialog } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const { autoUpdater } = require('electron-updater');
+const log = require('electron-log');
+
+// Configure logging (optional)
+log.transports.file.level = 'info';
+log.info('App starting...');
+
+// --- Auto Updater Setup ---
+autoUpdater.logger = log; // Pipe autoUpdater logs to electron-log
+autoUpdater.autoDownload = false; // Disable auto download, let user confirm
+
+// Check for updates function
+function checkForUpdates() {
+  log.info('Checking for updates...');
+  autoUpdater.checkForUpdatesAndNotify().catch(err => {
+    log.error('Error checking for updates:', err);
+  });
+}
 
 // 应用配置目录
 const userDataPath = app.getPath('userData');
@@ -59,8 +76,7 @@ function createWindow() {
     minWidth: 800,
     minHeight: 600,
     frame: false,  // 隐藏默认窗口边框
-    titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'hidden', // 在 macOS 上使用 hiddenInset
-    trafficLightPosition: { x: 20, y: 20 }, // 设置 macOS 窗口控制按钮位置
+    titleBarStyle: 'hiddenInset',
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -75,6 +91,15 @@ function createWindow() {
     mainWindow.webContents.openDevTools();
   } else {
     mainWindow.loadFile(path.join(__dirname, '../../dist/index.html'));
+    
+    // 在生产环境也打开开发者工具，便于调试
+    // mainWindow.webContents.openDevTools();
+    
+    // 添加错误监听
+    mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription) => {
+      console.error('页面加载失败:', errorCode, errorDescription);
+      log.error('页面加载失败:', errorCode, errorDescription);
+    });
   }
 
   // 窗口关闭事件处理
@@ -94,28 +119,8 @@ function createWindow() {
 app.whenReady().then(() => {
   createWindow();
 
-  // 初始化自动更新配置
-  autoUpdater.autoDownload = false;
-  autoUpdater.logger = console;
-  
-  // 自动更新事件处理
-  autoUpdater.on('update-available', (info) => {
-    if (mainWindow) {
-      mainWindow.webContents.send('update-available', info);
-    }
-  });
-  
-  autoUpdater.on('update-not-available', (info) => {
-    if (mainWindow) {
-      mainWindow.webContents.send('update-not-available', info);
-    }
-  });
-  
-  autoUpdater.on('error', (err) => {
-    if (mainWindow) {
-      mainWindow.webContents.send('update-error', err);
-    }
-  });
+  // Check for updates after window is created
+  checkForUpdates();
 
   // MacOS相关设置
   app.on('activate', () => {
@@ -382,4 +387,64 @@ ipcMain.handle('check-for-updates', async () => {
       error: error.message
     };
   }
+});
+
+// --- Auto Updater Event Listeners ---
+
+// Fired when an update is found
+autoUpdater.on('update-available', (info) => {
+  log.info('Update available:', info);
+  dialog.showMessageBox({
+    type: 'info',
+    title: '发现新版本',
+    message: `发现新版本 ${info.version}，是否现在下载？`, // Use info.version
+    buttons: ['是', '否']
+  }).then(result => {
+    if (result.response === 0) { // User clicked '是'
+      log.info('User agreed to download update.');
+      autoUpdater.downloadUpdate();
+    } else {
+      log.info('User declined update download.');
+    }
+  });
+});
+
+// Fired when an update is not available
+autoUpdater.on('update-not-available', (info) => {
+  log.info('Update not available.', info);
+  // Optionally notify the user, or just log it
+});
+
+// Fired on update download progress
+autoUpdater.on('download-progress', (progressObj) => {
+  let log_message = "Download speed: " + progressObj.bytesPerSecond;
+  log_message = log_message + ' - Downloaded ' + progressObj.percent + '%';
+  log_message = log_message + ' (' + progressObj.transferred + "/" + progressObj.total + ')';
+  log.info(log_message);
+  // You can send progress to the renderer process if you want to display it
+  // mainWindow.webContents.send('update-progress', progressObj);
+});
+
+// Fired when an update has been downloaded
+autoUpdater.on('update-downloaded', (info) => {
+  log.info('Update downloaded:', info);
+  dialog.showMessageBox({
+    type: 'info',
+    title: '更新已下载',
+    message: '新版本已下载完毕，是否立即重启应用以进行安装？',
+    buttons: ['立即重启', '稍后重启']
+  }).then(result => {
+    if (result.response === 0) { // User clicked '立即重启'
+      log.info('User agreed to restart and install update.');
+      autoUpdater.quitAndInstall();
+    } else {
+      log.info('User deferred update installation.');
+    }
+  });
+});
+
+// Fired when there is an error during the update process
+autoUpdater.on('error', (err) => {
+  log.error('Error in auto-updater:', err);
+  dialog.showErrorBox('更新出错', `检查或下载更新时遇到错误: ${err.message}`);
 }); 

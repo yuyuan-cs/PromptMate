@@ -12,9 +12,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   
   // 窗口控制
   togglePinWindow: (shouldPin) => ipcRenderer.send('toggle-pin-window', shouldPin),
-  minimize: () => ipcRenderer.send('minimize-window'),
-  maximize: () => ipcRenderer.send('maximize-window'),
-  close: () => ipcRenderer.send('close-window'),
   
   // 数据导入导出
   exportData: (options) => ipcRenderer.invoke('export-data', options),

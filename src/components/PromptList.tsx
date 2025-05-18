@@ -211,6 +211,9 @@ export const PromptList = memo(function PromptList({
   const [editDialogImageCaption, setEditDialogImageCaption] = useState("");
   const editDialogFileInputRef = useRef<HTMLInputElement>(null);
 
+  const [showAllTags, setShowAllTags] = useState(false);
+  const TAGS_DISPLAY_LIMIT = 10; // 每行最多显示的标签数量
+
   const handleEditDialogImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
@@ -501,8 +504,12 @@ export const PromptList = memo(function PromptList({
 
   // 查看提示词详情
   const handleViewPromptDetail = useCallback((prompt: Prompt) => {
-    setSelectedPrompt(currentSelected => currentSelected?.id === prompt.id ? null : prompt);
-  }, [setSelectedPrompt]);
+    if (selectedPrompt?.id === prompt.id) {
+      setSelectedPrompt(null);
+    } else {
+      setSelectedPrompt(prompt);
+    }
+  }, [selectedPrompt, setSelectedPrompt]);
 
   // 切换收藏状态
   const handleToggleFavorite = useCallback((e: React.MouseEvent, promptId: string) => {
@@ -575,7 +582,7 @@ export const PromptList = memo(function PromptList({
     <div className="flex flex-col h-full"> 
       
       {/* 当前分类/模式指示器 */}
-      <div className="bg-muted/30 px-4 py-2 text-sm flex items-center">
+      <div className="bg-muted/30 px-4 py-2 text-sm flex items-center w-full sticky top-0 z-20 border-b border-border/40">
         <span className="font-medium mr-2">当前查看:</span>
         <ViewBadge 
           showRecommended={showRecommended}
@@ -584,31 +591,24 @@ export const PromptList = memo(function PromptList({
           categories={categories}
         />
         <span className="ml-auto text-muted-foreground">找到 {filteredPrompts.length} 个提示词</span>
-        
-        {/* 添加当前视图类型显示 */}
-        {/* {contentTitle && (
-          <Badge variant="outline" className="ml-2 bg-purple-50 text-purple-700 border-purple-200">
-            <Icons.fileText className="h-3 w-3 mr-1" /> {contentTitle}
-          </Badge>
-        )} */}
       </div>
 
       {/* 标签过滤器 */}
       {allTags.length > 0 && (
-        <div className="p-2 border-b">
-          <div className="flex flex-wrap gap-2">
-            <Badge 
-              variant={selectedTag === null ? "default" : "outline"} 
+        <div className="p-2 border-b w-full">
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge
+              variant={selectedTag === null ? "default" : "outline"}
               className="cursor-pointer text-xs px-2 py-0.5"
               onClick={(e) => handleTagClick(e, null)}
             >
               全部
             </Badge>
-            {allTags.map(tag => (
+            {(showAllTags ? allTags : allTags.slice(0, TAGS_DISPLAY_LIMIT)).map(tag => (
               <ContextMenu key={tag}>
                 <ContextMenuTrigger>
-                  <Badge 
-                    variant={selectedTag === tag ? "default" : "outline"} 
+                  <Badge
+                    variant={selectedTag === tag ? "default" : "outline"}
                     className="cursor-pointer text-xs px-2 py-0.5"
                     onClick={(e) => handleTagClick(e, tag)}
                   >
@@ -620,7 +620,7 @@ export const PromptList = memo(function PromptList({
                     <Icons.fileText className="mr-2 h-4 w-4" />
                     按此标签筛选
                   </ContextMenuItem>
-                  <ContextMenuItem 
+                  <ContextMenuItem
                     onClick={() => handleDeleteTag(tag)}
                     className="text-destructive focus:text-destructive"
                   >
@@ -630,13 +630,33 @@ export const PromptList = memo(function PromptList({
                 </ContextMenuContent>
               </ContextMenu>
             ))}
+            {allTags.length > TAGS_DISPLAY_LIMIT && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-xs h-6 px-2"
+                onClick={() => setShowAllTags(!showAllTags)}
+              >
+                {showAllTags ? (
+                  <>
+                    <Icons.chevronUp className="h-3 w-3 mr-1" />
+                    收起
+                  </>
+                ) : (
+                  <>
+                    <Icons.chevronDown className="h-3 w-3 mr-1" />
+                    查看更多 ({allTags.length - TAGS_DISPLAY_LIMIT})
+                  </>
+                )}
+              </Button>
+            )}
           </div>
         </div>
       )}
 
       {/* 搜索结果提示 */}
       {searchTerm && (
-        <div className="flex items-center px-4 py-2 bg-muted/50">
+        <div className="flex items-center px-4 py-2 bg-muted/50 w-full border-b">
           <Icons.search className="h-4 w-4 mr-2 text-muted-foreground" />
           <span className="text-sm">
             当前搜索 "{searchTerm}" 的结果

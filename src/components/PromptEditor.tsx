@@ -40,6 +40,19 @@ import {
 } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
 
+// 防抖函数
+function debounce<T extends (...args: any[]) => any>(func: T, wait: number): (...args: Parameters<T>) => void {
+  let timeout: ReturnType<typeof setTimeout> | null = null;
+  
+  return function(...args: Parameters<T>) {
+    if (timeout) clearTimeout(timeout);
+    
+    timeout = setTimeout(() => {
+      func(...args);
+    }, wait);
+  };
+}
+
 export function PromptEditor() {
   const { toast } = useToast();
   const isMobile = useMediaQuery("(max-width: 768px)");
@@ -54,7 +67,9 @@ export function PromptEditor() {
     addFromRecommended,
     setShowRecommended,
     copyPromptContent,
-    allTags
+    allTags,
+    setCheckUnsavedChangesCallback,
+    prompts
   } = usePrompts();
   
   const [title, setTitle] = useState(selectedPrompt?.title || "");
@@ -70,6 +85,80 @@ export function PromptEditor() {
   const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
   const [imageCaption, setImageCaption] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [autoSaveStatus, setAutoSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
+  const previousSelectedPromptIdRef = useRef<string | null>(null);
+  const isAutoSavingRef = useRef<boolean>(false);
+  
+  // 添加切换提示词前的确认对话框状态
+  const [switchConfirmOpen, setSwitchConfirmOpen] = useState(false);
+  const [pendingPromptId, setPendingPromptId] = useState<string | null>(null);
+  
+  // 处理切换提示词的安全方法 - 注册回调函数来检查是否有未保存的更改
+  useEffect(() => {
+    // 创建检查未保存更改的回调函数
+    const checkUnsavedChanges = (newPromptId: string | null) => {
+      // 如果当前没有选定的提示词或没有未保存的更改，可以安全切换
+      if (!selectedPrompt || !hasChanges || isAutoSavingRef.current) {
+        return true;
+      }
+
+      // 如果是同一个提示词，可以安全切换
+      if (selectedPrompt.id === newPromptId) {
+        return true;
+      }
+      
+      // 存储要切换的ID并显示确认对话框
+      setPendingPromptId(newPromptId);
+      setSwitchConfirmOpen(true);
+      
+      // 返回false表示不能立即切换，需要用户确认
+      return false;
+    };
+    
+    // 注册回调函数
+    setCheckUnsavedChangesCallback(checkUnsavedChanges);
+    
+    // 清理函数
+    return () => {
+      // 注册一个永远返回true的函数，以便在组件卸载时不再检查未保存的更改
+      setCheckUnsavedChangesCallback(() => true);
+    };
+  }, [selectedPrompt, hasChanges, setCheckUnsavedChangesCallback]);
+
+  // 确认切换提示词
+  const confirmSwitchPrompt = useCallback(() => {
+    // 关闭确认对话框
+    setSwitchConfirmOpen(false);
+    
+    // 切换到新的提示词
+    if (pendingPromptId !== null) {
+      // 重置状态以防止自动保存触发
+      isAutoSavingRef.current = false;
+      if (pendingPromptId === 'null') {
+        setSelectedPrompt(null);
+      } else {
+        // 获取完整的提示词对象而不是只传递id
+        const promptToSelect = prompts.find(p => p.id === pendingPromptId);
+        setSelectedPrompt(promptToSelect || null);
+      }
+      setPendingPromptId(null);
+    }
+  }, [pendingPromptId, setSelectedPrompt, prompts]);
+  
+  // 保存并切换提示词
+  const saveAndSwitchPrompt = useCallback(() => {
+    if (selectedPrompt && hasChanges) {
+      // 手动保存当前更改
+      handleManualSave();
+      
+      // 短暂延迟后确认切换，确保保存完成
+      setTimeout(() => {
+        confirmSwitchPrompt();
+      }, 100);
+    } else {
+      confirmSwitchPrompt();
+    }
+  }, [selectedPrompt, hasChanges, confirmSwitchPrompt]);
 
   // 处理收藏状态切换
   const handleToggleFavorite = useCallback(() => {
@@ -119,20 +208,90 @@ export function PromptEditor() {
   // 当选择的提示词改变时更新表单和编辑状态
   useEffect(() => {
     if (selectedPrompt) {
-      setTitle(selectedPrompt.title);
-      setContent(selectedPrompt.content);
-      setCategory(selectedPrompt.category);
-      setTags(selectedPrompt.tags.join(", "));
-      setIsFavorite(selectedPrompt.isFavorite);
-      setImages(selectedPrompt.images || []);
-      setHasChanges(false);
-      setIsEditing(false);
+      // 只有在不是自动保存引起的更新时，才重新设置表单值
+      // 这样不会干扰用户正在输入的内容
+      if (!isAutoSavingRef.current) {
+        setTitle(selectedPrompt.title);
+        setContent(selectedPrompt.content);
+        setCategory(selectedPrompt.category);
+        setTags(selectedPrompt.tags.join(", "));
+        setIsFavorite(selectedPrompt.isFavorite);
+        setImages(selectedPrompt.images || []);
+        setHasChanges(false);
+      }
+      
+      // 只有当不是自动保存引起的更新并且是新选择的提示词时才重置编辑状态
+      if (!isAutoSavingRef.current && selectedPrompt.id !== previousSelectedPromptIdRef.current) {
+        setIsEditing(false);
+        setAutoSaveStatus("idle");
+        previousSelectedPromptIdRef.current = selectedPrompt.id;
+      }
     }
   }, [selectedPrompt]);
 
-  // 跟踪变更
+  // 自动保存函数
+  const saveChanges = useCallback(() => {
+    if (!selectedPrompt || !hasChanges) return;
+    
+    setAutoSaveStatus("saving");
+    
+    const payload = {
+      title,
+      content,
+      category,
+      tags: tags.split(/[,，;；]/).map((tag) => tag.trim()).filter(Boolean),
+      images
+    };
+    
+    // 在保存前设置标志，表示这是通过自动保存更新selectedPrompt
+    isAutoSavingRef.current = true;
+    updatePrompt(selectedPrompt.id, payload);
+    setHasChanges(false);
+    
+    // 立即将状态设为已保存
+    setAutoSaveStatus("saved");
+    
+    // 1秒后隐藏已保存状态
+    setTimeout(() => {
+      if (autoSaveStatus === "saved") {
+        setAutoSaveStatus("idle");
+      }
+      // 保存完成后重置标志
+      isAutoSavingRef.current = false;
+    }, 1000); // 减少为1秒
+  }, [selectedPrompt, hasChanges, title, content, category, tags, images, updatePrompt, autoSaveStatus]);
+
+  // 创建防抖版本的保存函数
+  const debouncedSaveChanges = useCallback(
+    debounce(saveChanges, 2000), // 2秒后自动保存
+    [saveChanges]
+  );
+
+  // 手动立即保存（不带防抖）
+  const handleManualSave = () => {
+    if (!selectedPrompt || !hasChanges) return;
+    
+    // 设置自动保存标志
+    isAutoSavingRef.current = true;
+    saveChanges(); // 直接调用保存，不使用防抖版本
+    
+    // 显示一个简短的保存成功提示
+    toast({
+      title: "保存成功",
+      description: "更改已保存",
+      variant: "success",
+      duration: 1000, // 1秒后自动关闭
+    });
+    
+    // 确保在toast消失后重置标志
+    setTimeout(() => {
+      isAutoSavingRef.current = false;
+    }, 1000); // 减少为1秒
+  };
+
+  // 跟踪变更并触发自动保存
   useEffect(() => {
-    if (!selectedPrompt) return;
+    if (!selectedPrompt || !isEditing) return;
     
     const originalImages = selectedPrompt.images || [];
     const imagesChanged = 
@@ -150,7 +309,13 @@ export function PromptEditor() {
       imagesChanged;
     
     setHasChanges(changed);
-  }, [title, content, category, tags, images, selectedPrompt]);
+    
+    // 如果有变更，触发自动保存
+    if (changed) {
+      setAutoSaveStatus("saving");
+      debouncedSaveChanges();
+    }
+  }, [title, content, category, tags, images, selectedPrompt, isEditing, debouncedSaveChanges]);
 
   // 处理图片上传
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -222,38 +387,6 @@ export function PromptEditor() {
     setImageCaption(images[index]?.caption || "");
   };
 
-  //保存提示词
-  const handleSave = () => {
-    if (!selectedPrompt) return;
-    
-    const payload = {
-      title,
-      content,
-      category,
-      tags: tags.split(/[,，;；]/).map((tag) => tag.trim()).filter(Boolean),
-      images // This is PromptEditor's 'images' state
-    };
-    // ---- DEBUG LOG 1 ----
-    console.log('[PromptEditor] handleSave - payload to updatePrompt:', payload);
-    // 为了更清晰地看到如果直接转JSON会怎样，可以额外加一个（可选）
-    // console.log('[PromptEditor] handleSave - payload (stringified):', JSON.stringify(payload, null, 2));
-
-    updatePrompt(selectedPrompt.id, {
-      title,
-      content,
-      category,
-      tags: tags.split(/[,，;；]/).map((tag) => tag.trim()).filter(Boolean),
-      images
-    });
-    
-    toast({
-      title: "保存成功",
-      description: "您的提示词已成功保存。",
-      variant: "success",
-    });
-    
-    setHasChanges(false);
-  };
   //删除提示词
   const handleDelete = () => {
     if (!selectedPrompt) return;
@@ -309,458 +442,445 @@ export function PromptEditor() {
   // 当有选择提示词时，显示提示词编辑器
   return (
     // 整个编辑器容器
-    <div className="flex flex-col h-[calc(100%-var(--header-height))]">
-      {/* 顶部工具栏 */}
-      <div className="flex flex-col h-10 sm:flex-row justify-between items-start sm:items-center p-2 md:p-2 border-b gap-1 sticky top-0 bg-background z-10">
+    <div className="flex flex-col h-[calc(100%-var(--header-height))] relative">
+      {/* 顶部工具栏和自动保存状态 - 位于 ScrollArea 外部 */}
+      <div className="sticky top-0 z-30 bg-background border-b">
+        {/* 顶部工具栏 */}
+        <div className="flex flex-col h-10 sm:flex-row justify-between items-start sm:items-center p-2 md:p-2 gap-1 bg-background">
         
-        {/* 左侧工具栏 */}
-        <div className="flex flex-wrap gap-1 items-center w-full sm:w-auto justify-center">
+          {/* 左侧工具栏 */}
+          <div className="flex flex-wrap gap-1 items-center w-full sm:w-auto justify-center">
 
-          {/* 分类选择器 */}
-          {!showRecommended && (
-            <Select value={category} onValueChange={setCategory} disabled={!isEditing}>
-              <SelectTrigger className="h-6 rounded-md md:w-[90px] lg:w-[100px] flex-shrink-0 text-[10px] focus-visible:ring-0 border-none">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {categories.map((cat) => (
-                  <SelectItem key={cat.id} value={cat.id}>
-                    {cat.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
+            {/* 分类选择器 */}
+            {!showRecommended && (
+              <Select value={category} onValueChange={setCategory} disabled={!isEditing}>
+                <SelectTrigger className="h-6 rounded-md md:w-[90px] lg:w-[100px] flex-shrink-0 text-[10px] focus-visible:ring-0 border-none">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((cat) => (
+                    <SelectItem key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
 
-          
-        </div>
-        {/* 右侧工具栏 */}
-        <div className="flex flex-wrap gap-1 h-8 justify-end">
+            {/* 自动保存状态指示器 */}
+            {isEditing && autoSaveStatus !== "idle" && (
+              <div className="text-xs text-muted-foreground ml-2 flex items-center">
+                {autoSaveStatus === "saving" ? (
+                  <>
+                    <svg className="animate-spin h-3 w-3 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span>保存中...</span>
+                  </>
+                ) : (
+                  <>
+                    <Icons.check className="h-3 w-3 mr-1 text-green-500" />
+                    <span className="text-green-500">已保存</span>
+                  </>
+                )}
+              </div>
+            )}
+            
+          </div>
+          {/* 右侧工具栏 */}
+          <div className="flex flex-wrap gap-1 h-8 justify-end">
 
-          {/* 收藏按钮 */}
-          {!showRecommended ? (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={handleToggleFavorite}
-                    className="h-6 w-6 flex-shrink-0"
-                  >
-                    <Star
-                      className={`h-4 w-4 md:h-5 md:w-5 ${
-                        isFavorite
-                          ? "fill-yellow-400 text-yellow-400"
-                          : ""
-                      }`}
-                    />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>{isFavorite ? "取消收藏" : "添加到收藏"}</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          ) : (
-            // 添加推荐提示词按钮
-            <Button
-              variant="outline"
-              size={isMobile ? "sm" : "default"}
-              onClick={handleAddFromRecommended}
-              className="h-8 flex items-center flex-shrink-0"
-            >
-              <Copy className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
-              <span className="text-xs md:text-sm">添加到我的提示词</span>
-            </Button>
-          )}
-          {/* 编辑/完成编辑按钮 (非推荐模式) */}
-          {!showRecommended && (
-            <>
-            {isEditing ? (
-            <>
-              {/* 完成编辑按钮 */}
+            {/* 收藏按钮 */}
+            {!showRecommended ? (
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={handleSave}
-                      disabled={!hasChanges}
-                      className="h-6 w-6 flex items-center justify-center text-green-600 hover:text-green-700"
-                      title="保存更改"
+                      onClick={handleToggleFavorite}
+                      className="h-6 w-6 flex-shrink-0"
                     >
-                      <Icons.check className="h-4 w-4 md:h-5 md:w-5" />
+                      <Star
+                        className={`h-4 w-4 md:h-5 md:w-5 ${
+                          isFavorite
+                            ? "fill-yellow-400 text-yellow-400"
+                            : ""
+                        }`}
+                      />
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>保存更改</p>
+                    <p>{isFavorite ? "取消收藏" : "添加到收藏"}</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
-            </>
             ) : (
-              // 编辑按钮
+              // 添加推荐提示词按钮
+              <Button
+                variant="outline"
+                size={isMobile ? "sm" : "default"}
+                onClick={handleAddFromRecommended}
+                className="h-8 flex items-center flex-shrink-0"
+              >
+                <Copy className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
+                <span className="text-xs md:text-sm">添加到我的提示词</span>
+              </Button>
+            )}
+            {/* 编辑/查看切换按钮 (非推荐模式) */}
+            {!showRecommended && (
+              <>
+              {isEditing ? (
+                <>
+                {/* 立即保存按钮 */}
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={handleManualSave}
+                        disabled={!hasChanges}
+                        className="h-6 w-6 flex items-center justify-center text-green-600 hover:text-green-700"
+                      >
+                        <Icons.check className="h-4 w-4 md:h-5 md:w-5" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>立即保存</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                
+                {/* 返回查看模式按钮 */}
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setIsEditing(false)}
+                        className="h-6 w-6 flex items-center justify-center"
+                      >
+                        <Icons.x className="h-4 w-4 md:h-5 md:w-5" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>返回查看模式</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                </>
+              ) : (
+                // 编辑按钮
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setIsEditing(true)}
+                        className="h-6 w-6 flex items-center justify-center" 
+                      >
+                        <Edit className="h-4 w-4 md:h-5 md:w-5" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>编辑提示词</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
+            </>
+          )}
+
+            
+            
+            {!showRecommended && (
               <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setIsEditing(true)}
-                      className="h-6 w-6 flex items-center justify-center" 
-                    >
-                      <Edit className="h-4 w-4 md:h-5 md:w-5" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>编辑提示词</p>
-                  </TooltipContent>
-                </Tooltip>
+                   <Tooltip>
+                      <TooltipTrigger asChild>
+                          <Button
+                          variant="destructive"
+                          size="icon"
+                          onClick={() => setDeleteDialogOpen(true)}
+                          className="h-6 w-6"
+                          >
+                          <Trash className="h-4 w-4 md:h-5 md:w-5" />
+                          </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                          <p>删除提示词</p>
+                      </TooltipContent>
+                  </Tooltip>
               </TooltipProvider>
             )}
-          </>
-        )}
-
-          
-          
-          {/* 放弃更改按钮 (仅在编辑模式且有更改时显示) */}
-          {!showRecommended && isEditing && hasChanges && (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => {
-                      if (selectedPrompt) {
-                        setTitle(selectedPrompt.title);
-                        setContent(selectedPrompt.content);
-                        setCategory(selectedPrompt.category);
-                        setTags(selectedPrompt.tags.join(", "));
-                        setImages(selectedPrompt.images || []);
-                        setHasChanges(false);
-                      }
-                    }}
-                    className="h-6 w-6"
-                  >
-                    <X className="h-4 w-4 md:h-5 md:w-5" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>放弃更改</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          )}
-          {/* 保存和删除按钮 */}         
-          {/* {!showRecommended && isEditing && (
-            <TooltipProvider>
-                <Tooltip>
-                    <TooltipTrigger asChild>
-                        <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={handleSave}
-                        disabled={!hasChanges}
-                        className="h-6 w-6 text-green-600"
-                        >
-                        <Save className="h-4 w-4 md:h-5 md:w-5" />
-                        </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                        <p>保存更改</p>
-                    </TooltipContent>
-                </Tooltip>
-            </TooltipProvider>
-          )} */}
-
-          {!showRecommended && (
-            <TooltipProvider>
-                 <Tooltip>
-                    <TooltipTrigger asChild>
-                        <Button
-                        variant="destructive"
-                        size="icon"
-                        onClick={() => setDeleteDialogOpen(true)}
-                        className="h-6 w-6"
-                        >
-                        <Trash className="h-4 w-4 md:h-5 md:w-5" />
-                        </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                        <p>删除提示词</p>
-                    </TooltipContent>
-                </Tooltip>
-            </TooltipProvider>
-          )}
-                    
-          
+                      
+            
+          </div>
         </div>
       </div>
-      {/* Global Unsaved Changes Notification Bar - Placed directly after the toolbar */}
-      {isEditing && hasChanges && (
-          <div className="bg-yellow-100 gap-10 border-b border-yellow-300 text-yellow-700 px-3 py-1.5 text-xs text-center">
-             您有未保存的更改。
-          </div>
-      )}
-      <ScrollArea className="flex-1 overflow-auto">
-        <div className="p-3 md:p-6 space-y-4">
-          {/* 只读模式标题 */}
-          {!isEditing && (
-            <div className="flex items-center justify-between w-full">
-              <h2 className="text-2xl font-semibold">
-                {selectedPrompt.title}
-              </h2>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 shrink-0"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleCopyPrompt(selectedPrompt?.content || "");
-                      }}
-                    >
-                      <Icons.copy className="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>复制提示词内容</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
-          )}
-
-          {/* 编辑模式表单 */}
-          {isEditing && (
-            <div className="space-y-4">
-              <div className="grid gap-2">
-                <label htmlFor="title" className="text-sm font-medium">
-                  标题
-                </label>
-                <Input
-                  id="title"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  placeholder="提示词标题"
-                />
+      
+      {/* 内容区域 - 在固定顶部下方 */}
+      <div className="flex-1 min-h-[500px] overflow-hidden">
+        <ScrollArea className="h-full">
+          <div className="p-3 md:p-6 space-y-4 pb-[600px]">
+            {/* 只读模式标题 */}
+            {!isEditing && (
+              <div className="flex items-center justify-between w-full">
+                <h2 className="text-2xl font-semibold">
+                  {selectedPrompt.title}
+                </h2>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 shrink-0"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleCopyPrompt(selectedPrompt?.content || "");
+                        }}
+                      >
+                        <Icons.copy className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>复制提示词内容</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
+            )}
 
-              <div className="grid gap-2">
-                <label htmlFor="content" className="text-sm font-medium">
-                  内容
-                </label>
-                <Textarea
-                  id="content"
-                  value={content}
-                  onChange={(e) => setContent(e.target.value)}
-                  placeholder="输入提示词内容"
-                  className="min-h-[200px]"
-                />
-              </div>
-
-              <div className="grid gap-2">
-                <label htmlFor="category" className="text-sm font-medium">
-                  分类
-                </label>
-                <Select
-                  value={category}
-                  onValueChange={setCategory}
-                >
-                  <SelectTrigger id="category">
-                    <SelectValue placeholder="选择分类" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.map((cat) => (
-                      <SelectItem key={cat.id} value={cat.id}>
-                        {cat.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="grid gap-2">
-                <label htmlFor="tags" className="text-sm font-medium">
-                  标签（用逗号、分号分隔）
-                </label>
-                <div className="space-y-2">
-                  <Input
-                    id="tags"
-                    value={tags}
-                    onChange={(e) => setTags(e.target.value)}
-                    placeholder="标签1, 标签2, 标签3"
-                  />
-                  
-                  {/* 显示现有标签供选择 */}
-                  {allTags && allTags.length > 0 && (
-                    <div className="mt-2">
-                      <label className="text-xs text-muted-foreground mb-1 block">选择已有标签</label>
-                      <div className="flex flex-wrap gap-1.5 max-h-[80px] overflow-y-auto p-1">
-                        {allTags.map(tag => (
-                          <Badge 
-                            key={tag}
-                            variant="outline" 
-                            className="cursor-pointer px-2 py-0.5 text-[10px] font-normal hover:bg-primary/10"
-                            onClick={() => handleAddTag(tag)}
-                          >
-                            {tag}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* 图片管理区域 */}
-              <div className="space-y-2 pt-2 border-t">
-                <div className="flex items-center justify-between">
-                  <label className="text-sm font-medium">
-                    参考图片
+            {/* 编辑模式表单 */}
+            {isEditing && (
+              <div className="space-y-4">
+                <div className="grid gap-2">
+                  <label htmlFor="title" className="text-sm font-medium">
+                    标题
                   </label>
-                  <div>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => fileInputRef.current?.click()}
-                    >
-                      <Icons.image className="h-4 w-4 mr-2" />
-                      添加图片
-                    </Button>
-                  </div>
+                  <Input
+                    id="title"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    placeholder="提示词标题"
+                  />
                 </div>
 
-                {/* 图片预览区域 */}
-                {images.length > 0 && (
-                  <div className="space-y-3">
-                    <div className="grid grid-cols-3 gap-2">
-                      {images.map((image, index) => (
-                        <div 
-                          key={image.id} 
-                          className={`relative border rounded-md overflow-hidden cursor-pointer
-                          ${selectedImageIndex === index ? 'ring-2 ring-primary' : ''}
-                          group`}
-                          onClick={() => handleSelectImage(index)}
-                        >
-                          <img 
-                            src={image.data} 
-                            alt={image.caption || `图片 ${index + 1}`} 
-                            className="w-full h-28 object-cover"
-                          />
-                          <div className="absolute bottom-0 left-0 right-0 p-1 text-xs bg-black/60 text-white truncate">
-                            {image.caption || `图片 ${index + 1}`}
-                          </div>
-                          <button 
-                            className="absolute top-1 right-1 bg-black/60 rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDeleteImage(index);
-                            }}
-                          >
-                            <X className="h-3 w-3 text-white" />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
+                <div className="grid gap-2">
+                  <label htmlFor="content" className="text-sm font-medium">
+                    内容
+                  </label>
+                  <Textarea
+                    id="content"
+                    value={content}
+                    onChange={(e) => setContent(e.target.value)}
+                    placeholder="输入提示词内容"
+                    className="min-h-[200px]"
+                  />
+                </div>
 
-                    {/* 图片编辑区域 */}
-                    {selectedImageIndex !== null && (
-                      <div className="rounded-md p-3 bg-muted/50">
-                        <p className="text-sm font-medium mb-2">图片说明</p>
-                        <div className="flex gap-2">
-                          <Input
-                            value={imageCaption}
-                            onChange={(e) => setImageCaption(e.target.value)}
-                            placeholder="添加图片说明"
-                            className="flex-1"
-                          />
-                          <Button 
-                            size="sm"
-                            onClick={() => {
-                              handleUpdateCaption(selectedImageIndex, imageCaption);
-                              setSelectedImageIndex(null);
-                              setImageCaption("");
-                            }}
-                          >
-                            保存
-                          </Button>
+                <div className="grid gap-2">
+                  <label htmlFor="category" className="text-sm font-medium">
+                    分类
+                  </label>
+                  <Select
+                    value={category}
+                    onValueChange={setCategory}
+                  >
+                    <SelectTrigger id="category">
+                      <SelectValue placeholder="选择分类" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories.map((cat) => (
+                        <SelectItem key={cat.id} value={cat.id}>
+                          {cat.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="grid gap-2">
+                  <label htmlFor="tags" className="text-sm font-medium">
+                    标签（用逗号、分号分隔）
+                  </label>
+                  <div className="space-y-2">
+                    <Input
+                      id="tags"
+                      value={tags}
+                      onChange={(e) => setTags(e.target.value)}
+                      placeholder="标签1, 标签2, 标签3"
+                    />
+                    
+                    {/* 显示现有标签供选择 */}
+                    {allTags && allTags.length > 0 && (
+                      <div className="mt-2">
+                        <label className="text-xs text-muted-foreground mb-1 block">选择已有标签</label>
+                        <div className="flex flex-wrap gap-1.5 max-h-[80px] overflow-y-auto p-1">
+                          {allTags.map(tag => (
+                            <Badge 
+                              key={tag}
+                              variant="outline" 
+                              className="cursor-pointer px-2 py-0.5 text-[10px] font-normal hover:bg-primary/10"
+                              onClick={() => handleAddTag(tag)}
+                            >
+                              {tag}
+                            </Badge>
+                          ))}
                         </div>
                       </div>
                     )}
                   </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* 只读模式内容 */}
-          {!isEditing && (
-            <>
-              <div className="bg-muted/30 rounded-md p-4 mb-4 whitespace-pre-wrap">
-                {selectedPrompt.content}
-              </div>
-              
-              {/* 图片预览区域（只读模式） */}
-              {selectedPrompt.images && selectedPrompt.images.length > 0 && (
-                <div className="space-y-3 mt-6">
-                  <h3 className="text-sm font-medium">参考图片</h3>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                    {selectedPrompt.images.map((image, index) => (
-                      <Popover key={image.id}>
-                        <PopoverTrigger asChild>
-                          <div className="border rounded-md overflow-hidden cursor-pointer hover:opacity-90">
-                            <img 
-                              src={image.data} 
-                              alt={image.caption || `图片 ${index + 1}`} 
-                              className="w-full h-32 object-cover"
-                            />
-                            {image.caption && (
-                              <div className="p-2 text-xs text-muted-foreground truncate">
-                                {image.caption}
-                              </div>
-                            )}
-                          </div>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-80 p-0">
-                          <div className="relative">
-                            <img 
-                              src={image.data} 
-                              alt={image.caption || `图片 ${index + 1}`} 
-                              className="w-full max-h-[500px] object-contain"
-                            />
-                            {image.caption && (
-                              <div className="p-2 text-sm bg-background/95 border-t">
-                                {image.caption}
-                              </div>
-                            )}
-                          </div>
-                        </PopoverContent>
-                      </Popover>
-                    ))}
-                  </div>
                 </div>
-              )}
-              
-              <div className="flex flex-wrap gap-2 mt-4">
-                {selectedPrompt.tags.map((tag) => (
-                  <div
-                    key={tag}
-                    className="bg-muted/80 text-muted-foreground px-1.5 py-0.5 rounded-md text-[10px] font-normal"
-                  >
-                    {tag}
+
+                {/* 图片管理区域 */}
+                <div className="space-y-2 pt-2 border-t">
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-medium">
+                      参考图片
+                    </label>
+                    <div>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        <Icons.image className="h-4 w-4 mr-2" />
+                        添加图片
+                      </Button>
+                    </div>
                   </div>
-                ))}
+
+                  {/* 图片预览区域 */}
+                  {images.length > 0 && (
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-3 gap-2">
+                        {images.map((image, index) => (
+                          <div 
+                            key={image.id} 
+                            className={`relative border rounded-md overflow-hidden cursor-pointer
+                            ${selectedImageIndex === index ? 'ring-2 ring-primary' : ''}
+                            group`}
+                            onClick={() => handleSelectImage(index)}
+                          >
+                            <img 
+                              src={image.data} 
+                              alt={image.caption || `图片 ${index + 1}`} 
+                              className="w-full h-28 object-cover"
+                            />
+                            <div className="absolute bottom-0 left-0 right-0 p-1 text-xs bg-black/60 text-white truncate">
+                              {image.caption || `图片 ${index + 1}`}
+                            </div>
+                            <button 
+                              className="absolute top-1 right-1 bg-black/60 rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteImage(index);
+                              }}
+                            >
+                              <X className="h-3 w-3 text-white" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* 图片编辑区域 */}
+                      {selectedImageIndex !== null && (
+                        <div className="rounded-md p-3 bg-muted/50">
+                          <p className="text-sm font-medium mb-2">图片说明</p>
+                          <div className="flex gap-2">
+                            <Input
+                              value={imageCaption}
+                              onChange={(e) => setImageCaption(e.target.value)}
+                              placeholder="添加图片说明"
+                              className="flex-1"
+                            />
+                            <Button 
+                              size="sm"
+                              onClick={() => {
+                                handleUpdateCaption(selectedImageIndex, imageCaption);
+                                setSelectedImageIndex(null);
+                                setImageCaption("");
+                              }}
+                            >
+                              确定
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
-            </>
-          )}
-        </div>
-      </ScrollArea>
+            )}
+
+            {/* 只读模式内容 */}
+            {!isEditing && (
+              <>
+                <div className="bg-muted/30 rounded-md p-4 mb-4 whitespace-pre-wrap">
+                  {selectedPrompt.content}
+                </div>
+                
+                {/* 图片预览区域（只读模式） */}
+                {selectedPrompt.images && selectedPrompt.images.length > 0 && (
+                  <div className="space-y-3 mt-6">
+                    <h3 className="text-sm font-medium">参考图片</h3>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                      {selectedPrompt.images.map((image, index) => (
+                        <Popover key={image.id}>
+                          <PopoverTrigger asChild>
+                            <div className="border rounded-md overflow-hidden cursor-pointer hover:opacity-90">
+                              <img 
+                                src={image.data} 
+                                alt={image.caption || `图片 ${index + 1}`} 
+                                className="w-full h-32 object-cover"
+                              />
+                              {image.caption && (
+                                <div className="p-2 text-xs text-muted-foreground truncate">
+                                  {image.caption}
+                                </div>
+                              )}
+                            </div>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-80 p-0">
+                            <div className="relative">
+                              <img 
+                                src={image.data} 
+                                alt={image.caption || `图片 ${index + 1}`} 
+                                className="w-full max-h-[500px] object-contain"
+                              />
+                              {image.caption && (
+                                <div className="p-2 text-sm bg-background/95 border-t">
+                                  {image.caption}
+                                </div>
+                              )}
+                            </div>
+                          </PopoverContent>
+                        </Popover>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                <div className="flex flex-wrap gap-2 mt-4">
+                  {selectedPrompt.tags.map((tag) => (
+                    <div
+                      key={tag}
+                      className="bg-muted/80 text-muted-foreground px-1.5 py-0.5 rounded-md text-[10px] font-normal"
+                    >
+                      {tag}
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        </ScrollArea>
+      </div>
 
       {/* 隐藏的文件输入 */}
       <input
@@ -770,6 +890,27 @@ export function PromptEditor() {
         accept="image/*"
         onChange={handleImageUpload}
       />
+
+      {/* 确认对话框 - 提示词更改未保存时的切换确认 */}
+      <AlertDialog open={switchConfirmOpen} onOpenChange={setSwitchConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>未保存的更改</AlertDialogTitle>
+            <AlertDialogDescription>
+              您有未保存的更改。要保存更改并继续，放弃更改，还是留在当前编辑页面？
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex flex-col sm:flex-row gap-2">
+            <AlertDialogCancel className="mt-0">留在当前页面</AlertDialogCancel>
+            <Button variant="outline" onClick={() => confirmSwitchPrompt()}>
+              放弃更改
+            </Button>
+            <Button onClick={() => saveAndSwitchPrompt()}>
+              保存并继续
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>

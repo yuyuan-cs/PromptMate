@@ -85,6 +85,9 @@ npm run pack
 
 # 打包并生成安装程序
 npm run dist
+
+# 清除之前的构建
+rm -rf dist/* dist-electron/*
 ```
 
 
