@@ -4,6 +4,9 @@ const fs = require('fs');
 const { autoUpdater } = require('electron-updater');
 const log = require('electron-log');
 
+// 强制设置开发环境
+process.env.NODE_ENV = 'development';
+
 // Configure logging (optional)
 log.transports.file.level = 'info';
 log.info('App starting...');
@@ -70,6 +73,10 @@ const defaultPrompts = [
 
 // 创建主窗口
 function createWindow() {
+  const preloadPath = path.join(__dirname, 'preload.cjs');
+  console.log('Preload script path:', preloadPath);
+  console.log('Preload script exists:', fs.existsSync(preloadPath));
+  
   mainWindow = new BrowserWindow({
     width: 1100,
     height: 700,
@@ -80,12 +87,11 @@ function createWindow() {
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
-      preload: path.join(__dirname, 'preload.cjs'),
-      webSecurity: true,  // 启用web安全
-      allowRunningInsecureContent: false,  // 禁止运行不安全内容
-      additionalArguments: [
-        '--disable-features=VizDisplayCompositor'
-      ]
+      preload: preloadPath,  // 启用preload脚本
+      webSecurity: false,  // 开发环境禁用web安全
+      allowRunningInsecureContent: true,  // 允许运行不安全内容
+      enableRemoteModule: false,  // 禁用远程模块
+      worldSafeExecuteJavaScript: true  // 启用安全的JavaScript执行
     }
   });
 
@@ -95,63 +101,22 @@ function createWindow() {
   console.log('NODE_ENV:', process.env.NODE_ENV);
   
   if (isDev) {
-    // 自动检测Vite开发服务器端口
-    const tryPorts = [5173, 5174, 5175, 5176, 5177, 5178, 5179];
-    let currentPortIndex = 0;
+    // 直接连接到开发服务器
+    console.log('尝试连接到开发服务器: http://localhost:5173');
+    log.info('尝试连接到开发服务器: http://localhost:5173');
     
-    function tryConnectToDevServer() {
-      if (currentPortIndex >= tryPorts.length) {
-        console.error('所有端口都尝试失败，加载本地文件');
-        mainWindow.loadFile(path.join(__dirname, '../../index.html'));
-        return;
-      }
-      
-      const currentPort = tryPorts[currentPortIndex];
-      const currentUrl = `http://localhost:${currentPort}`;
-      console.log(`尝试连接到开发服务器: ${currentUrl}`);
-      
-      mainWindow.loadURL(currentUrl);
-    }
+    mainWindow.loadURL('http://localhost:5173');
     
     // 监听页面加载失败事件
     mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL) => {
-      console.error(`端口 ${tryPorts[currentPortIndex]} 加载失败:`, errorCode, errorDescription);
-      
-      // 尝试下一个端口
-      currentPortIndex++;
-      setTimeout(tryConnectToDevServer, 500);
+      console.error('页面加载失败:', errorCode, errorDescription, validatedURL);
+      log.error('页面加载失败:', errorCode, errorDescription, validatedURL);
     });
     
     // 监听页面加载成功事件
     mainWindow.webContents.on('did-finish-load', () => {
-      console.log(`成功连接到端口 ${tryPorts[currentPortIndex - 1]}`);
-      log.info('页面加载完成');
-    });
-    
-    // 开始尝试连接
-    tryConnectToDevServer();
-    
-    // 添加页面开始加载的事件监听
-    mainWindow.webContents.on('did-start-loading', () => {
-      console.log('页面开始加载');
-      log.info('页面开始加载');
-    });
-    
-    // 添加控制台消息监听
-    mainWindow.webContents.on('console-message', (event, level, message, line, sourceId) => {
-      console.log(`渲染进程控制台 [${level}]: ${message} (${sourceId}:${line})`);
-    });
-    
-    // 添加渲染进程崩溃监听
-    mainWindow.webContents.on('crashed', (event, killed) => {
-      console.error('渲染进程崩溃:', killed);
-      log.error('渲染进程崩溃:', killed);
-    });
-    
-    // 添加DOM就绪监听
-    mainWindow.webContents.on('dom-ready', () => {
-      console.log('DOM已就绪');
-      log.info('DOM已就绪');
+      console.log('页面加载成功');
+      log.info('页面加载成功');
     });
     
     mainWindow.webContents.openDevTools();

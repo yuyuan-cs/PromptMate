@@ -164,6 +164,26 @@
   .titlebar-no-drag {
     -webkit-app-region: no-drag;
   }
+  
+  /* Windows窗口控制按钮样式优化 */
+  .window-control-button {
+    @apply transition-all duration-200 ease-in-out;
+    @apply hover:bg-muted/60 active:bg-muted/80;
+    @apply focus:outline-none focus:ring-2 focus:ring-ring/50 focus:ring-offset-1;
+  }
+  
+  /* 关闭按钮特殊样式 */
+  .window-control-close {
+    @apply hover:bg-destructive/10 hover:text-destructive;
+    @apply active:bg-destructive/20;
+  }
+  
+  /* 确保按钮在Windows下有足够的点击区域 */
+  .window-control-button {
+    min-width: 36px;
+    min-height: 36px;
+    @apply flex items-center justify-center;
+  }
 }
 
 @layer utilities {

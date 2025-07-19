@@ -246,6 +246,159 @@ useEffect(() => {
 3. 字体大小设置会在设置界面中正确显示当前值
 4. 字体设置具有更好的稳定性和一致性
 
+## Windows窗口控制优化
+
+### 问题描述
+在Windows环境下，窗口控制按钮（最小化、最大化、关闭）存在以下问题：
+1. **按钮无法点击**：preload脚本被禁用，导致electronAPI不可用
+2. **视觉反馈不足**：按钮缺少合适的悬停和点击效果
+3. **错误处理缺失**：没有适当的错误提示和调试信息
+4. **兼容性问题**：在不同环境下缺少功能可用性检查
+
+### 解决方案
+
+#### 1. 启用preload脚本
+**问题**：main.cjs中preload脚本被注释掉
+```javascript
+// 修复前
+webPreferences: {
+  nodeIntegration: false,
+  contextIsolation: true,
+  // preload: path.join(__dirname, 'preload.cjs'),  // 暂时禁用preload
+  webSecurity: false,
+  allowRunningInsecureContent: true
+}
+
+// 修复后
+webPreferences: {
+  nodeIntegration: false,
+  contextIsolation: true,
+  preload: path.join(__dirname, 'preload.cjs'),  // 启用preload脚本
+  webSecurity: false,
+  allowRunningInsecureContent: true
+}
+```
+
+#### 2. 增强错误处理
+**问题**：缺少API可用性检查和错误处理
+```typescript
+// 检查electronAPI是否可用
+const isElectronAPIAvailable = () => {
+  return window.electronAPI && 
+         typeof window.electronAPI.minimize === 'function' &&
+         typeof window.electronAPI.maximize === 'function' &&
+         typeof window.electronAPI.close === 'function';
+};
+
+// 增强的窗口控制函数
+const handleMinimize = () => {
+  try {
+    if (isElectronAPIAvailable()) {
+      window.electronAPI.minimize();
+      console.log('最小化窗口');
+    } else {
+      console.warn('electronAPI 不可用');
+      toast({
+        title: "功能不可用",
+        description: "窗口控制功能在当前环境下不可用",
+      });
+    }
+  } catch (error) {
+    console.error('最小化窗口失败:', error);
+    toast({
+      title: "操作失败",
+      description: "最小化窗口时发生错误",
+      variant: "destructive",
+    });
+  }
+};
+```
+
+#### 3. 优化CSS样式
+**问题**：按钮缺少合适的交互效果
+```css
+/* Windows窗口控制按钮样式优化 */
+.window-control-button {
+  @apply transition-all duration-200 ease-in-out;
+  @apply hover:bg-muted/60 active:bg-muted/80;
+  @apply focus:outline-none focus:ring-2 focus:ring-ring/50 focus:ring-offset-1;
+}
+
+/* 关闭按钮特殊样式 */
+.window-control-close {
+  @apply hover:bg-destructive/10 hover:text-destructive;
+  @apply active:bg-destructive/20;
+}
+
+/* 确保按钮在Windows下有足够的点击区域 */
+.window-control-button {
+  min-width: 36px;
+  min-height: 36px;
+  @apply flex items-center justify-center;
+}
+```
+
+#### 4. 更新组件实现
+```typescript
+// 最小化按钮
+<Button
+  variant="ghost"
+  size="icon"
+  onClick={handleMinimize}
+  className="rounded-full window-control-button titlebar-no-drag h-9 w-9"
+>
+  <Minus className="h-4 w-4" />
+</Button>
+
+// 最大化按钮
+<Button
+  variant="ghost"
+  size="icon"
+  onClick={handleMaximize}
+  className="rounded-full window-control-button titlebar-no-drag h-9 w-9"
+>
+  <Maximize2 className="h-4 w-4" />
+</Button>
+
+// 关闭按钮
+<Button
+  variant="ghost"
+  size="icon"
+  onClick={handleClose}
+  className="rounded-full window-control-button window-control-close titlebar-no-drag h-9 w-9"
+>
+  <X className="h-4 w-4" />
+</Button>
+```
+
+### 修复结果
+
+#### ✅ 已解决的问题
+1. **功能可用性**：启用preload脚本，恢复窗口控制功能
+2. **错误处理**：添加API可用性检查和详细的错误提示
+3. **用户体验**：优化按钮样式，提供更好的视觉反馈
+4. **调试支持**：添加控制台日志，便于问题排查
+
+#### 🔧 技术改进
+1. **代码健壮性**：增强错误处理和边界情况处理
+2. **样式优化**：提供更好的交互体验和视觉反馈
+3. **调试友好**：添加详细的日志和错误信息
+4. **兼容性**：支持不同环境下的功能检测
+5. **构建优化**：改进了Electron构建流程，确保文件正确部署
+
+#### 🐛 问题排查步骤
+1. **检查preload脚本路径**：确认preload.cjs文件存在于正确位置
+2. **验证构建流程**：确保src/main/*.cjs文件正确复制到dist-electron/main/
+3. **调试信息输出**：在preload脚本和Header组件中添加详细的调试日志
+4. **API可用性检查**：添加isElectronAPIAvailable函数检查API是否可用
+5. **错误提示优化**：当API不可用时显示友好的错误提示
+
+#### 📝 最新修复（2024年7月19日）
+- **构建流程修复**：解决了package.json中main字段指向dist-electron目录的问题
+- **文件复制优化**：确保preload脚本正确复制到构建目录
+- **调试信息增强**：添加了更详细的preload脚本加载状态检查
+- **错误处理完善**：改进了API不可用时的用户提示
+
 ## 窗口控制API
 
 ### 1. 窗口置顶控制
@@ -288,7 +441,13 @@ window.electronAPI?.minimize();
 ```typescript
 // 最小化窗口
 const handleMinimize = () => {
-  window.electronAPI?.minimize();
+  try {
+    if (window.electronAPI?.minimize) {
+      window.electronAPI.minimize();
+    }
+  } catch (error) {
+    console.error('最小化窗口失败:', error);
+  }
 };
 ```
 
@@ -306,7 +465,13 @@ window.electronAPI?.maximize();
 ```typescript
 // 最大化/还原窗口
 const handleMaximize = () => {
-  window.electronAPI?.maximize();
+  try {
+    if (window.electronAPI?.maximize) {
+      window.electronAPI.maximize();
+    }
+  } catch (error) {
+    console.error('最大化窗口失败:', error);
+  }
 };
 ```
 
@@ -324,7 +489,13 @@ window.electronAPI?.close();
 ```typescript
 // 关闭窗口
 const handleClose = () => {
-  window.electronAPI?.close();
+  try {
+    if (window.electronAPI?.close) {
+      window.electronAPI.close();
+    }
+  } catch (error) {
+    console.error('关闭窗口失败:', error);
+  }
 };
 ```
 

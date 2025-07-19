@@ -1,5 +1,15 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
+console.log('Preload script loaded successfully');
+console.log('contextBridge available:', !!contextBridge);
+console.log('ipcRenderer available:', !!ipcRenderer);
+
+// 在渲染进程中显示日志
+window.addEventListener('DOMContentLoaded', () => {
+  console.log('Preload script: DOMContentLoaded event fired');
+  console.log('Preload script: window.electronAPI will be available');
+});
+
 // 暴露给渲染进程的API
 contextBridge.exposeInMainWorld('electronAPI', {
   // 设置管理
@@ -20,3 +30,5 @@ contextBridge.exposeInMainWorld('electronAPI', {
   exportData: (options) => ipcRenderer.invoke('export-data', options),
   importData: (options) => ipcRenderer.invoke('import-data', options)
 }); 
+
+console.log('electronAPI exposed to renderer process');
