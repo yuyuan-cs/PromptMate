@@ -9,7 +9,7 @@ const __dirname = dirname(__filename);
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  base: process.env.ELECTRON_RENDERER_URL ? './' : '/',
+  base: '/',
   plugins: [
     react(),
   ],
@@ -29,6 +29,24 @@ export default defineConfig({
         drop_console: false,
         drop_debugger: false
       }
-    }
+    },
+    rollupOptions: {
+      output: {
+        assetFileNames: (assetInfo) => {
+          const info = assetInfo.name?.split('.') || [];
+          const ext = info[info.length - 1] || 'unknown';
+          if (/\.(css)$/.test(assetInfo.name || '')) {
+            return `assets/[name].[hash].${ext}`;
+          }
+          return `assets/[name].[hash].${ext}`;
+        },
+        chunkFileNames: 'assets/[name].[hash].js',
+        entryFileNames: 'assets/[name].[hash].js',
+      },
+    },
+  },
+  server: {
+    port: 5173,
+    strictPort: false, // 不锁定端口，允许自动选择
   }
 });

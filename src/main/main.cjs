@@ -81,50 +81,77 @@ function createWindow() {
       nodeIntegration: false,
       contextIsolation: true,
       preload: path.join(__dirname, 'preload.cjs'),
-      webSecurity: false,  // 开发环境禁用web安全
-      allowRunningInsecureContent: true  // 允许运行不安全内容
+      webSecurity: true,  // 启用web安全
+      allowRunningInsecureContent: false,  // 禁止运行不安全内容
+      additionalArguments: [
+        '--disable-features=VizDisplayCompositor'
+      ]
     }
   });
 
   // 根据环境加载应用（开发环境或生产环境）
   const isDev = process.env.NODE_ENV === 'development';
+  console.log('当前环境:', isDev ? 'development' : 'production');
+  console.log('NODE_ENV:', process.env.NODE_ENV);
+  
   if (isDev) {
-    // 从环境变量获取端口，如果没有则使用默认端口
-    const port = process.env.VITE_PORT || 5173;
-    const devServerUrl = `http://localhost:${port}`;
+    // 自动检测Vite开发服务器端口
+    const tryPorts = [5173, 5174, 5175, 5176, 5177, 5178, 5179];
+    let currentPortIndex = 0;
     
-    // 设置环境变量，让 Vite 知道这是 Electron 环境
-    process.env.ELECTRON_RENDERER_URL = devServerUrl;
+    function tryConnectToDevServer() {
+      if (currentPortIndex >= tryPorts.length) {
+        console.error('所有端口都尝试失败，加载本地文件');
+        mainWindow.loadFile(path.join(__dirname, '../../index.html'));
+        return;
+      }
+      
+      const currentPort = tryPorts[currentPortIndex];
+      const currentUrl = `http://localhost:${currentPort}`;
+      console.log(`尝试连接到开发服务器: ${currentUrl}`);
+      
+      mainWindow.loadURL(currentUrl);
+    }
     
-    console.log(`尝试连接到开发服务器: ${devServerUrl}`);
-    mainWindow.loadURL(devServerUrl);
+    // 监听页面加载失败事件
+    mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL) => {
+      console.error(`端口 ${tryPorts[currentPortIndex]} 加载失败:`, errorCode, errorDescription);
+      
+      // 尝试下一个端口
+      currentPortIndex++;
+      setTimeout(tryConnectToDevServer, 500);
+    });
     
-    // 添加页面加载成功的事件监听
+    // 监听页面加载成功事件
     mainWindow.webContents.on('did-finish-load', () => {
-      console.log('页面加载完成');
+      console.log(`成功连接到端口 ${tryPorts[currentPortIndex - 1]}`);
       log.info('页面加载完成');
     });
     
-    // 添加错误处理
-    mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL) => {
-      console.error('页面加载失败:', errorCode, errorDescription, validatedURL);
-      log.error('页面加载失败:', errorCode, errorDescription, validatedURL);
-      
-      // 如果加载失败，尝试其他端口
-      const fallbackPorts = [5174, 5175, 5176, 5177];
-      for (const fallbackPort of fallbackPorts) {
-        if (fallbackPort !== port) {
-          const fallbackUrl = `http://localhost:${fallbackPort}`;
-          console.log(`尝试备用端口: ${fallbackUrl}`);
-          mainWindow.loadURL(fallbackUrl);
-          break;
-        }
-      }
+    // 开始尝试连接
+    tryConnectToDevServer();
+    
+    // 添加页面开始加载的事件监听
+    mainWindow.webContents.on('did-start-loading', () => {
+      console.log('页面开始加载');
+      log.info('页面开始加载');
     });
     
     // 添加控制台消息监听
     mainWindow.webContents.on('console-message', (event, level, message, line, sourceId) => {
       console.log(`渲染进程控制台 [${level}]: ${message} (${sourceId}:${line})`);
+    });
+    
+    // 添加渲染进程崩溃监听
+    mainWindow.webContents.on('crashed', (event, killed) => {
+      console.error('渲染进程崩溃:', killed);
+      log.error('渲染进程崩溃:', killed);
+    });
+    
+    // 添加DOM就绪监听
+    mainWindow.webContents.on('dom-ready', () => {
+      console.log('DOM已就绪');
+      log.info('DOM已就绪');
     });
     
     mainWindow.webContents.openDevTools();

@@ -59,15 +59,18 @@ cd promptmate
 # 安装依赖
 npm install
 
+
 # 启动应用
-npm start
+npm run dev && npx electron .
+
+npm run electron:start
 ```
 
 ## 开发
 
 ```bash
 # 开发模式启动
-npm start
+npm run dev && npx electron .
 
 # 打包应用
 npm run build

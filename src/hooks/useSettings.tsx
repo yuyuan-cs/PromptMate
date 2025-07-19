@@ -15,6 +15,7 @@ const FONT_FAMILIES = {
   '苹方': '"PingFang SC", "SF Pro SC", "苹方-简", sans-serif',
   '微软雅黑': '"Microsoft YaHei", "微软雅黑", sans-serif',
 };
+
 // 设置主题
 export function useSettings() {
   const [settings, setSettings] = useState<Settings>(loadSettings());
@@ -51,7 +52,7 @@ export function useSettings() {
     // 移除所有主题相关的类
     document.documentElement.classList.remove("light", "dark");
     
-    // 先清除所有自定义主题变量
+    // 先清除所有自定义主题变量（但不影响字体相关变量）
     resetThemeVariables();
     
     // 应用深色/浅色模式
@@ -67,10 +68,11 @@ export function useSettings() {
     }
   }, [systemTheme, settings.customTheme]);
   
-  // 重置主题变量到默认状态
+  // 重置主题变量到默认状态（保留字体相关变量）
   const resetThemeVariables = useCallback(() => {
     const root = document.documentElement;
-    const variableNames = [
+    // 只清除主题相关的CSS变量，保留字体相关的变量
+    const themeVariableNames = [
       "--background", "--foreground", "--card", "--card-foreground",
       "--popover", "--popover-foreground", "--primary", "--primary-foreground",
       "--secondary", "--secondary-foreground", "--muted", "--muted-foreground",
@@ -80,19 +82,22 @@ export function useSettings() {
       "--sidebar-accent-foreground", "--sidebar-border", "--sidebar-ring"
     ];
     
-    // 清除所有主题相关的CSS变量
-    variableNames.forEach(varName => {
+    // 清除所有主题相关的CSS变量，但保留字体相关变量
+    themeVariableNames.forEach(varName => {
       root.style.removeProperty(varName);
     });
+    
+    // 确保字体相关变量不被清除
+    // 这些变量会在 applyFont 中重新设置
   }, []);
 
   // 应用字体和字体大小
   const applyFont = useCallback((fontName: string, fontSize: number) => {
     const fontFamily = FONT_FAMILIES[fontName as keyof typeof FONT_FAMILIES] || fontName;
     
-    // 设置CSS变量
-    document.documentElement.style.setProperty('--app-font', fontFamily);
-    document.documentElement.style.setProperty('--app-font-size', `${fontSize}px`);
+    // 设置CSS变量，使用!important确保优先级
+    document.documentElement.style.setProperty('--app-font', fontFamily, 'important');
+    document.documentElement.style.setProperty('--app-font-size', `${fontSize}px`, 'important');
     
     // 强制应用到整个文档
     document.documentElement.style.fontFamily = fontFamily;
@@ -105,6 +110,10 @@ export function useSettings() {
     const styleElement = document.getElementById('font-override-style') || document.createElement('style');
     styleElement.id = 'font-override-style';
     styleElement.textContent = `
+      :root {
+        --app-font: ${fontFamily} !important;
+        --app-font-size: ${fontSize}px !important;
+      }
       * {
         font-family: ${fontFamily} !important;
       }
@@ -120,14 +129,34 @@ export function useSettings() {
     if (!document.getElementById('font-override-style')) {
       document.head.appendChild(styleElement);
     }
+    
+    // 确保字体设置被正确应用
+    console.log(`字体已应用: ${fontName} (${fontSize}px)`);
   }, []);
 
-  // 保存设置
+  // 保存设置并应用主题和字体
   useEffect(() => {
     saveSettings(settings);
+    
+    // 先应用主题
     applyTheme(settings.theme);
-    applyFont(settings.font, settings.fontSize);
+    
+    // 主题应用完成后，立即应用字体设置
+    // 使用 requestAnimationFrame 确保在下一帧应用字体
+    requestAnimationFrame(() => {
+      applyFont(settings.font, settings.fontSize);
+    });
+    
+    // 额外确保字体设置不被覆盖
+    setTimeout(() => {
+      applyFont(settings.font, settings.fontSize);
+    }, 50);
   }, [settings, applyTheme, applyFont]);
+
+  // 单独监听字体和字体大小的变化，确保及时应用
+  useEffect(() => {
+    applyFont(settings.font, settings.fontSize);
+  }, [settings.font, settings.fontSize, applyFont]);
 
   const updateSettings = (newSettings: Partial<Settings>) => {
     // 检查字体是否变更

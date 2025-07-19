@@ -607,15 +607,15 @@ export function Sidebar({ className }: { className?: string }) {
       className={cn(
         "h-full border-r relative transition-all duration-300 flex-shrink-0 bg-background flex flex-col",
         isCollapsed && "w-[60px]",
+        !isCollapsed && "sidebar-dynamic-width",
         className
       )}
-      style={!isCollapsed ? { width: `${sidebarWidth}px` } : undefined}
+      style={!isCollapsed ? { '--sidebar-width': `${sidebarWidth}px` } as React.CSSProperties : undefined}
     >
       {/* 拖拽调整区域 - 整个右边缘 */}
       <div
-        className="absolute top-0 right-0 w-4 h-full cursor-col-resize z-30"
+        className="absolute top-0 right-0 w-4 h-full cursor-col-resize z-30 transform translate-x-0.5"
         onMouseDown={handleMouseDown}
-        style={{transform: 'translateX(2px)'}}
       />
 
       {/* 顶部标题和按钮 */}
@@ -1147,6 +1147,7 @@ export function Sidebar({ className }: { className?: string }) {
                     className="hidden"
                     accept="image/*"
                     onChange={handleNewImageUpload}
+                    aria-label="选择图片文件"
                   />
                 </div>
                 
@@ -1177,6 +1178,7 @@ export function Sidebar({ className }: { className?: string }) {
                               handleDeleteNewImage(index);
                             }}
                             type="button"
+                            aria-label="删除图片"
                           >
                             <X className="h-3 w-3 text-white" />
                           </button>

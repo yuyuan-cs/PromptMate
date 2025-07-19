@@ -67,7 +67,7 @@
     --sidebar-ring: 217.2 91.2% 59.8%;
 
     --app-font: system-ui, sans-serif;
-    --app-font-size: 16px;
+    --app-font-size: 14px; /* 改为默认值14px，与defaultSettings一致 */
     
     --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
     --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
@@ -149,6 +149,20 @@
   
   input:focus {
     @apply ring-1 ring-ring/30 ring-offset-0 !important;
+  }
+  
+  /* 侧边栏动态宽度 */
+  .sidebar-dynamic-width {
+    width: var(--sidebar-width, 180px);
+  }
+  
+  /* Electron窗口拖拽区域 */
+  .titlebar-drag {
+    -webkit-app-region: drag;
+  }
+  
+  .titlebar-no-drag {
+    -webkit-app-region: no-drag;
   }
 }
 

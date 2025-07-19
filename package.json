@@ -26,7 +26,8 @@
     "dist:all": "electron-builder --mac universal --config.electronDownload.mirror=https://npmmirror.com/mirrors/electron/ && electron-builder --win --x64 --arm64 --config.electronDownload.mirror=https://npmmirror.com/mirrors/electron/",
     "electron:dev": "concurrently \"vite\" \"wait-on http://localhost:5173 http://localhost:5174 http://localhost:5175 && electron .\"",
     "electron:build": "vite build && npm run build:electron && electron-builder",
-    "electron:preview": "vite build && npm run build:electron && electron ."
+    "electron:preview": "vite build && npm run build:electron && electron .",
+    "electron:start": "set NODE_ENV=development && electron ."
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.0",
