@@ -80,14 +80,53 @@ function createWindow() {
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
-      preload: path.join(__dirname, 'preload.cjs')
+      preload: path.join(__dirname, 'preload.cjs'),
+      webSecurity: false,  // 开发环境禁用web安全
+      allowRunningInsecureContent: true  // 允许运行不安全内容
     }
   });
 
   // 根据环境加载应用（开发环境或生产环境）
   const isDev = process.env.NODE_ENV === 'development';
   if (isDev) {
-    mainWindow.loadURL('http://localhost:5173');
+    // 从环境变量获取端口，如果没有则使用默认端口
+    const port = process.env.VITE_PORT || 5173;
+    const devServerUrl = `http://localhost:${port}`;
+    
+    // 设置环境变量，让 Vite 知道这是 Electron 环境
+    process.env.ELECTRON_RENDERER_URL = devServerUrl;
+    
+    console.log(`尝试连接到开发服务器: ${devServerUrl}`);
+    mainWindow.loadURL(devServerUrl);
+    
+    // 添加页面加载成功的事件监听
+    mainWindow.webContents.on('did-finish-load', () => {
+      console.log('页面加载完成');
+      log.info('页面加载完成');
+    });
+    
+    // 添加错误处理
+    mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL) => {
+      console.error('页面加载失败:', errorCode, errorDescription, validatedURL);
+      log.error('页面加载失败:', errorCode, errorDescription, validatedURL);
+      
+      // 如果加载失败，尝试其他端口
+      const fallbackPorts = [5174, 5175, 5176, 5177];
+      for (const fallbackPort of fallbackPorts) {
+        if (fallbackPort !== port) {
+          const fallbackUrl = `http://localhost:${fallbackPort}`;
+          console.log(`尝试备用端口: ${fallbackUrl}`);
+          mainWindow.loadURL(fallbackUrl);
+          break;
+        }
+      }
+    });
+    
+    // 添加控制台消息监听
+    mainWindow.webContents.on('console-message', (event, level, message, line, sourceId) => {
+      console.log(`渲染进程控制台 [${level}]: ${message} (${sourceId}:${line})`);
+    });
+    
     mainWindow.webContents.openDevTools();
   } else {
     mainWindow.loadFile(path.join(__dirname, '../../dist/index.html'));
