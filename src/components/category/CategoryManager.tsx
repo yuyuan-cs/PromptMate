@@ -16,7 +16,7 @@ import { Category } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
-import { getIconComponent } from "@/lib/icons";
+import { CategoryIcon } from "./CategoryIcon";
 
 interface CategoryManagerProps {
   open: boolean;
@@ -166,10 +166,7 @@ export function CategoryManager({ open, onOpenChange }: CategoryManagerProps) {
                       // 查看模式
                       <div className="flex items-center justify-between h-10">
                         <div className="flex items-center">
-                          {(() => {
-                            const IconComponent = getIconComponent(category.icon);
-                            return <IconComponent className="h-4 w-4 mr-2" />;
-                          })()}
+                          <CategoryIcon iconName={category.icon} className="h-4 w-4 mr-2" />
                           <span>{category.name}</span>
                         </div>
                         

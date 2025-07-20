@@ -79,20 +79,7 @@ export const themePresets: ThemePreset[] = [
         "--sidebar-primary": "200 98% 39%",
         "--sidebar-accent": "199 100% 96%"
       },
-      dark: {
-        "--background": "202 80% 16%",
-        "--foreground": "210 40% 98%",
-        "--primary": "199 89% 48%",
-        "--primary-foreground": "0 0% 100%",
-        "--secondary": "200 50% 20%",
-        "--secondary-foreground": "210 40% 98%",
-        "--accent": "200 50% 20%",
-        "--accent-foreground": "210 40% 98%",
-        "--sidebar-background": "203 70% 16%",
-        "--sidebar-foreground": "210 40% 98%",
-        "--sidebar-primary": "199 89% 48%",
-        "--sidebar-accent": "200 50% 18%"
-      }
+      dark: {}
     }
   },
   {
@@ -121,20 +108,7 @@ export const themePresets: ThemePreset[] = [
         "--sidebar-primary": "270 76% 56%",
         "--sidebar-accent": "270 100% 96%"
       },
-      dark: {
-        "--background": "280 60% 15%",
-        "--foreground": "270 20% 96%",
-        "--primary": "270 76% 56%",
-        "--primary-foreground": "0 0% 100%",
-        "--secondary": "280 30% 20%",
-        "--secondary-foreground": "270 20% 96%",
-        "--accent": "280 30% 20%",
-        "--accent-foreground": "270 20% 96%",
-        "--sidebar-background": "280 50% 14%",
-        "--sidebar-foreground": "270 20% 96%",
-        "--sidebar-primary": "270 76% 56%",
-        "--sidebar-accent": "280 30% 18%"
-      }
+      dark: {}
     }
   },
   {
@@ -163,62 +137,36 @@ export const themePresets: ThemePreset[] = [
         "--sidebar-primary": "142 71% 36%",
         "--sidebar-accent": "140 84% 96%"
       },
-      dark: {
-        "--background": "145 55% 14%",
-        "--foreground": "140 10% 96%",
-        "--primary": "142 71% 36%",
-        "--primary-foreground": "0 0% 100%",
-        "--secondary": "145 25% 18%",
-        "--secondary-foreground": "140 10% 96%",
-        "--accent": "145 25% 18%",
-        "--accent-foreground": "140 10% 96%",
-        "--sidebar-background": "145 45% 13%",
-        "--sidebar-foreground": "140 10% 96%",
-        "--sidebar-primary": "142 71% 36%",
-        "--sidebar-accent": "145 25% 16%"
-      }
+      dark: {}
     }
   },
   {
     id: "orange",
     name: "橙色主题",
-    description: "充满活力的橙色主题",
+    description: "活力橙色主题，充满能量",
     isDefault: false,
     preview: {
       background: "#fff7ed",
-      foreground: "#7c2d12",
+      foreground: "#9a3412",
       primary: "#ea580c",
-      accent: "#ffedd5",
+      accent: "#fed7aa",
     },
     variables: {
       light: {
-        "--background": "30 100% 96%",
-        "--foreground": "15 80% 28%",
-        "--primary": "23 96% 48%",
+        "--background": "30 100% 98%",
+        "--foreground": "20 90% 30%",
+        "--primary": "25 95% 47%",
         "--primary-foreground": "0 0% 100%",
-        "--secondary": "30 100% 92%",
-        "--secondary-foreground": "23 96% 48%",
-        "--accent": "30 100% 92%",
-        "--accent-foreground": "23 96% 48%",
-        "--sidebar-background": "30 100% 97%",
-        "--sidebar-foreground": "15 80% 28%",
-        "--sidebar-primary": "23 96% 48%",
-        "--sidebar-accent": "30 100% 94%"
+        "--secondary": "30 100% 94%",
+        "--secondary-foreground": "25 95% 47%",
+        "--accent": "30 100% 94%",
+        "--accent-foreground": "25 95% 47%",
+        "--sidebar-background": "30 100% 99%",
+        "--sidebar-foreground": "20 90% 30%",
+        "--sidebar-primary": "25 95% 47%",
+        "--sidebar-accent": "30 100% 96%"
       },
-      dark: {
-        "--background": "20 60% 15%",
-        "--foreground": "30 10% 92%",
-        "--primary": "23 96% 48%",
-        "--primary-foreground": "0 0% 100%",
-        "--secondary": "20 30% 18%",
-        "--secondary-foreground": "30 10% 92%",
-        "--accent": "20 30% 18%",
-        "--accent-foreground": "30 10% 92%",
-        "--sidebar-background": "20 50% 14%",
-        "--sidebar-foreground": "30 10% 92%",
-        "--sidebar-primary": "23 96% 48%",
-        "--sidebar-accent": "20 30% 16%"
-      }
+      dark: {}
     }
   },
   {
@@ -247,20 +195,7 @@ export const themePresets: ThemePreset[] = [
         "--sidebar-primary": "0 72% 51%",
         "--sidebar-accent": "0 100% 96%"
       },
-      dark: {
-        "--background": "0 60% 15%",
-        "--foreground": "0 10% 92%",
-        "--primary": "0 72% 51%",
-        "--primary-foreground": "0 0% 100%",
-        "--secondary": "0 30% 18%",
-        "--secondary-foreground": "0 10% 92%",
-        "--accent": "0 30% 18%",
-        "--accent-foreground": "0 10% 92%",
-        "--sidebar-background": "0 50% 14%",
-        "--sidebar-foreground": "0 10% 92%",
-        "--sidebar-primary": "0 72% 51%",
-        "--sidebar-accent": "0 30% 16%"
-      }
+      dark: {}
     }
   },
   {
@@ -287,18 +222,7 @@ export const themePresets: ThemePreset[] = [
         "--sidebar-background": "214 32% 91%",
         "--sidebar-foreground": "222 47% 11%"
       },
-      dark: {
-        "--background": "222 84% 5%",
-        "--foreground": "210 40% 98%",
-        "--primary": "217 91.2% 59.8%",
-        "--primary-foreground": "0 0% 100%",
-        "--secondary": "217 32% 18%",
-        "--secondary-foreground": "210 40% 98%",
-        "--accent": "217 32% 18%",
-        "--accent-foreground": "210 40% 98%",
-        "--sidebar-background": "222 74% 5%",
-        "--sidebar-foreground": "210 40% 98%"
-      }
+      dark: {}
     }
   },
   {
@@ -327,20 +251,7 @@ export const themePresets: ThemePreset[] = [
         "--sidebar-primary": "25 95% 27%",
         "--sidebar-accent": "40 100% 94%"
       },
-      dark: {
-        "--background": "25 30% 16%",
-        "--foreground": "30 5% 92%",
-        "--primary": "40 92% 75%",
-        "--primary-foreground": "25 30% 16%",
-        "--secondary": "25 20% 20%",
-        "--secondary-foreground": "30 5% 92%",
-        "--accent": "25 20% 20%",
-        "--accent-foreground": "30 5% 92%",
-        "--sidebar-background": "25 25% 15%",
-        "--sidebar-foreground": "30 5% 92%",
-        "--sidebar-primary": "40 92% 75%",
-        "--sidebar-accent": "25 20% 18%"
-      }
+      dark: {}
     }
   },
 
@@ -374,20 +285,64 @@ export function applyThemeVariables(theme: ThemeType, mode: 'light' | 'dark', cu
   const preset = getThemePreset(theme);
   if (!preset) return;
 
-    // 处理自定义主题
-    if (theme === 'custom' && customColors) {
+  // 处理自定义主题
+  if (theme === 'custom' && customColors) {
     // 应用自定义颜色
     applyCustomThemeVariables(customColors, mode);
     return;
-    }
+  }
 
-  const variables = preset.variables[mode];
-  if (!variables) return;
+  // 处理预设主题
+  if (preset.isDefault) {
+    // 默认主题使用原有的CSS变量
+    const variables = preset.variables[mode];
+    if (!variables) return;
 
-  // 应用CSS变量
+    // 应用CSS变量
+    const root = document.documentElement;
+    Object.entries(variables).forEach(([key, value]) => {
+      root.style.setProperty(key, value);
+    });
+  } else {
+    // 非默认主题使用智能深色化处理
+    applyPresetThemeWithSmartDarkening(preset, mode);
+  }
+}
+
+// 智能深色化预设主题
+function applyPresetThemeWithSmartDarkening(preset: ThemePreset, mode: 'light' | 'dark'): void {
   const root = document.documentElement;
-  Object.entries(variables).forEach(([key, value]) => {
-    root.style.setProperty(key, value);
+  const isDark = mode === 'dark';
+  
+  // 获取浅色模式的变量作为基础
+  const lightVariables = preset.variables.light;
+  if (!lightVariables) return;
+  
+  // 智能深色化处理
+  Object.entries(lightVariables).forEach(([key, value]) => {
+    let processedValue = value;
+    
+    if (isDark) {
+      // 根据变量类型进行不同的深色化处理
+      if (key.includes('background') || key.includes('card') || key.includes('popover')) {
+        // 背景色：降低亮度
+        processedValue = darkenColor(value, 0.4);
+      } else if (key.includes('foreground') || key.includes('text')) {
+        // 前景色：提高亮度
+        processedValue = lightenColor(value, 0.3);
+      } else if (key.includes('primary')) {
+        // 主色调：适当提高亮度以保持可见性
+        processedValue = lightenColor(value, 0.2);
+      } else if (key.includes('accent') || key.includes('secondary') || key.includes('muted')) {
+        // 强调色：降低亮度
+        processedValue = darkenColor(value, 0.3);
+      }
+      
+      // 确保对比度
+      processedValue = adjustContrast(processedValue, isDark);
+    }
+    
+    root.style.setProperty(key, processedValue);
   });
 }
 
@@ -422,10 +377,74 @@ export function hexToHsl(hex: string): string {
     }
     
     return `${h} ${s}% ${l}%`;
-  }
+}
+
+// 将HSL色值字符串转换为对象
+export function hslToObject(hsl: string): { h: number; s: number; l: number } {
+    const [h, s, l] = hsl.split(' ').map(val => parseFloat(val));
+    return { h, s, l };
+}
+
+// 将HSL对象转换为字符串
+export function hslToString(hsl: { h: number; s: number; l: number }): string {
+    return `${hsl.h} ${hsl.s}% ${hsl.l}%`;
+}
+
+// 智能深色化颜色处理
+export function darkenColor(hsl: string, factor: number = 0.3): string {
+    const color = hslToObject(hsl);
+    
+    // 降低亮度，但保持色相和饱和度
+    color.l = Math.max(5, color.l * (1 - factor));
+    
+    // 适当调整饱和度，让深色模式更自然
+    if (color.l < 20) {
+        color.s = Math.min(100, color.s * 1.2);
+    }
+    
+    return hslToString(color);
+}
+
+// 智能亮化颜色处理
+export function lightenColor(hsl: string, factor: number = 0.3): string {
+    const color = hslToObject(hsl);
+    
+    // 提高亮度，但保持色相和饱和度
+    color.l = Math.min(95, color.l * (1 + factor));
+    
+    // 适当调整饱和度，让浅色模式更自然
+    if (color.l > 80) {
+        color.s = Math.max(0, color.s * 0.8);
+    }
+    
+    return hslToString(color);
+}
+
+// 智能对比度调整
+export function adjustContrast(hsl: string, isDark: boolean): string {
+    const color = hslToObject(hsl);
+    
+    if (isDark) {
+        // 深色模式下，确保文字有足够的对比度
+        if (color.l > 70) {
+            color.l = Math.max(85, color.l);
+        } else if (color.l < 30) {
+            color.l = Math.min(15, color.l);
+        }
+    } else {
+        // 浅色模式下，确保文字有足够的对比度
+        if (color.l > 70) {
+            color.l = Math.max(85, color.l);
+        } else if (color.l < 30) {
+            color.l = Math.min(15, color.l);
+        }
+    }
+    
+    return hslToString(color);
+}
   
-  // 应用自定义主题变量
-  function applyCustomThemeVariables(colors: Settings['customTheme'], mode: 'light' | 'dark'): void {
+// 应用自定义主题变量
+function applyCustomThemeVariables(colors: Settings['customTheme'], mode: 'light' | 'dark'): void {
     if (!colors) return;
     
     const root = document.documentElement;
@@ -437,30 +456,40 @@ export function hexToHsl(hex: string): string {
     const primaryHsl = hexToHsl(colors.primary);
     const accentHsl = hexToHsl(colors.accent);
     
+    // 智能深色化处理
+    const processedBgHsl = isDark ? darkenColor(bgHsl, 0.4) : bgHsl;
+    const processedFgHsl = isDark ? lightenColor(fgHsl, 0.3) : fgHsl;
+    const processedPrimaryHsl = isDark ? lightenColor(primaryHsl, 0.2) : primaryHsl;
+    const processedAccentHsl = isDark ? darkenColor(accentHsl, 0.3) : accentHsl;
+    
+    // 确保对比度
+    const finalFgHsl = adjustContrast(processedFgHsl, isDark);
+    const finalPrimaryHsl = adjustContrast(processedPrimaryHsl, isDark);
+    
     // 设置基本变量
-    root.style.setProperty('--background', bgHsl);
-    root.style.setProperty('--foreground', fgHsl);
-    root.style.setProperty('--primary', primaryHsl);
+    root.style.setProperty('--background', processedBgHsl);
+    root.style.setProperty('--foreground', finalFgHsl);
+    root.style.setProperty('--primary', finalPrimaryHsl);
     root.style.setProperty('--primary-foreground', isDark ? '0 0% 100%' : '0 0% 0%');
-    root.style.setProperty('--accent', accentHsl);
-    root.style.setProperty('--accent-foreground', fgHsl);
+    root.style.setProperty('--accent', processedAccentHsl);
+    root.style.setProperty('--accent-foreground', finalFgHsl);
     
     // 派生其他变量
-    root.style.setProperty('--card', bgHsl);
-    root.style.setProperty('--card-foreground', fgHsl);
-    root.style.setProperty('--popover', bgHsl);
-    root.style.setProperty('--popover-foreground', fgHsl);
-    root.style.setProperty('--secondary', accentHsl);
-    root.style.setProperty('--secondary-foreground', fgHsl);
-    root.style.setProperty('--muted', accentHsl);
-    root.style.setProperty('--muted-foreground', fgHsl);
-    root.style.setProperty('--border', accentHsl);
+    root.style.setProperty('--card', processedBgHsl);
+    root.style.setProperty('--card-foreground', finalFgHsl);
+    root.style.setProperty('--popover', processedBgHsl);
+    root.style.setProperty('--popover-foreground', finalFgHsl);
+    root.style.setProperty('--secondary', processedAccentHsl);
+    root.style.setProperty('--secondary-foreground', finalFgHsl);
+    root.style.setProperty('--muted', processedAccentHsl);
+    root.style.setProperty('--muted-foreground', finalFgHsl);
+    root.style.setProperty('--border', processedAccentHsl);
     
     // 侧边栏变量
-    root.style.setProperty('--sidebar-background', bgHsl);
-    root.style.setProperty('--sidebar-foreground', fgHsl);
-    root.style.setProperty('--sidebar-primary', primaryHsl);
+    root.style.setProperty('--sidebar-background', processedBgHsl);
+    root.style.setProperty('--sidebar-foreground', finalFgHsl);
+    root.style.setProperty('--sidebar-primary', finalPrimaryHsl);
     root.style.setProperty('--sidebar-primary-foreground', isDark ? '0 0% 100%' : '0 0% 0%');
-    root.style.setProperty('--sidebar-accent', accentHsl);
-    root.style.setProperty('--sidebar-accent-foreground', fgHsl);
-  }
+    root.style.setProperty('--sidebar-accent', processedAccentHsl);
+    root.style.setProperty('--sidebar-accent-foreground', finalFgHsl);
+}

@@ -1,14 +1,29 @@
 {
   "name": "promptmate",
   "private": true,
-  "version": "1.0.1",
+  "version": "1.0.3",
   "type": "commonjs",
   "main": "dist-electron/main/main.cjs",
+  "buildDate": "2025-07-20T06:29:56.653Z",
   "author": {
     "name": "泺源",
     "email": "yuyuan3162021@163.com"
   },
   "description": "PromptMate is a desktop application that allows you to create and manage your prompts.",
+  "homepage": "https://github.com/yy0691/PromptMate",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yy0691/PromptMate.git"
+  },
+  "keywords": [
+    "prompt",
+    "ai",
+    "desktop",
+    "electron",
+    "react",
+    "typescript"
+  ],
+  "license": "MIT",
   "scripts": {
     "dev": "vite",
     "build": "vite build && npm run build:electron",
@@ -27,7 +42,16 @@
     "electron:dev": "concurrently \"vite\" \"wait-on http://localhost:5173 http://localhost:5174 http://localhost:5175 && electron .\"",
     "electron:build": "vite build && npm run build:electron && electron-builder",
     "electron:preview": "vite build && npm run build:electron && electron .",
-    "electron:start": "set NODE_ENV=development && electron ."
+    "electron:start": "set NODE_ENV=development && electron .",
+    "version:patch": "node scripts/version-manager.js patch",
+    "version:minor": "node scripts/version-manager.js minor",
+    "version:major": "node scripts/version-manager.js major",
+    "release:patch": "npm run version:patch && npm run dist",
+    "release:minor": "npm run version:minor && npm run dist",
+    "release:major": "npm run version:major && npm run dist",
+    "release:win": "npm run version:patch && npm run dist:win",
+    "release:mac": "npm run version:patch && npm run dist:mac",
+    "release:all": "npm run version:patch && npm run dist:all"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.0",

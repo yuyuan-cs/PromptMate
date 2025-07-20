@@ -61,13 +61,33 @@ interface ElectronAPI {
   checkForUpdates: () => Promise<{
     success: boolean;
     hasUpdate: boolean;
-    version?: string;
+    currentVersion?: string;
+    latestVersion?: string;
+    releaseInfo?: {
+      version: string;
+      name: string;
+      body: string;
+      published_at: string;
+      html_url: string;
+      assets: any[];
+    };
+    updateType?: 'major' | 'minor' | 'patch';
     error?: string;
   }>;
   getAppInfo: () => Promise<{
     version: string;
     name: string;
     description: string;
+    author: {
+      name: string;
+      email: string;
+    };
+    homepage: string;
+    repository: string;
+    buildDate: string;
+    electronVersion: string;
+    nodeVersion: string;
+    chromeVersion: string;
   }>;
 }
 

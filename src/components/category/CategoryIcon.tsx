@@ -1,5 +1,6 @@
 import React from "react";
 import * as LucideIcons from "lucide-react";
+import { getIconComponent } from "@/lib/icons";
 
 interface CategoryIconProps {
   iconName: string;
@@ -7,11 +8,7 @@ interface CategoryIconProps {
 }
 
 export function CategoryIcon({ iconName, className = "h-5 w-5" }: CategoryIconProps) {
-  const Icon = LucideIcons[iconName as keyof typeof LucideIcons];
+  const IconComponent = getIconComponent(iconName);
   
-  if (!Icon) {
-    return <LucideIcons.Folder className={className} />;
-  }
-  
-  return <Icon className={className} />;
+  return <IconComponent className={className} />;
 } 

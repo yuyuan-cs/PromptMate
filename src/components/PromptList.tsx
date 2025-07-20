@@ -383,13 +383,13 @@ export const PromptList = memo(function PromptList({
     // Reset form
     setNewPromptTitle("");
     setNewPromptContent("");
-    setNewPromptCategory("general");
+    setNewPromptCategory(activeCategory || categories[0]?.id || "general");
     setNewPromptTags("");
     setNewPromptImages([]);
     setSelectedNewImageIndex(null);
     setNewImageCaption("");
     setShowNewPromptDialog(false);
-  }, [newPromptTitle, newPromptContent, newPromptCategory, newPromptTags, newPromptImages, addPrompt, toast]);
+  }, [newPromptTitle, newPromptContent, newPromptCategory, newPromptTags, newPromptImages, addPrompt, toast, activeCategory, categories]);
   
   // 从推荐模板添加提示词
   const handleAddFromRecommended = useCallback((prompt: Prompt) => {
@@ -528,12 +528,12 @@ export const PromptList = memo(function PromptList({
     setShowNewPromptDialog(false);
     setNewPromptTitle("");
     setNewPromptContent("");
-    setNewPromptCategory("general");
+    setNewPromptCategory(activeCategory || categories[0]?.id || "general");
     setNewPromptTags("");
     setNewPromptImages([]);
     setSelectedNewImageIndex(null);
     setNewImageCaption("");
-  }, []);
+  }, [activeCategory, categories]);
 
   // 编辑对话框关闭
   const handleEditDialogClose = useCallback(() => {
@@ -686,7 +686,11 @@ export const PromptList = memo(function PromptList({
                 {!searchTerm && !showRecommended && (
                   <Button 
                     className="mt-4"
-                    onClick={() => setShowNewPromptDialog(true)}
+                    onClick={() => {
+                      // 设置当前选中的分类作为默认值
+                      setNewPromptCategory(activeCategory || categories[0]?.id || "general");
+                      setShowNewPromptDialog(true);
+                    }}
                   >
                     <Icons.plus className="h-4 w-4 mr-2" />
                     新建提示词
@@ -899,7 +903,7 @@ export const PromptList = memo(function PromptList({
               <div className="space-y-2">
                 <Label htmlFor="category">分类</Label>
                 <Select
-                  value={newPromptCategory}
+                  value={newPromptCategory || activeCategory || categories[0]?.id || "general"}
                   onValueChange={setNewPromptCategory}
                 >
                   <SelectTrigger>

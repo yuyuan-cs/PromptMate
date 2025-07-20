@@ -21,6 +21,7 @@ import { CategoryManager } from "./category/CategoryManager";
 import { Category } from "@/types";
 import { ViewBadge } from "./category/ViewBadge";
 import { CategoryIcon } from "./category/CategoryIcon";
+import { IconSelector } from "./category/IconSelector";
 import { ThemePreview } from "./ThemePreview";
 import { themePresets } from "@/lib/themes";
 import { ThemeType } from "@/types";
@@ -32,12 +33,10 @@ import {
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import * as LucideIcons from "lucide-react";
 import React from "react";
 import { ThemeCustomizer } from "./ThemeCustomizer";
 import { Settings } from "@/types";
 import { About } from './About';
-import { aiIcons, getIconComponent } from "@/lib/icons";
 import { generateId } from "@/lib/data";
 import { PromptImage } from "@/types";
 import { X } from "lucide-react";
@@ -86,9 +85,6 @@ export function Sidebar({ className }: { className?: string }) {
   const [editingCategory, setEditingCategory] = useState<string | null>(null);
   const [editingName, setEditingName] = useState("");
   const [editingIcon, setEditingIcon] = useState("");
-  const [iconSearch, setIconSearch] = useState("");
-  const [showIconPicker, setShowIconPicker] = useState(false);
-  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [showThemeCustomizer, setShowThemeCustomizer] = useState(false);
   const [tempCustomTheme, setTempCustomTheme] = useState<Settings['customTheme']>(
     settings.customTheme || {
@@ -486,20 +482,7 @@ export function Sidebar({ className }: { className?: string }) {
     }
   };
 
-  // 使用防抖处理搜索
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearch(iconSearch);
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [iconSearch]);
 
-  // 过滤并限制显示的图标数量
-  const filteredIcons = useMemo(() => {
-    return aiIcons
-      .filter(name => name.toLowerCase().includes(debouncedSearch.toLowerCase()))
-      .slice(0, 50);
-  }, [debouncedSearch]);
 
   // 应用自定义主题
   const applyCustomTheme = () => {
@@ -806,43 +789,10 @@ export function Sidebar({ className }: { className?: string }) {
                               <div className="flex flex-col p-1 space-y-2">
                                 {/* 第一行：图标选择和文字输入 */}
                                 <div className="flex items-center gap-2 w-full">
-                                  <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                      <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="h-8 w-8 shrink-0 hover:scale-105 transition-transform"
-                                      >
-                                        <CategoryIcon iconName={editingIcon || category.icon} />
-                                      </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent className="w-[300px] p-2" align="start" side="right" sideOffset={5}>
-                                      <div className="w-full p-2">
-                                        <Input
-                                          placeholder="搜索图标..."
-                                          value={iconSearch}
-                                          onChange={(e) => setIconSearch(e.target.value)}
-                                          className="mb-1 h-6"
-                                        />
-                                        <div className="grid grid-cols-6 gap-2 max-h-[300px] overflow-y-auto">
-                                          {filteredIcons.map(name => (
-                                            <Button
-                                              key={name}
-                                              variant="ghost"
-                                              size="icon"
-                                              className="h-8 w-8 hover:bg-muted/50"
-                                              onClick={() => {
-                                                setEditingIcon(name);
-                                                setShowIconPicker(false);
-                                              }}
-                                            >
-                                              {React.createElement(getIconComponent(name), { className: "h-4 w-4" })}
-                                            </Button>
-                                          ))}
-                                        </div>
-                                      </div>
-                                    </DropdownMenuContent>
-                                  </DropdownMenu>
+                                  <IconSelector
+                                    value={editingIcon || category.icon || "folder"}
+                                    onChange={(iconName) => setEditingIcon(iconName)}
+                                  />
                                   {/* 编辑分类名称 */}
                                   <Input
                                     value={editingName}
@@ -1050,6 +1000,9 @@ export function Sidebar({ className }: { className?: string }) {
           setNewPromptImages([]);
           setSelectedNewImageIndex(null);
           setNewImageCaption("");
+        } else {
+          // 打开对话框时设置当前选中的分类作为默认值
+          setNewPromptCategory(activeCategory || categories[0]?.id || "general");
         }
         setShowNewPromptDialog(open);
       }}>
