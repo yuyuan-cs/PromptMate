@@ -4,9 +4,31 @@
 
 ## 发布方式
 
-### 1. 快速发布（推荐）
+### 1. 简化发布（最推荐）
 
-使用GitHub Actions自动构建和发布，只需要推送代码和标签。
+跳过本地构建，直接推送代码和标签，让GitHub Actions自动构建和发布。
+
+```bash
+# 补丁版本简化发布
+npm run simple:patch
+
+# 次版本简化发布
+npm run simple:minor
+
+# 主版本简化发布
+npm run simple:major
+```
+
+**流程说明：**
+1. 自动更新版本号
+2. 自动更新CHANGELOG.md
+3. 自动提交代码和创建Git标签
+4. 推送代码和标签到GitHub
+5. GitHub Actions自动构建并创建Release
+
+### 2. 快速发布
+
+使用GitHub Actions自动构建和发布，需要本地构建。
 
 ```bash
 # 补丁版本快速发布
@@ -32,7 +54,7 @@ npm run quick:all    # 全平台
 5. 推送代码和标签到GitHub
 6. GitHub Actions自动构建并创建Release
 
-### 2. 本地发布
+### 3. 本地发布
 
 使用本地脚本直接发布到GitHub Release（需要GitHub Token）。
 
