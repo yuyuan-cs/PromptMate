@@ -65,4 +65,15 @@
 - 改进了更新检查的用户体验，包括进度提示和错误处理
 - 添加了应用详细信息显示，包括构建日期、Electron版本等
 - 更新了package.json配置，添加了homepage、repository等字段
-- 版本号更新至1.0.2，为后续发布做准备 
+- 版本号更新至1.0.2，为后续发布做准备
+
+### 2024-12-19 (第五次更新)
+- 实现自动版本管理功能：打包时自动更新版本号
+- 创建了版本管理脚本（scripts/version-manager.js），支持语义化版本控制
+- 添加了多种版本更新命令：version:patch、version:minor、version:major
+- 实现了一键发布功能：release:patch、release:minor、release:major等
+- 自动更新构建日期和CHANGELOG.md文件
+- 自动创建Git标签和提交更改
+- 支持Windows、macOS和全平台发布
+- 添加了详细的使用说明文档（scripts/README.md）
+- 版本号更新至1.0.3，完善了版本管理流程 

@@ -115,9 +115,27 @@ class VersionManager {
 `;
       }
       
-      // 在开头插入新版本
+      // 找到第一个版本条目的位置
       const lines = changelog.split('\n');
-      const insertIndex = lines.findIndex(line => line.startsWith('## [')) + 1;
+      let insertIndex = 0;
+      
+      // 查找第一个版本条目（## [版本号]）
+      for (let i = 0; i < lines.length; i++) {
+        if (lines[i].match(/^## \[[\d\.]+\]/)) {
+          insertIndex = i;
+          break;
+        }
+      }
+      
+      // 如果没有找到版本条目，插入到文件开头
+      if (insertIndex === 0) {
+        insertIndex = lines.findIndex(line => line.startsWith('---')) + 1;
+        if (insertIndex === 0) {
+          insertIndex = lines.length;
+        }
+      }
+      
+      // 插入新版本条目
       lines.splice(insertIndex, 0, changelogEntry);
       
       fs.writeFileSync(changelogPath, lines.join('\n'));
