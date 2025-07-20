@@ -773,9 +773,12 @@ export function PromptEditor() {
                               className="w-full h-28 object-cover"
                             />
                             <div className="absolute bottom-0 left-0 right-0 p-1 text-xs bg-black/60 text-white truncate">
-                              {image.caption || `图片 ${index + 1}`}
+                              {image.caption ? image.caption : `图片 ${index + 1}`}
                             </div>
                             <button 
+                              title="删除图片"
+                              aria-label="删除图片"
+                              type="button"
                               className="absolute top-1 right-1 bg-black/60 rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
                               onClick={(e) => {
                                 e.stopPropagation();

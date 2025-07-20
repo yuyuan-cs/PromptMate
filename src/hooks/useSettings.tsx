@@ -44,53 +44,6 @@ export function useSettings() {
     return () => mediaQuery.removeEventListener('change', handler);
   }, [settings.theme]);
 
-  // 应用主题
-  const applyTheme = useCallback((theme: ThemeType) => {
-    const themePreset = getThemePreset(theme);
-    const isDark = theme === 'dark' || (theme === 'system' && systemTheme === 'dark');
-    
-    // 移除所有主题相关的类
-    document.documentElement.classList.remove("light", "dark");
-    
-    // 先清除所有自定义主题变量（但不影响字体相关变量）
-    resetThemeVariables();
-    
-    // 应用深色/浅色模式
-    document.documentElement.classList.toggle('dark', isDark);
-    
-    // 如果是自定义主题，应用自定义变量
-    if (theme === 'custom') {
-      applyThemeVariables(theme, isDark ? 'dark' : 'light', settings.customTheme);
-    } 
-    // 如果是预设主题但不是默认主题，应用预设变量
-    else if (themePreset && !themePreset.isDefault) {
-      applyThemeVariables(theme, isDark ? 'dark' : 'light');
-    }
-  }, [systemTheme, settings.customTheme]);
-  
-  // 重置主题变量到默认状态（保留字体相关变量）
-  const resetThemeVariables = useCallback(() => {
-    const root = document.documentElement;
-    // 只清除主题相关的CSS变量，保留字体相关的变量
-    const themeVariableNames = [
-      "--background", "--foreground", "--card", "--card-foreground",
-      "--popover", "--popover-foreground", "--primary", "--primary-foreground",
-      "--secondary", "--secondary-foreground", "--muted", "--muted-foreground",
-      "--accent", "--accent-foreground", "--destructive", "--destructive-foreground",
-      "--border", "--input", "--ring", "--sidebar-background", "--sidebar-foreground",
-      "--sidebar-primary", "--sidebar-primary-foreground", "--sidebar-accent",
-      "--sidebar-accent-foreground", "--sidebar-border", "--sidebar-ring"
-    ];
-    
-    // 清除所有主题相关的CSS变量，但保留字体相关变量
-    themeVariableNames.forEach(varName => {
-      root.style.removeProperty(varName);
-    });
-    
-    // 确保字体相关变量不被清除
-    // 这些变量会在 applyFont 中重新设置
-  }, []);
-
   // 应用字体和字体大小
   const applyFont = useCallback((fontName: string, fontSize: number) => {
     const fontFamily = FONT_FAMILIES[fontName as keyof typeof FONT_FAMILIES] || fontName;
@@ -132,6 +85,58 @@ export function useSettings() {
     
     // 确保字体设置被正确应用
     console.log(`字体已应用: ${fontName} (${fontSize}px)`);
+  }, []);
+
+  // 应用主题
+  const applyTheme = useCallback((theme: ThemeType) => {
+    const themePreset = getThemePreset(theme);
+    const isDark = theme === 'dark' || (theme === 'system' && systemTheme === 'dark');
+    
+    // 移除所有主题相关的类
+    document.documentElement.classList.remove("light", "dark");
+    
+    // 先清除所有自定义主题变量（但不影响字体相关变量）
+    resetThemeVariables();
+    
+    // 应用深色/浅色模式
+    document.documentElement.classList.toggle('dark', isDark);
+    
+    // 如果是自定义主题，应用自定义变量
+    if (theme === 'custom') {
+      applyThemeVariables(theme, isDark ? 'dark' : 'light', settings.customTheme);
+    } 
+    // 如果是预设主题但不是默认主题，应用预设变量
+    else if (themePreset && !themePreset.isDefault) {
+      applyThemeVariables(theme, isDark ? 'dark' : 'light');
+    }
+    
+    // 主题应用完成后，立即重新应用字体设置以确保不被覆盖
+    requestAnimationFrame(() => {
+      applyFont(settings.font, settings.fontSize);
+    });
+  }, [systemTheme, settings.customTheme, settings.font, settings.fontSize, applyFont]);
+  
+  // 重置主题变量到默认状态（保留字体相关变量）
+  const resetThemeVariables = useCallback(() => {
+    const root = document.documentElement;
+    // 只清除主题相关的CSS变量，保留字体相关的变量
+    const themeVariableNames = [
+      "--background", "--foreground", "--card", "--card-foreground",
+      "--popover", "--popover-foreground", "--primary", "--primary-foreground",
+      "--secondary", "--secondary-foreground", "--muted", "--muted-foreground",
+      "--accent", "--accent-foreground", "--destructive", "--destructive-foreground",
+      "--border", "--input", "--ring", "--sidebar-background", "--sidebar-foreground",
+      "--sidebar-primary", "--sidebar-primary-foreground", "--sidebar-accent",
+      "--sidebar-accent-foreground", "--sidebar-border", "--sidebar-ring"
+    ];
+    
+    // 清除所有主题相关的CSS变量，但保留字体相关变量
+    themeVariableNames.forEach(varName => {
+      root.style.removeProperty(varName);
+    });
+    
+    // 确保字体相关变量不被清除
+    // 这些变量会在 applyFont 中重新设置
   }, []);
 
   // 保存设置并应用主题和字体

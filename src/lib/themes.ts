@@ -298,10 +298,13 @@ export function applyThemeVariables(theme: ThemeType, mode: 'light' | 'dark', cu
     const variables = preset.variables[mode];
     if (!variables) return;
 
-    // 应用CSS变量
+    // 应用CSS变量，但排除字体相关的变量
     const root = document.documentElement;
     Object.entries(variables).forEach(([key, value]) => {
-      root.style.setProperty(key, value);
+      // 确保不覆盖字体相关的CSS变量
+      if (!key.includes('font') && key !== '--app-font' && key !== '--app-font-size') {
+        root.style.setProperty(key, value);
+      }
     });
   } else {
     // 非默认主题使用智能深色化处理
@@ -320,6 +323,11 @@ function applyPresetThemeWithSmartDarkening(preset: ThemePreset, mode: 'light' |
   
   // 智能深色化处理
   Object.entries(lightVariables).forEach(([key, value]) => {
+    // 确保不覆盖字体相关的CSS变量
+    if (key.includes('font') || key === '--app-font' || key === '--app-font-size') {
+      return;
+    }
+    
     let processedValue = value;
     
     if (isDark) {

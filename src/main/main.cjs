@@ -5,8 +5,10 @@ const { autoUpdater } = require('electron-updater');
 const log = require('electron-log');
 const https = require('https');
 
-// 强制设置开发环境
-process.env.NODE_ENV = 'development';
+// 根据环境设置
+if (!process.env.NODE_ENV) {
+  process.env.NODE_ENV = 'production';
+}
 
 // Configure logging (optional)
 log.transports.file.level = 'info';
@@ -15,6 +17,9 @@ log.info('App starting...');
 // --- Auto Updater Setup ---
 autoUpdater.logger = log; // Pipe autoUpdater logs to electron-log
 autoUpdater.autoDownload = false; // Disable auto download, let user confirm
+
+// 禁用自动更新检查，避免错误
+autoUpdater.autoRunAppAfterInstall = false;
 
 // GitHub API配置
 const GITHUB_API_BASE = 'https://api.github.com';
@@ -82,9 +87,22 @@ async function getLatestGitHubRelease() {
 // 检查更新函数
 function checkForUpdates() {
   log.info('Checking for updates...');
-  autoUpdater.checkForUpdatesAndNotify().catch(err => {
-    log.error('Error checking for updates:', err);
-  });
+  
+  // 设置更新检查超时
+  const updateTimeout = setTimeout(() => {
+    log.warn('Update check timeout, skipping...');
+  }, 10000); // 10秒超时
+  
+  autoUpdater.checkForUpdatesAndNotify()
+    .then(() => {
+      clearTimeout(updateTimeout);
+      log.info('Update check completed');
+    })
+    .catch(err => {
+      clearTimeout(updateTimeout);
+      log.error('Error checking for updates:', err);
+      // 不显示错误对话框，静默处理
+    });
 }
 
 // 获取应用信息
@@ -265,15 +283,51 @@ function createWindow() {
     
     mainWindow.webContents.openDevTools();
   } else {
-    mainWindow.loadFile(path.join(__dirname, '../../dist/index.html'));
+    // 生产环境：加载打包后的文件
+    const indexPath = path.join(__dirname, '../../dist/index.html');
+    console.log('生产环境加载路径:', indexPath);
+    console.log('文件是否存在:', fs.existsSync(indexPath));
     
-    // 在生产环境也打开开发者工具，便于调试
+    // 检查dist目录内容
+    const distDir = path.join(__dirname, '../../dist');
+    console.log('dist目录是否存在:', fs.existsSync(distDir));
+    if (fs.existsSync(distDir)) {
+      console.log('dist目录内容:', fs.readdirSync(distDir));
+    }
+    
+    // 检查assets目录
+    const assetsDir = path.join(distDir, 'assets');
+    console.log('assets目录是否存在:', fs.existsSync(assetsDir));
+    if (fs.existsSync(assetsDir)) {
+      console.log('assets目录内容:', fs.readdirSync(assetsDir));
+    }
+    
+    mainWindow.loadFile(indexPath);
+    
+    // 生产环境不打开开发者工具
     // mainWindow.webContents.openDevTools();
     
     // 添加错误监听
     mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription) => {
       console.error('页面加载失败:', errorCode, errorDescription);
       log.error('页面加载失败:', errorCode, errorDescription);
+      
+      // 如果加载失败，尝试重新加载
+      setTimeout(() => {
+        console.log('尝试重新加载页面...');
+        mainWindow.loadFile(indexPath);
+      }, 1000);
+    });
+    
+    // 监听页面加载成功
+    mainWindow.webContents.on('did-finish-load', () => {
+      console.log('生产环境页面加载成功');
+      log.info('生产环境页面加载成功');
+    });
+    
+    // 监听控制台消息
+    mainWindow.webContents.on('console-message', (event, level, message, line, sourceId) => {
+      console.log(`渲染进程控制台 [${level}]:`, message, `(${sourceId}:${line})`);
     });
   }
 
@@ -294,8 +348,8 @@ function createWindow() {
 app.whenReady().then(() => {
   createWindow();
 
-  // Check for updates after window is created
-  checkForUpdates();
+  // 暂时禁用自动更新检查，避免错误
+  // checkForUpdates();
 
   // MacOS相关设置
   app.on('activate', () => {

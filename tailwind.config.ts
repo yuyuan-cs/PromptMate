@@ -79,7 +79,7 @@ export default {
 				sm: 'calc(var(--radius) - 4px)'
 			},
 			fontFamily: {
-				sans: ['Inter var', 'SF Pro', 'system-ui', 'sans-serif'],
+				sans: ['var(--app-font)', 'Inter var', 'SF Pro', 'system-ui', 'sans-serif'],
 				mono: ['SF Mono', 'Source Code Pro', 'monospace'],
 			},
 			keyframes: {

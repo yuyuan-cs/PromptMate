@@ -161,7 +161,8 @@
     "publish": {
       "provider": "github",
       "owner": "yy0691",
-      "repo": "PromptMate"
+      "repo": "PromptMate",
+      "private": false
     },
     "files": [
       "dist/**/*",
@@ -204,8 +205,7 @@
           ]
         }
       ],
-      "artifactName": "${productName}-${version}-${arch}.${ext}",
-      "sign": false
+      "artifactName": "${productName}-${version}-${arch}.${ext}"
     },
     "linux": {
       "target": [
