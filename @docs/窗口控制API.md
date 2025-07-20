@@ -76,4 +76,17 @@
 - 自动创建Git标签和提交更改
 - 支持Windows、macOS和全平台发布
 - 添加了详细的使用说明文档（scripts/README.md）
-- 版本号更新至1.0.3，完善了版本管理流程 
+- 版本号更新至1.0.3，完善了版本管理流程
+
+### 2024-12-19 (第六次更新)
+- 实现完整的自动化发布功能：自动更新、打包并发布至GitHub Release
+- 创建了自动化发布脚本（scripts/release-manager.js），支持直接发布到GitHub
+- 创建了快速发布脚本（scripts/quick-release.js），利用GitHub Actions自动构建
+- 添加了GitHub Actions工作流（.github/workflows/release.yml），实现CI/CD自动化
+- 支持两种发布方式：快速发布（推荐）和本地发布
+- 自动创建GitHub Release并上传构建产物
+- 自动生成发布说明和更新日志
+- 支持多平台构建（Windows、macOS）
+- 添加了详细的发布指南（scripts/RELEASE_GUIDE.md）
+- 完善了npm脚本命令，支持一键发布
+- 实现了完整的DevOps自动化流程 

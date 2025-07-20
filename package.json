@@ -1,10 +1,10 @@
 {
   "name": "promptmate",
   "private": true,
-  "version": "1.0.4",
+  "version": "1.0.5",
   "type": "commonjs",
   "main": "dist-electron/main/main.cjs",
-  "buildDate": "2025-07-20T06:33:34.490Z",
+  "buildDate": "2025-07-20T06:36:37.803Z",
   "author": {
     "name": "泺源",
     "email": "yuyuan3162021@163.com"
@@ -51,7 +51,19 @@
     "release:major": "npm run version:major && npm run dist",
     "release:win": "npm run version:patch && npm run dist:win",
     "release:mac": "npm run version:patch && npm run dist:mac",
-    "release:all": "npm run version:patch && npm run dist:all"
+    "release:all": "npm run version:patch && npm run dist:all",
+    "publish:patch": "node scripts/release-manager.js patch",
+    "publish:minor": "node scripts/release-manager.js minor",
+    "publish:major": "node scripts/release-manager.js major",
+    "publish:win": "node scripts/release-manager.js patch win",
+    "publish:mac": "node scripts/release-manager.js patch mac",
+    "publish:all": "node scripts/release-manager.js patch all",
+    "quick:patch": "node scripts/quick-release.js patch",
+    "quick:minor": "node scripts/quick-release.js minor",
+    "quick:major": "node scripts/quick-release.js major",
+    "quick:win": "node scripts/quick-release.js patch win",
+    "quick:mac": "node scripts/quick-release.js patch mac",
+    "quick:all": "node scripts/quick-release.js patch all"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.0",
