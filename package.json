@@ -1,10 +1,10 @@
 {
   "name": "promptmate",
   "private": true,
-  "version": "1.0.8",
+  "version": "1.0.9",
   "type": "commonjs",
   "main": "dist-electron/main/main.cjs",
-  "buildDate": "2025-07-20T06:41:51.753Z",
+  "buildDate": "2025-07-20T06:44:31.931Z",
   "author": {
     "name": "泺源",
     "email": "yuyuan3162021@163.com"
@@ -63,7 +63,10 @@
     "quick:major": "node scripts/quick-release.js major",
     "quick:win": "node scripts/quick-release.js patch win",
     "quick:mac": "node scripts/quick-release.js patch mac",
-    "quick:all": "node scripts/quick-release.js patch all"
+    "quick:all": "node scripts/quick-release.js patch all",
+    "simple:patch": "node scripts/simple-release.js patch",
+    "simple:minor": "node scripts/simple-release.js minor",
+    "simple:major": "node scripts/simple-release.js major"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.0",
