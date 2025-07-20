@@ -3,6 +3,7 @@ const path = require('path');
 const fs = require('fs');
 const { autoUpdater } = require('electron-updater');
 const log = require('electron-log');
+const https = require('https');
 
 // 强制设置开发环境
 process.env.NODE_ENV = 'development';
@@ -15,12 +16,155 @@ log.info('App starting...');
 autoUpdater.logger = log; // Pipe autoUpdater logs to electron-log
 autoUpdater.autoDownload = false; // Disable auto download, let user confirm
 
-// Check for updates function
+// GitHub API配置
+const GITHUB_API_BASE = 'https://api.github.com';
+const GITHUB_REPO_OWNER = 'yy0691';
+const GITHUB_REPO_NAME = 'PromptMate';
+
+// 版本比较函数
+function compareVersions(version1, version2) {
+  const v1Parts = version1.split('.').map(Number);
+  const v2Parts = version2.split('.').map(Number);
+  
+  for (let i = 0; i < Math.max(v1Parts.length, v2Parts.length); i++) {
+    const v1Part = v1Parts[i] || 0;
+    const v2Part = v2Parts[i] || 0;
+    
+    if (v1Part > v2Part) return 1;
+    if (v1Part < v2Part) return -1;
+  }
+  
+  return 0;
+}
+
+// 获取GitHub最新发布版本
+async function getLatestGitHubRelease() {
+  return new Promise((resolve, reject) => {
+    const url = `${GITHUB_API_BASE}/repos/${GITHUB_REPO_OWNER}/${GITHUB_REPO_NAME}/releases/latest`;
+    
+    https.get(url, {
+      headers: {
+        'User-Agent': 'PromptMate-Update-Checker',
+        'Accept': 'application/vnd.github.v3+json'
+      }
+    }, (res) => {
+      let data = '';
+      
+      res.on('data', (chunk) => {
+        data += chunk;
+      });
+      
+      res.on('end', () => {
+        try {
+          if (res.statusCode === 200) {
+            const release = JSON.parse(data);
+            resolve({
+              version: release.tag_name.replace('v', ''),
+              name: release.name,
+              body: release.body,
+              published_at: release.published_at,
+              html_url: release.html_url,
+              assets: release.assets
+            });
+          } else {
+            reject(new Error(`GitHub API返回状态码: ${res.statusCode}`));
+          }
+        } catch (error) {
+          reject(new Error(`解析GitHub响应失败: ${error.message}`));
+        }
+      });
+    }).on('error', (error) => {
+      reject(new Error(`GitHub API请求失败: ${error.message}`));
+    });
+  });
+}
+
+// 检查更新函数
 function checkForUpdates() {
   log.info('Checking for updates...');
   autoUpdater.checkForUpdatesAndNotify().catch(err => {
     log.error('Error checking for updates:', err);
   });
+}
+
+// 获取应用信息
+function getAppInfo() {
+  const packageJson = require('../../package.json');
+  return {
+    version: app.getVersion(),
+    name: app.getName(),
+    description: packageJson.description,
+    author: packageJson.author,
+    homepage: packageJson.homepage || `https://github.com/${GITHUB_REPO_OWNER}/${GITHUB_REPO_NAME}`,
+    repository: packageJson.repository || `https://github.com/${GITHUB_REPO_OWNER}/${GITHUB_REPO_NAME}`,
+    buildDate: packageJson.buildDate || new Date().toISOString(),
+    electronVersion: process.versions.electron,
+    nodeVersion: process.versions.node,
+    chromeVersion: process.versions.chrome
+  };
+}
+
+// 检查更新（增强版）
+async function checkForUpdatesEnhanced() {
+  try {
+    log.info('开始检查更新...');
+    
+    // 获取当前版本
+    const currentVersion = app.getVersion();
+    log.info(`当前版本: ${currentVersion}`);
+    
+    // 获取GitHub最新发布
+    const latestRelease = await getLatestGitHubRelease();
+    log.info(`GitHub最新版本: ${latestRelease.version}`);
+    
+    // 比较版本
+    const versionComparison = compareVersions(currentVersion, latestRelease.version);
+    
+    if (versionComparison < 0) {
+      // 有新版本
+      log.info(`发现新版本: ${latestRelease.version}`);
+      return {
+        success: true,
+        hasUpdate: true,
+        currentVersion: currentVersion,
+        latestVersion: latestRelease.version,
+        releaseInfo: latestRelease,
+        updateType: getUpdateType(currentVersion, latestRelease.version)
+      };
+    } else {
+      // 已是最新版本
+      log.info('当前已是最新版本');
+      return {
+        success: true,
+        hasUpdate: false,
+        currentVersion: currentVersion,
+        latestVersion: latestRelease.version,
+        releaseInfo: latestRelease
+      };
+    }
+  } catch (error) {
+    log.error('检查更新失败:', error);
+    return {
+      success: false,
+      hasUpdate: false,
+      error: error.message,
+      currentVersion: app.getVersion()
+    };
+  }
+}
+
+// 获取更新类型
+function getUpdateType(currentVersion, latestVersion) {
+  const currentParts = currentVersion.split('.').map(Number);
+  const latestParts = latestVersion.split('.').map(Number);
+  
+  if (latestParts[0] > currentParts[0]) {
+    return 'major'; // 主版本更新
+  } else if (latestParts[1] > currentParts[1]) {
+    return 'minor'; // 次版本更新
+  } else {
+    return 'patch'; // 补丁更新
+  }
 }
 
 // 应用配置目录
@@ -389,33 +533,20 @@ ipcMain.handle('import-data', async (_, { filePath }) => {
 
 // 添加应用信息和更新检查相关IPC
 ipcMain.handle('get-app-info', () => {
-  return {
-    version: app.getVersion(),
-    name: app.getName(),
-    description: 'PromptMate是一个帮助你创建和管理提示词的桌面应用'
-  };
+  return getAppInfo();
 });
 
 ipcMain.handle('check-for-updates', async () => {
   try {
-    const result = await autoUpdater.checkForUpdates();
-    if (result && result.updateInfo) {
-      return {
-        success: true,
-        hasUpdate: result.updateInfo.version !== app.getVersion(),
-        version: result.updateInfo.version
-      };
-    }
-    return {
-      success: true,
-      hasUpdate: false
-    };
+    const result = await checkForUpdatesEnhanced();
+    return result;
   } catch (error) {
     console.error('检查更新出错:', error);
     return {
       success: false,
       hasUpdate: false,
-      error: error.message
+      error: error.message,
+      currentVersion: app.getVersion()
     };
   }
 });

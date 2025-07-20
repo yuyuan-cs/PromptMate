@@ -1,52 +1,5 @@
-/* 思源黑体 (Noto Sans SC) */
-@font-face {
-  font-family: 'Noto Sans SC';
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC&display=swap');
-}
-
-@font-face {
-  font-family: 'Noto Sans SC';
-  font-style: normal;
-  font-weight: 500;
-  font-display: swap;
-  src: url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@500&display=swap');
-}
-
-@font-face {
-  font-family: 'Noto Sans SC';
-  font-style: normal;
-  font-weight: 700;
-  font-display: swap;
-  src: url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@700&display=swap');
-}
-
-/* 思源宋体 (Noto Serif SC) */
-@font-face {
-  font-family: 'Noto Serif SC';
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC&display=swap');
-}
-
-@font-face {
-  font-family: 'Noto Serif SC';
-  font-style: normal;
-  font-weight: 500;
-  font-display: swap;
-  src: url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500&display=swap');
-}
-
-@font-face {
-  font-family: 'Noto Serif SC';
-  font-style: normal;
-  font-weight: 700;
-  font-display: swap;
-  src: url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@700&display=swap');
-}
+/* 导入Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@400;500;700&family=Source+Code+Pro:wght@400;700&display=swap');
 
 /* 苹方字体 (PingFang SC) 注意：浏览器需要系统安装这些字体 */
 @font-face {
@@ -71,21 +24,4 @@
   font-weight: 700;
   font-display: swap;
   src: local('PingFang SC Bold'), local('PingFangSC-Bold');
-}
-
-/* Source Code Pro */
-@font-face {
-  font-family: 'Source Code Pro';
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url('https://fonts.googleapis.com/css2?family=Source+Code+Pro&display=swap');
-}
-
-@font-face {
-  font-family: 'Source Code Pro';
-  font-style: normal;
-  font-weight: 700;
-  font-display: swap;
-  src: url('https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@700&display=swap');
 } 

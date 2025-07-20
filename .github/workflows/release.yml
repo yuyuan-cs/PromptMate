@@ -32,17 +32,22 @@ jobs:
         run: npm ci
 
       - name: Build application
-        run: npm run dist:${{ matrix.platform }}
+        run: |
+          echo "Building for ${{ matrix.platform }} on ${{ matrix.os }}"
+          npm run dist:${{ matrix.platform }}
+        continue-on-error: false
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: promptmate-${{ matrix.platform }}
           path: release/
+        if: success()
 
   create-release:
     needs: release
     runs-on: ubuntu-latest
+    if: success()
     
     steps:
       - name: Checkout code
@@ -93,6 +98,18 @@ jobs:
           asset_path: ./artifacts/promptmate-win/release/*.exe
           asset_name: PromptMate-${{ github.ref_name }}-win.exe
           asset_content_type: application/octet-stream
+        continue-on-error: true
+
+      - name: Upload Windows ZIP Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./artifacts/promptmate-win/release/*.zip
+          asset_name: PromptMate-${{ github.ref_name }}-win.zip
+          asset_content_type: application/zip
+        continue-on-error: true
 
       - name: Upload macOS Release Asset
         uses: actions/upload-release-asset@v1
@@ -103,6 +120,7 @@ jobs:
           asset_path: ./artifacts/promptmate-mac/release/*.dmg
           asset_name: PromptMate-${{ github.ref_name }}-mac.dmg
           asset_content_type: application/octet-stream
+        continue-on-error: true
 
       - name: Upload macOS ZIP Asset
         uses: actions/upload-release-asset@v1
@@ -112,4 +130,5 @@ jobs:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./artifacts/promptmate-mac/release/*.zip
           asset_name: PromptMate-${{ github.ref_name }}-mac.zip
-          asset_content_type: application/zip 
+          asset_content_type: application/zip
+        continue-on-error: true 

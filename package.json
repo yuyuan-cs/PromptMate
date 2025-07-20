@@ -1,10 +1,10 @@
 {
   "name": "promptmate",
   "private": true,
-  "version": "1.0.10",
+  "version": "1.0.11",
   "type": "commonjs",
   "main": "dist-electron/main/main.cjs",
-  "buildDate": "2025-07-20T06:49:20.988Z",
+  "buildDate": "2025-07-20T07:23:13.443Z",
   "author": {
     "name": "泺源",
     "email": "yuyuan3162021@163.com"
@@ -27,18 +27,18 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build && npm run build:electron",
-    "build:electron": "mkdir -p dist-electron/main && cp src/main/*.cjs dist-electron/main/",
+    "build:electron": "node -e \"const fs=require('fs');const path=require('path');const srcDir='src/main';const destDir='dist-electron/main';if(!fs.existsSync(destDir))fs.mkdirSync(destDir,{recursive:true});fs.readdirSync(srcDir).forEach(file=>{if(file.endsWith('.cjs'))fs.copyFileSync(path.join(srcDir,file),path.join(destDir,file));});\"",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",
     "package": "electron-packager . PromptMate --platform=win32 --arch=x64 --icon=./public/fav_512x512.ico",
     "pack": "electron-builder --dir",
-    "dist": "electron-builder",
-    "dist:win": "electron-builder --win --x64 --config.electronDownload.mirror=https://npmmirror.com/mirrors/electron/",
-    "dist:mac-intel": "electron-builder --mac --x64 --config.electronDownload.mirror=https://npmmirror.com/mirrors/electron/",
-    "dist:mac-arm": "electron-builder --mac --arm64 --config.electronDownload.mirror=https://npmmirror.com/mirrors/electron/",
-    "dist:mac": "electron-builder --mac --universal --config.electronDownload.mirror=https://npmmirror.com/mirrors/electron/",
-    "dist:all": "electron-builder --mac universal --config.electronDownload.mirror=https://npmmirror.com/mirrors/electron/ && electron-builder --win --x64 --arm64 --config.electronDownload.mirror=https://npmmirror.com/mirrors/electron/",
+    "dist": "npm run build && electron-builder",
+    "dist:win": "npm run build && electron-builder --win --x64 --config.electronDownload.mirror=https://npmmirror.com/mirrors/electron/",
+    "dist:mac-intel": "npm run build && electron-builder --mac --x64 --config.electronDownload.mirror=https://npmmirror.com/mirrors/electron/",
+    "dist:mac-arm": "npm run build && electron-builder --mac --arm64 --config.electronDownload.mirror=https://npmmirror.com/mirrors/electron/",
+    "dist:mac": "npm run build && electron-builder --mac --universal --config.electronDownload.mirror=https://npmmirror.com/mirrors/electron/",
+    "dist:all": "npm run build && electron-builder --win --x64 --config.electronDownload.mirror=https://npmmirror.com/mirrors/electron/ && electron-builder --mac --universal --config.electronDownload.mirror=https://npmmirror.com/mirrors/electron/",
     "electron:dev": "concurrently \"vite\" \"wait-on http://localhost:5173 http://localhost:5174 http://localhost:5175 && electron .\"",
     "electron:build": "vite build && npm run build:electron && electron-builder",
     "electron:preview": "vite build && npm run build:electron && electron .",
@@ -66,7 +66,8 @@
     "quick:all": "node scripts/quick-release.js patch all",
     "simple:patch": "node scripts/simple-release.js patch",
     "simple:minor": "node scripts/simple-release.js minor",
-    "simple:major": "node scripts/simple-release.js major"
+    "simple:major": "node scripts/simple-release.js major",
+    "test:build": "node scripts/test-build.js"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.0",
@@ -190,17 +191,12 @@
           ]
         }
       ],
-      "artifactName": "${productName}-${version}-${arch}.${ext}"
+      "artifactName": "${productName}-${version}-${arch}.${ext}",
+      "sign": false
     },
     "win": {
       "icon": "./public/favicon.ico",
       "target": [
-        {
-          "target": "nsis",
-          "arch": [
-            "x64"
-          ]
-        },
         {
           "target": "portable",
           "arch": [
