@@ -34,14 +34,33 @@ class QuickRelease {
     console.log(`🔨 开始构建应用 (${platform})...`);
     
     try {
+      // 检测操作系统
+      const os = require('os').platform();
+      
+      // 在Windows上，如果选择all，则只构建Windows版本
+      if (platform === 'all' && os === 'win32') {
+        console.log('⚠️  在Windows上检测到全平台构建，将只构建Windows版本');
+        platform = 'win';
+      }
+      
       switch (platform) {
         case 'win':
           execSync('npm run dist:win', { stdio: 'inherit' });
           break;
         case 'mac':
+          if (os === 'win32') {
+            throw new Error('❌ 在Windows上无法构建macOS版本');
+          }
           execSync('npm run dist:mac', { stdio: 'inherit' });
           break;
         case 'all':
+          if (os === 'win32') {
+            console.log('⚠️  在Windows上检测到全平台构建，将只构建Windows版本');
+            execSync('npm run dist:win', { stdio: 'inherit' });
+          } else {
+            execSync('npm run dist:all', { stdio: 'inherit' });
+          }
+          break;
         default:
           execSync('npm run dist:all', { stdio: 'inherit' });
           break;
