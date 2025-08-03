@@ -72,8 +72,39 @@ class ReleaseManager {
       throw new Error('❌ 构建产物目录不存在');
     }
     
+    // 定义要排除的文件和目录
+    const excludePatterns = [
+      '.DS_Store',
+      'Assets.zip',
+      'builder-debug.yml',
+      'builder-effective-config.yaml',
+      'latest-mac.yml',
+      '.blockmap',
+      '.icon-ico',
+      '.icon-icns',
+      'win-unpacked',
+      'mac',
+      'win-universal-unpacked',
+      'win-arm64-unpacked',
+      'Assets'
+    ];
+    
     const files = fs.readdirSync(releaseDir);
     files.forEach(file => {
+      // 检查是否应该排除这个文件
+      const shouldExclude = excludePatterns.some(pattern => {
+        if (pattern.startsWith('.')) {
+          // 对于以点开头的模式，检查文件扩展名
+          return file.endsWith(pattern);
+        }
+        return file === pattern || file.startsWith(pattern + '.');
+      });
+      
+      if (shouldExclude) {
+        console.log(`⏭️  跳过文件: ${file}`);
+        return;
+      }
+      
       const filePath = path.join(releaseDir, file);
       const stats = fs.statSync(filePath);
       
@@ -174,25 +205,18 @@ class ReleaseManager {
     };
     
     if (uploadData) {
-      // 文件上传
-      const boundary = '----WebKitFormBoundary' + Math.random().toString(16).substr(2);
-      headers['Content-Type'] = `multipart/form-data; boundary=${boundary}`;
-      
+      // 文件上传 - GitHub API v3 要求直接上传文件内容
       const fileContent = fs.readFileSync(uploadData.file);
-      const formData = [
-        `--${boundary}`,
-        `Content-Disposition: form-data; name="name"`,
-        '',
-        uploadData.name,
-        `--${boundary}`,
-        `Content-Disposition: form-data; name="file"; filename="${uploadData.name}"`,
-        'Content-Type: application/octet-stream',
-        '',
-        fileContent,
-        `--${boundary}--`
-      ].join('\r\n');
       
-      options.body = formData;
+      headers['Content-Type'] = 'application/octet-stream';
+      headers['Content-Length'] = fileContent.length;
+      
+      options.body = fileContent;
+      
+      // 修改URL以包含文件名
+      const urlObj = new URL(url);
+      urlObj.searchParams.set('name', uploadData.name);
+      url = urlObj.toString();
     } else if (data) {
       // JSON数据
       headers['Content-Type'] = 'application/json';
