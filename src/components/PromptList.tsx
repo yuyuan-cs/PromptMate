@@ -39,6 +39,7 @@ import {
   ContextMenuItem,
   ContextMenuTrigger
 } from "@/components/ui/context-menu";
+import ReactMarkdown from 'react-markdown';
 
 // 提示词详情查看对话框组件 (Memoized)
 const PromptDetailDialog = memo(function PromptDetailDialog({ 
@@ -97,7 +98,9 @@ const PromptDetailDialog = memo(function PromptDetailDialog({
         </DialogHeader>
         <ScrollArea className="flex-1 overflow-auto">
           <div className="p-4 rounded-lg bg-muted/30 whitespace-pre-wrap">
-            {prompt.content}
+            <div className="markdown-body">
+              <ReactMarkdown>{prompt.content}</ReactMarkdown>
+            </div>
           </div>
           
           {/* 显示图片 */}
@@ -805,8 +808,8 @@ export const PromptList = memo(function PromptList({
                   </CardHeader>
 
                   <CardContent className="pb-2">
-                    <div className="text-sm text-muted-foreground line-clamp-3 h-[4.5em]">
-                      {prompt.content}
+                    <div className="text-sm text-muted-foreground line-clamp-3 h-[4.5em] markdown-body">
+                      <ReactMarkdown>{prompt.content}</ReactMarkdown>
                     </div>
                   </CardContent>
 

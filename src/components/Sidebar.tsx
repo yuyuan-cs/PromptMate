@@ -41,6 +41,7 @@ import { generateId } from "@/lib/data";
 import { PromptImage } from "@/types";
 import { X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import ReactMarkdown from 'react-markdown';
 
 // 侧边栏显示模式类型
 type SidebarMode = "expanded" | "collapsed";
@@ -872,6 +873,12 @@ export function Sidebar({ className }: { className?: string }) {
                           <ContextMenuItem onClick={() => handleEditCategory(category)}>
                             编辑
                           </ContextMenuItem>
+                          <ContextMenuItem onClick={() => {
+                            setNewPromptCategory(category.id);
+                            setShowNewPromptDialog(true);
+                          }}>
+                            新建提示词
+                          </ContextMenuItem>
                           <ContextMenuItem 
                             className="text-destructive"
                             onClick={() => handleDelete(category.id)}
@@ -1030,6 +1037,13 @@ export function Sidebar({ className }: { className?: string }) {
                   value={newPromptContent}
                   onChange={(e) => setNewPromptContent(e.target.value)}
                 />
+                {/* Markdown 预览 */}
+                <div className="mt-2 p-2 border rounded bg-muted/30">
+                  <div className="text-xs text-muted-foreground mb-1">Markdown 预览：</div>
+                  <div className="markdown-body">
+                    <ReactMarkdown>{newPromptContent}</ReactMarkdown>
+                  </div>
+                </div>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="category">分类</Label>
