@@ -3,17 +3,15 @@
 const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
-const VersionManager = require('./version-manager');
 
-// GitHub Release配置
-const GITHUB_REPO_OWNER = 'yy0691';
-const GITHUB_REPO_NAME = 'PromptMate';
+// 环境变量
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
+const GITHUB_REPO_OWNER = process.env.GITHUB_REPO_OWNER || 'yy0691';
+const GITHUB_REPO_NAME = process.env.GITHUB_REPO_NAME || 'PromptMate';
 
-class ReleaseManager {
+class PublishExistingManager {
   constructor() {
-    this.versionManager = new VersionManager();
-    this.packageJson = this.versionManager.packageJson;
+    this.versionManager = require('./version-manager.js');
   }
 
   // 检查环境
@@ -21,55 +19,23 @@ class ReleaseManager {
     console.log('🔍 检查发布环境...');
     
     if (!GITHUB_TOKEN) {
-      throw new Error('❌ 未设置GITHUB_TOKEN环境变量。请设置: export GITHUB_TOKEN=your_token');
+      throw new Error('❌ 未设置GITHUB_TOKEN环境变量');
     }
     
-    // 检查是否在Git仓库中
-    try {
-      execSync('git status', { stdio: 'pipe' });
-    } catch (error) {
-      throw new Error('❌ 当前目录不是Git仓库');
-    }
-    
-    // 检查是否有未提交的更改
-    const status = execSync('git status --porcelain', { encoding: 'utf8' });
-    if (status.trim()) {
-      console.warn('⚠️  检测到未提交的更改，将自动提交');
+    if (!fs.existsSync(path.join(__dirname, '../release'))) {
+      throw new Error('❌ release目录不存在，请先构建应用');
     }
     
     console.log('✅ 环境检查通过');
   }
 
-  // 构建应用
-  async buildApp(platform = 'all') {
-    console.log(`🔨 开始构建应用 (${platform})...`);
-    
-    try {
-      switch (platform) {
-        case 'win':
-          execSync('npm run dist:win', { stdio: 'inherit' });
-          break;
-        case 'mac':
-          execSync('npm run dist:mac', { stdio: 'inherit' });
-          break;
-        case 'all':
-        default:
-          execSync('npm run dist:all', { stdio: 'inherit' });
-          break;
-      }
-      console.log('✅ 应用构建完成');
-    } catch (error) {
-      throw new Error(`❌ 构建失败: ${error.message}`);
-    }
-  }
-
-  // 获取构建产物
-  getBuildArtifacts() {
+  // 获取已构建的产物
+  getExistingArtifacts() {
     const releaseDir = path.join(__dirname, '../release');
     const artifacts = [];
     
     if (!fs.existsSync(releaseDir)) {
-      throw new Error('❌ 构建产物目录不存在');
+      throw new Error('❌ release目录不存在');
     }
     
     // 定义要排除的文件和目录
@@ -118,7 +84,7 @@ class ReleaseManager {
     });
     
     if (artifacts.length === 0) {
-      throw new Error('❌ 未找到构建产物');
+      throw new Error('❌ 未找到可发布的构建产物');
     }
     
     console.log(`📦 找到 ${artifacts.length} 个构建产物:`);
@@ -135,6 +101,13 @@ class ReleaseManager {
     if (bytes === 0) return '0 B';
     const i = Math.floor(Math.log(bytes) / Math.log(1024));
     return Math.round(bytes / Math.pow(1024, i) * 100) / 100 + ' ' + sizes[i];
+  }
+
+  // 获取当前版本
+  getCurrentVersion() {
+    const packagePath = path.join(__dirname, '../package.json');
+    const packageJson = JSON.parse(fs.readFileSync(packagePath, 'utf8'));
+    return packageJson.version;
   }
 
   // 创建GitHub Release
@@ -196,7 +169,7 @@ class ReleaseManager {
     const headers = {
       'Authorization': `token ${GITHUB_TOKEN}`,
       'Accept': 'application/vnd.github.v3+json',
-      'User-Agent': 'PromptMate-Release-Manager'
+      'User-Agent': 'PromptMate-Publish-Manager'
     };
     
     const options = {
@@ -238,7 +211,7 @@ class ReleaseManager {
     const changelogPath = path.join(__dirname, '../CHANGELOG.md');
     
     if (!fs.existsSync(changelogPath)) {
-      return `## PromptMate ${version}\n\n自动发布版本`;
+      return `## PromptMate ${version}\n\n直接发布已构建的版本`;
     }
     
     const changelog = fs.readFileSync(changelogPath, 'utf8');
@@ -256,7 +229,7 @@ class ReleaseManager {
     }
     
     if (startIndex === -1) {
-      return `## PromptMate ${version}\n\n自动发布版本`;
+      return `## PromptMate ${version}\n\n直接发布已构建的版本`;
     }
     
     // 查找下一个版本或文件结尾
@@ -288,64 +261,42 @@ class ReleaseManager {
   }
 
   // 主发布流程
-  async release(type = 'patch', platform = 'all') {
-    console.log('🚀 开始自动化发布流程...\n');
+  async publish() {
+    console.log('🚀 开始发布已构建的版本...\n');
     
     try {
       // 1. 检查环境
       this.checkEnvironment();
       
-      // 2. 更新版本
-      const newVersion = this.versionManager.run(type);
+      // 2. 获取当前版本
+      const version = this.getCurrentVersion();
+      console.log(`📋 当前版本: ${version}`);
       
-      // 3. 构建应用
-      await this.buildApp(platform);
+      // 3. 获取已构建的产物
+      const artifacts = this.getExistingArtifacts();
       
-      // 4. 获取构建产物
-      const artifacts = this.getBuildArtifacts();
+      // 4. 创建GitHub Release
+      const release = await this.createGitHubRelease(version, artifacts);
       
-      // 5. 创建GitHub Release
-      const release = await this.createGitHubRelease(newVersion, artifacts);
-      
-      // 6. 推送Git标签
+      // 5. 推送Git标签
       this.pushGitTags();
       
       console.log('\n🎉 发布完成!');
-      console.log(`📋 版本: ${newVersion}`);
+      console.log(`📋 版本: ${version}`);
       console.log(`🌐 Release页面: ${release.html_url}`);
       console.log(`📦 构建产物: ${artifacts.length} 个文件`);
       
-      return {
-        version: newVersion,
-        release: release,
-        artifacts: artifacts
-      };
-      
     } catch (error) {
-      console.error('\n❌ 发布失败:', error.message);
+      console.error(`\n❌ 发布失败: ${error.message}`);
       process.exit(1);
     }
   }
 }
 
-// 命令行参数处理
+// 主函数
 function main() {
-  const args = process.argv.slice(2);
-  const type = args[0] || 'patch';
-  const platform = args[1] || 'all';
-  
-  if (!['major', 'minor', 'patch'].includes(type)) {
-    console.error('❌ 无效的版本类型。请使用: major, minor, 或 patch');
-    process.exit(1);
-  }
-  
-  if (!['all', 'win', 'mac'].includes(platform)) {
-    console.error('❌ 无效的平台。请使用: all, win, 或 mac');
-    process.exit(1);
-  }
-  
-  const releaseManager = new ReleaseManager();
-  releaseManager.release(type, platform);
+  const publisher = new PublishExistingManager();
+  publisher.publish();
 }
 
 // 如果直接运行此脚本
@@ -353,4 +304,4 @@ if (require.main === module) {
   main();
 }
 
-module.exports = ReleaseManager; 
+module.exports = PublishExistingManager; 
