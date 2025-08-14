@@ -9,14 +9,10 @@ import { useSettings } from "@/hooks/useSettings";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { FontSelector } from "./FontSelector";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { DialogFooter } from "@/components/ui/dialog";
-import { useToast } from "@/hooks/use-toast";
 import { CategoryManager } from "./category/CategoryManager";
 import { Category } from "@/types";
 import { ViewBadge } from "./category/ViewBadge";
@@ -37,11 +33,10 @@ import React from "react";
 import { ThemeCustomizer } from "./ThemeCustomizer";
 import { Settings } from "@/types";
 import { About } from './About';
-import { generateId } from "@/lib/data";
-import { PromptImage } from "@/types";
-import { X } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import ReactMarkdown from 'react-markdown';
+import { QuickCreatePrompt } from "./QuickCreatePrompt";
+import { CreatePromptDialog } from "./CreatePromptDialog";
+import { AISettings } from "./AISettings";
+import { useToast } from "@/hooks/use-toast";
 
 // 侧边栏显示模式类型
 type SidebarMode = "expanded" | "collapsed";
@@ -72,16 +67,16 @@ export function Sidebar({ className }: { className?: string }) {
   const { settings, toggleTheme, updateSettings, availableFonts } = useSettings();
   const { toast } = useToast();
 
+  // 新建提示词对话框状态
+  const [showNewPromptDialog, setShowNewPromptDialog] = useState(false);
+  const [newPromptCategoryId, setNewPromptCategoryId] = useState<string | null>(null);
+
   const [showDataImportExport, setShowDataImportExport] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
-  const [newPromptTitle, setNewPromptTitle] = useState("");
-  const [newPromptContent, setNewPromptContent] = useState("");
-  const [newPromptCategory, setNewPromptCategory] = useState("");
-  const [newPromptTags, setNewPromptTags] = useState("");
   const [sidebarWidth, setSidebarWidth] = useState(180); // 默认180px
   const [isDragging, setIsDragging] = useState(false);
   const [sidebarMode, setSidebarMode] = useState<SidebarMode>("expanded");
-  const [settingsPanel, setSettingsPanel] = useState<"appearance" | "data" | "about">("appearance");
+  const [settingsPanel, setSettingsPanel] = useState<"appearance" | "data" | "ai" | "about">("appearance");
   const [showCategoryManager, setShowCategoryManager] = useState(false);
   const [editingCategory, setEditingCategory] = useState<string | null>(null);
   const [editingName, setEditingName] = useState("");
@@ -111,13 +106,6 @@ export function Sidebar({ className }: { className?: string }) {
   const sidebarRef = useRef<HTMLDivElement>(null);
   const startXRef = useRef<number>(0);
   const startWidthRef = useRef<number>(0);
-  const [showNewPromptDialog, setShowNewPromptDialog] = useState(false);
-  
-  // 添加图片相关状态
-  const [newPromptImages, setNewPromptImages] = useState<PromptImage[]>([]);
-  const [selectedNewImageIndex, setSelectedNewImageIndex] = useState<number | null>(null);
-  const [newImageCaption, setNewImageCaption] = useState("");
-  const newFileInputRef = useRef<HTMLInputElement>(null);
 
   // 计算每个分类下的提示词数量
   const promptCounts = prompts.reduce((acc, prompt) => {
@@ -304,140 +292,6 @@ export function Sidebar({ className }: { className?: string }) {
 
   const isCollapsed = sidebarMode === "collapsed";
 
-  // 添加图片上传功能
-  const handleNewImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
-    
-    const file = files[0];
-    if (!file.type.startsWith('image/')) {
-      toast({
-        title: "格式错误",
-        description: "请上传图片文件",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    if (file.size > 5 * 1024 * 1024) { // 5MB限制
-      toast({
-        title: "文件过大",
-        description: "图片大小不能超过5MB",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const result = e.target?.result as string;
-      const newImage: PromptImage = {
-        id: generateId(),
-        data: result,
-        caption: ""
-      };
-      setNewPromptImages(prev => [...prev, newImage]);
-      setSelectedNewImageIndex(newPromptImages.length);
-      setNewImageCaption("");
-    };
-    reader.readAsDataURL(file);
-    
-    // 清空文件输入以允许重复选择相同文件
-    if (newFileInputRef.current) {
-      newFileInputRef.current.value = "";
-    }
-  };
-  
-  // 删除图片
-  const handleDeleteNewImage = (index: number) => {
-    setNewPromptImages(prev => prev.filter((_, i) => i !== index));
-    if (selectedNewImageIndex === index) {
-      setSelectedNewImageIndex(null);
-      setNewImageCaption("");
-    } else if (selectedNewImageIndex !== null && selectedNewImageIndex > index) {
-      setSelectedNewImageIndex(selectedNewImageIndex - 1);
-    }
-  };
-  
-  // 更新图片说明
-  const handleUpdateNewCaption = (index: number, caption: string) => {
-    setNewPromptImages(prev => 
-      prev.map((img, i) => 
-        i === index ? {...img, caption} : img
-      )
-    );
-  };
-  
-  // 选择图片进行编辑
-  const handleSelectNewImage = (index: number) => {
-    setSelectedNewImageIndex(index);
-    setNewImageCaption(newPromptImages[index].caption || "");
-  };
-
-  // 处理创建新提示词
-  const handleCreatePrompt = () => {
-    if (!newPromptTitle.trim() || !newPromptContent.trim()) {
-      toast({
-        title: "错误",
-        description: "标题和内容不能为空",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    // 修改标签处理逻辑，确保正确分割
-    const tags = newPromptTags.split(/[,，;；]/).map(tag => tag.trim()).filter(Boolean);
-    
-    addPrompt({
-      title: newPromptTitle,
-      content: newPromptContent,
-      category: newPromptCategory || activeCategory || categories[0]?.id || "general",
-      tags,
-      isFavorite: false,
-      images: newPromptImages, // 添加图片数据
-    });
-    
-    toast({
-      title: "创建成功",
-      description: "新的提示词已创建",
-      variant: "success",
-    });
-    
-    // 重置表单
-    setNewPromptTitle("");
-    setNewPromptContent("");
-    setNewPromptCategory("");
-    setNewPromptTags("");
-    setNewPromptImages([]);
-    setSelectedNewImageIndex(null);
-    setNewImageCaption("");
-    setShowNewPromptDialog(false);
-  };
-
-  // 打开新建提示词对话框
-  const openNewPromptDialog = () => {
-    setNewPromptCategory(activeCategory || categories[0]?.id || "general");
-    setNewPromptImages([]);
-    setSelectedNewImageIndex(null);
-    setNewImageCaption("");
-    setShowNewPromptDialog(true);
-  };
-
-  // 添加标签选择功能
-  const handleAddTag = (tag: string) => {
-    const currentTags = newPromptTags.split(/[,，;；]/).map(t => t.trim()).filter(Boolean);
-    
-    // 检查标签是否已存在
-    if (!currentTags.includes(tag)) {
-      // 如果当前已有标签，则添加逗号和新标签
-      const newTagsString = currentTags.length > 0 
-        ? `${newPromptTags.trim()}${newPromptTags.trim().endsWith(',') ? ' ' : ', '}${tag}` 
-        : tag;
-      
-      setNewPromptTags(newTagsString);
-    }
-  };
-
   // 添加键盘事件处理函数
   const handleKeyDown = (e: React.KeyboardEvent, category: Category) => {
     if (e.key === "F2") {
@@ -481,6 +335,12 @@ export function Sidebar({ className }: { className?: string }) {
         handleAllPromptsClick();
       }
     }
+  };
+
+  // 处理右键菜单新建提示词
+  const handleContextMenuNewPrompt = (categoryId: string) => {
+    setNewPromptCategoryId(categoryId);
+    setShowNewPromptDialog(true);
   };
 
 
@@ -873,10 +733,8 @@ export function Sidebar({ className }: { className?: string }) {
                           <ContextMenuItem onClick={() => handleEditCategory(category)}>
                             编辑
                           </ContextMenuItem>
-                          <ContextMenuItem onClick={() => {
-                            setNewPromptCategory(category.id);
-                            setShowNewPromptDialog(true);
-                          }}>
+                          <ContextMenuItem onClick={() => handleContextMenuNewPrompt(category.id)}>
+                            <Icons.plus className="h-4 w-4 mr-2" />
                             新建提示词
                           </ContextMenuItem>
                           <ContextMenuItem 
@@ -949,26 +807,16 @@ export function Sidebar({ className }: { className?: string }) {
         
         
         {/* 新建提示词 */}
-        <TooltipProvider delayDuration={100}>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className={cn(
-                  "rounded-full h-8 w-8 bg-primary/10 text-primary hover:bg-primary/20 hover:scale-95 transition-transform",
-                  isCollapsed ? "mx-auto" : ""
-                )}
-                onClick={() => setShowNewPromptDialog(true)}
-              >
-                <Icons.plus className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="right">
-              新建提示词
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        <QuickCreatePrompt
+          variant="icon"
+          className={cn(
+            "bg-primary/10 text-primary hover:bg-primary/20",
+            isCollapsed ? "mx-auto" : ""
+          )}
+          options={{
+            defaultCategory: activeCategory || categories[0]?.id || "general"
+          }}
+        />
         
         {/* 设置 */}
         <TooltipProvider delayDuration={100}>
@@ -996,200 +844,6 @@ export function Sidebar({ className }: { className?: string }) {
         </TooltipProvider>
       </div>
 
-      {/* 对话框组件 */}
-      <Dialog open={showNewPromptDialog} onOpenChange={(open) => {
-        if (!open) {
-          // 关闭对话框时重置所有状态
-          setNewPromptTitle("");
-          setNewPromptContent("");
-          setNewPromptCategory("");
-          setNewPromptTags("");
-          setNewPromptImages([]);
-          setSelectedNewImageIndex(null);
-          setNewImageCaption("");
-        } else {
-          // 打开对话框时设置当前选中的分类作为默认值
-          setNewPromptCategory(activeCategory || categories[0]?.id || "general");
-        }
-        setShowNewPromptDialog(open);
-      }}>
-        <DialogContent className="sm:max-w-[600px] max-h-[90vh] flex flex-col">
-          <DialogHeader>
-            <DialogTitle>新建提示词</DialogTitle>
-          </DialogHeader>
-          <ScrollArea className="flex-1 max-h-[calc(90vh-130px)] overflow-auto">
-            <div className="space-y-4 py-4 px-1">
-              <div className="space-y-2">
-                <Label htmlFor="title">标题</Label>
-                <Input 
-                  id="title" 
-                  placeholder="请输入提示词标题" 
-                  value={newPromptTitle}
-                  onChange={(e) => setNewPromptTitle(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="content">内容</Label>
-                <Textarea 
-                  id="content" 
-                  placeholder="请输入提示词内容" 
-                  className="h-[200px]"
-                  value={newPromptContent}
-                  onChange={(e) => setNewPromptContent(e.target.value)}
-                />
-                {/* Markdown 预览 */}
-                <div className="mt-2 p-2 border rounded bg-muted/30">
-                  <div className="text-xs text-muted-foreground mb-1">Markdown 预览：</div>
-                  <div className="markdown-body">
-                    <ReactMarkdown>{newPromptContent}</ReactMarkdown>
-                  </div>
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="category">分类</Label>
-                <Select 
-                  value={newPromptCategory || activeCategory || categories[0]?.id || "general"}
-                  onValueChange={setNewPromptCategory}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="选择分类" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.map(category => (
-                      <SelectItem key={category.id} value={category.id}>
-                        {category.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="tags">标签</Label>
-                <div className="space-y-2">
-                  <Input
-                    id="tags" 
-                    placeholder="输入标签，用逗号、分号分隔"
-                    value={newPromptTags}
-                    onChange={(e) => setNewPromptTags(e.target.value)}
-                  />
-                  
-                  {/* 显示现有标签供选择 */}
-                  {allTags && allTags.length > 0 && (
-                    <div className="mt-2">
-                      <Label className="text-xs text-muted-foreground mb-1 block">选择已有标签</Label>
-                      <div className="flex flex-wrap gap-1.5 max-h-[80px] overflow-y-auto p-1">
-                        {allTags.map(tag => (
-                          <Badge 
-                            key={tag}
-                            variant="outline" 
-                            className="cursor-pointer px-2 py-0.5 text-[8px] font-normal hover:bg-primary/10"
-                            onClick={() => handleAddTag(tag)}
-                          >
-                            {tag}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-              
-              {/* 图片上传区域 */}
-              <div className="space-y-2 pt-2 border-t">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="newPromptImages">参考图片</Label>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => newFileInputRef.current?.click()}
-                    type="button"
-                  >
-                    <Icons.image className="h-4 w-4 mr-2" />
-                    添加图片
-                  </Button>
-                  <input
-                    type="file"
-                    id="newPromptImages"
-                    ref={newFileInputRef}
-                    className="hidden"
-                    accept="image/*"
-                    onChange={handleNewImageUpload}
-                    aria-label="选择图片文件"
-                  />
-                </div>
-                
-                {/* 图片预览区域 */}
-                {newPromptImages.length > 0 && (
-                  <div className="space-y-3">
-                    <div className="grid grid-cols-3 gap-2">
-                      {newPromptImages.map((image, index) => (
-                        <div 
-                          key={image.id} 
-                          className={`relative border rounded-md overflow-hidden cursor-pointer
-                          ${selectedNewImageIndex === index ? 'ring-2 ring-primary' : ''}
-                          group`}
-                          onClick={() => handleSelectNewImage(index)}
-                        >
-                          <img 
-                            src={image.data} 
-                            alt={image.caption || `图片 ${index + 1}`} 
-                            className="w-full h-28 object-cover"
-                          />
-                          <div className="absolute bottom-0 left-0 right-0 p-1 text-xs bg-black/60 text-white truncate">
-                            {image.caption || `图片 ${index + 1}`}
-                          </div>
-                          <button 
-                            className="absolute top-1 right-1 bg-black/60 rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDeleteNewImage(index);
-                            }}
-                            type="button"
-                            aria-label="删除图片"
-                          >
-                            <X className="h-3 w-3 text-white" />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                    
-                    {/* 图片编辑区域 */}
-                    {selectedNewImageIndex !== null && (
-                      <div className="rounded-md p-3 bg-muted/50">
-                        <p className="text-sm font-medium mb-2">图片说明</p>
-                        <div className="flex gap-2">
-                          <Input
-                            value={newImageCaption}
-                            onChange={(e) => setNewImageCaption(e.target.value)}
-                            placeholder="添加图片说明"
-                            className="flex-1"
-                          />
-                          <Button 
-                            size="sm"
-                            onClick={() => {
-                              handleUpdateNewCaption(selectedNewImageIndex, newImageCaption);
-                              setSelectedNewImageIndex(null);
-                              setNewImageCaption("");
-                            }}
-                            type="button"
-                          >
-                            保存
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-          </ScrollArea>
-          
-          <DialogFooter className="mt-4 pt-4 border-t">
-            <Button variant="outline" onClick={() => setShowNewPromptDialog(false)}>取消</Button>
-            <Button onClick={handleCreatePrompt}>创建</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       {/* 设置对话框 */}
       <Dialog open={showSettings} onOpenChange={setShowSettings}>
@@ -1202,7 +856,7 @@ export function Sidebar({ className }: { className?: string }) {
           </DialogHeader>
           
           {/* 设置导航按钮 */}
-          <div className="grid grid-cols-3 gap-2 mb-4">
+          <div className="grid grid-cols-4 gap-2 mb-4">
             <Button 
               variant={settingsPanel === "appearance" ? "default" : "outline"} 
               onClick={() => setSettingsPanel("appearance")}
@@ -1218,6 +872,14 @@ export function Sidebar({ className }: { className?: string }) {
             >
               <Icons.fileJson className="mr-2 h-4 w-4" />
               数据管理
+            </Button>
+            <Button 
+              variant={settingsPanel === "ai" ? "default" : "outline"} 
+              onClick={() => setSettingsPanel("ai")}
+              className="w-full"
+            >
+              <Icons.star className="mr-2 h-4 w-4" />
+              AI设置
             </Button>
             <Button 
               variant={settingsPanel === "about" ? "default" : "outline"} 
@@ -1322,6 +984,15 @@ export function Sidebar({ className }: { className?: string }) {
             </div>
           )}
 
+          {/* AI设置面板 */}
+          {settingsPanel === "ai" && (
+            <ScrollArea className="h-[60vh] pr-4">
+              <div className="py-2">
+                <AISettings />
+              </div>
+            </ScrollArea>
+          )}
+
           {/* 关于面板 */}
           {settingsPanel === "about" && (
             <ScrollArea className="h-[60vh] pr-4">
@@ -1353,6 +1024,19 @@ export function Sidebar({ className }: { className?: string }) {
           />
         </DialogContent>
       </Dialog>
+
+      {/* 新建提示词对话框 */}
+      <CreatePromptDialog
+        open={showNewPromptDialog}
+        onOpenChange={setShowNewPromptDialog}
+        options={{
+          defaultCategory: newPromptCategoryId || undefined,
+          onSuccess: () => {
+            setShowNewPromptDialog(false);
+            setNewPromptCategoryId(null);
+          }
+        }}
+      />
     </div>
   );
 }

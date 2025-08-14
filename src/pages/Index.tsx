@@ -1,7 +1,7 @@
 import { useState, useEffect, Dispatch, SetStateAction } from "react";
 import { Sidebar } from "@/components/Sidebar";
 import { PromptList } from "@/components/PromptList";
-import { PromptEditor } from "@/components/PromptEditor";
+import { PromptEditorModular } from "@/components/PromptEditorModular";
 import { usePrompts } from "@/hooks/usePrompts";
 import { Icons } from "@/components/ui/icons";
 import { Button } from "@/components/ui/button";
@@ -123,7 +123,7 @@ function ContentArea({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
       {/* 提示词编辑器 */}
       {selectedPrompt && (
         <div className={`min-h-[150vh] h-full border-l fixed md:relative right-0 top-[64px] bottom-0 z-10 bg-background md:z-0 w-full md:w-1/2 transition-all duration-300 overflow-auto ${showEditor ? "translate-x-0" : "translate-x-full md:translate-x-0"}`}>
-          <PromptEditor />
+          <PromptEditorModular />
         </div>
       )}
     </div>
