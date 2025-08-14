@@ -39,6 +39,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
+import ReactMarkdown from 'react-markdown';
 
 // 防抖函数
 function debounce<T extends (...args: any[]) => any>(func: T, wait: number): (...args: Parameters<T>) => void {
@@ -681,6 +682,13 @@ export function PromptEditor() {
                     placeholder="输入提示词内容"
                     className="min-h-[200px]"
                   />
+                  {/* Markdown 预览 */}
+                  <div className="mt-2 p-2 border rounded bg-muted/30">
+                    <div className="text-xs text-muted-foreground mb-1">Markdown 预览：</div>
+                    <div className="markdown-body">
+                      <ReactMarkdown>{content}</ReactMarkdown>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="grid gap-2">
@@ -824,8 +832,8 @@ export function PromptEditor() {
             {/* 只读模式内容 */}
             {!isEditing && (
               <>
-                <div className="bg-muted/30 rounded-md p-4 mb-4 whitespace-pre-wrap">
-                  {selectedPrompt.content}
+                <div className="bg-muted/30 rounded-md p-4 mb-4 markdown-body">
+                  <ReactMarkdown>{selectedPrompt.content}</ReactMarkdown>
                 </div>
                 
                 {/* 图片预览区域（只读模式） */}
@@ -840,28 +848,13 @@ export function PromptEditor() {
                               <img 
                                 src={image.data} 
                                 alt={image.caption || `图片 ${index + 1}`} 
-                                className="w-full h-32 object-cover"
+                                className="w-full h-28 object-cover"
                               />
-                              {image.caption && (
-                                <div className="p-2 text-xs text-muted-foreground truncate">
-                                  {image.caption}
-                                </div>
-                              )}
                             </div>
                           </PopoverTrigger>
-                          <PopoverContent className="w-80 p-0">
-                            <div className="relative">
-                              <img 
-                                src={image.data} 
-                                alt={image.caption || `图片 ${index + 1}`} 
-                                className="w-full max-h-[500px] object-contain"
-                              />
-                              {image.caption && (
-                                <div className="p-2 text-sm bg-background/95 border-t">
-                                  {image.caption}
-                                </div>
-                              )}
-                            </div>
+                          <PopoverContent className="p-2 max-w-xs">
+                            <img src={image.data} alt={image.caption || `图片 ${index + 1}`} className="w-full mb-2 rounded" />
+                            <div className="text-xs text-muted-foreground">{image.caption}</div>
                           </PopoverContent>
                         </Popover>
                       ))}
