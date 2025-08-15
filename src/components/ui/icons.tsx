@@ -41,7 +41,9 @@ import {
   Github,
   Loader,
   MoveVertical,
-  Image
+  Image,
+  History,
+  GitCompare
 } from "lucide-react";
 
 export const Icons = {
@@ -89,5 +91,7 @@ export const Icons = {
   loader: Loader,
   bot: AlertCircle,
   moveVertical: MoveVertical,
-  image: Image
+  image: Image,
+  history: History,
+  gitCompare: GitCompare
 }; 

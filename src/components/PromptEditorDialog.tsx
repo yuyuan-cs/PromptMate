@@ -213,6 +213,7 @@ export const PromptEditorDialog: React.FC<PromptEditorDialogProps> = ({
                     allTags={allTags}
                     onFieldChange={updateField}
                     onImageUpload={() => fileInputRef.current?.click()}
+                    onImageUploadChange={handleImageUpload}
                     onImageSelect={selectImage}
                     onImageDelete={deleteImage}
                     onImageCaptionUpdate={updateImageCaption}
@@ -225,14 +226,7 @@ export const PromptEditorDialog: React.FC<PromptEditorDialogProps> = ({
             </ScrollArea>
           </div>
 
-          {/* 隐藏的文件输入 */}
-          <input
-            type="file"
-            ref={fileInputRef}
-            className="hidden"
-            accept="image/*"
-            onChange={handleImageUpload}
-          />
+
         </DialogContent>
       </Dialog>
 

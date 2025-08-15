@@ -71,11 +71,9 @@ export const useCreatePrompt = (options: CreatePromptOptions = {}) => {
           const result = event.target?.result as string;
           if (result) {
             const newImage: PromptImage = {
-              id: Date.now() + Math.random(),
-              url: result,
-              caption: "",
-              filename: file.name,
-              size: file.size
+              id: (Date.now() + Math.random()).toString(),
+              data: result,
+              caption: ""
             };
             
             setFormData(prev => ({

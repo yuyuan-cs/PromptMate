@@ -203,30 +203,41 @@ export const usePromptEditor = (options: PromptEditorOptions = {}) => {
 
   // 图片上传
   const handleImageUpload = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
 
-    if (file.size > 5 * 1024 * 1024) {
-      toast({
-        title: "文件过大",
-        description: "图片大小不能超过5MB",
-        variant: "destructive",
-      });
-      return;
-    }
+    // 处理多个文件
+    Array.from(files).forEach(file => {
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: "文件过大",
+          description: `图片 "${file.name}" 大小不能超过5MB`,
+          variant: "destructive",
+        });
+        return;
+      }
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const newImage: PromptImage = {
-        id: generateId(),
-        data: e.target?.result as string,
-        caption: "",
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const newImage: PromptImage = {
+          id: generateId(),
+          data: e.target?.result as string,
+          caption: "",
+        };
+        
+        // 添加新图片到现有图片列表
+        setState(prev => ({
+          ...prev,
+          images: [...prev.images, newImage],
+          hasChanges: true
+        }));
       };
-      
-      updateField('images', [...state.images, newImage]);
-    };
-    reader.readAsDataURL(file);
-  }, [state.images, updateField, toast]);
+      reader.readAsDataURL(file);
+    });
+
+    // 清空文件输入，允许重复选择同一文件
+    event.target.value = '';
+  }, [toast]);
 
   // 删除图片
   const deleteImage = useCallback((index: number) => {

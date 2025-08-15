@@ -19,6 +19,7 @@ interface AIOptimizeButtonProps {
   disabled?: boolean;
   className?: string;
   onOpenSettings?: () => void;
+  variant?: 'floating' | 'inline'; // 新增：支持浮动和内联两种模式
 }
 
 export const AIOptimizeButton: React.FC<AIOptimizeButtonProps> = ({
@@ -28,6 +29,7 @@ export const AIOptimizeButton: React.FC<AIOptimizeButtonProps> = ({
   disabled = false,
   className = "",
   onOpenSettings,
+  variant = 'floating',
 }) => {
   const { toast } = useToast();
   const [isOptimizing, setIsOptimizing] = useState(false);
@@ -63,7 +65,14 @@ export const AIOptimizeButton: React.FC<AIOptimizeButtonProps> = ({
       return;
     }
 
-    if (isOptimizing || disabled) return;
+    // 如果正在优化但对话框已关闭，重新打开对话框显示进度
+    if (isOptimizing && !showDialog) {
+      setShowDialog(true);
+      return;
+    }
+
+    // 如果已经在优化且对话框已打开，或者被禁用，则不执行
+    if ((isOptimizing && showDialog) || disabled) return;
 
     setIsOptimizing(true);
     setShowDialog(true);
@@ -133,10 +142,40 @@ export const AIOptimizeButton: React.FC<AIOptimizeButtonProps> = ({
     setStreamingContent('');
   };
 
-  const buttonText = hasContent ? "AI优化" : "AI生成";
   const tooltipText = hasContent 
     ? "使用AI优化当前提示词" 
     : "使用AI生成新的提示词";
+
+  // 根据variant决定按钮样式
+  const getButtonStyles = () => {
+    if (variant === 'inline') {
+      return cn(
+        "w-8 h-8 rounded-full shadow-md border-0 p-0",
+        "hover:shadow-lg hover:scale-110 transition-all duration-200",
+        !isConfigured 
+          ? "bg-gray-500 hover:bg-gray-600 text-white"
+          : isOptimizing && !showDialog
+            ? "bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white animate-pulse"
+            : "bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white",
+        !isOptimizing && !disabled && isConfigured && "animate-breathing",
+        className
+      );
+    }
+    
+    // 浮动模式（原有样式）
+    return cn(
+      "fixed bottom-6 right-6 z-50 rounded-full shadow-lg",
+      !isConfigured 
+        ? "bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700"
+        : isOptimizing && !showDialog
+          ? "bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 animate-pulse"
+          : "bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600",
+      "text-white border-0 min-w-[120px] h-12",
+      !isOptimizing && !disabled && "animate-breathing",
+      "hover:shadow-xl hover:scale-105 transition-all duration-300",
+      className
+    );
+  };
 
   // 如果未配置AI服务，显示不同的按钮样式
   if (!isConfigured) {
@@ -147,19 +186,19 @@ export const AIOptimizeButton: React.FC<AIOptimizeButtonProps> = ({
             <Button
               onClick={onOpenSettings}
               disabled={disabled}
-              className={cn(
-                "fixed bottom-6 right-6 z-50 rounded-full shadow-lg",
-                "bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700",
-                "text-white border-0 min-w-[120px] h-12",
-                "hover:shadow-xl hover:scale-105 transition-all duration-300",
-                className
-              )}
+              className={getButtonStyles()}
             >
-              <Settings className="h-4 w-4 mr-2" />
-              配置AI
+              {variant === 'inline' ? (
+                <Settings className="h-4 w-4" />
+              ) : (
+                <>
+                  <Settings className="h-4 w-4 mr-2" />
+                  配置AI
+                </>
+              )}
             </Button>
           </TooltipTrigger>
-          <TooltipContent side="left">
+          <TooltipContent side={variant === 'inline' ? 'top' : 'left'}>
             <p>点击配置AI服务以启用优化功能</p>
           </TooltipContent>
         </Tooltip>
@@ -174,33 +213,36 @@ export const AIOptimizeButton: React.FC<AIOptimizeButtonProps> = ({
           <TooltipTrigger asChild>
             <Button
               onClick={handleOptimize}
-              disabled={disabled || isOptimizing}
-              className={cn(
-                "fixed bottom-6 right-6 z-50 rounded-full shadow-lg",
-                "bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600",
-                "text-white border-0 min-w-[120px] h-12",
-                // 呼吸动画
-                !isOptimizing && !disabled && "animate-pulse",
-                // 悬浮效果
-                "hover:shadow-xl hover:scale-105 transition-all duration-300",
-                className
-              )}
+              disabled={disabled}
+              className={getButtonStyles()}
             >
               {isOptimizing ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  优化中...
-                </>
+                showDialog ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  // 显示可重新打开的状态
+                  <div className="relative">
+                    <Sparkles className="h-4 w-4" />
+                    <div className="absolute -top-1 -right-1 w-2 h-2 bg-orange-400 rounded-full animate-ping" />
+                  </div>
+                )
               ) : (
-                <>
-                  <Sparkles className="h-4 w-4 mr-2" />
-                  {buttonText}
-                </>
+                <Sparkles className="h-4 w-4" />
+              )}
+              {variant === 'floating' && (
+                <span className="ml-2">
+                  {isOptimizing ? '优化中...' : (hasContent ? 'AI优化' : 'AI生成')}
+                </span>
               )}
             </Button>
           </TooltipTrigger>
-          <TooltipContent side="left">
-            <p>{tooltipText}</p>
+          <TooltipContent side={variant === 'inline' ? 'top' : 'left'}>
+            <p>
+              {isOptimizing && !showDialog 
+                ? "点击查看AI优化进度" 
+                : tooltipText
+              }
+            </p>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>

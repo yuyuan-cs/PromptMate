@@ -115,23 +115,19 @@ function ContentArea({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
 
   return (
     <div className="flex flex-1 overflow-hidden">
-      {/* 左侧内容区域 */}
-      <div className={`h-full transition-all duration-300 ${selectedPrompt ? "w-full md:w-1/2" : "w-full"}`}>
+      {/* 左侧：提示词列表 - 始终显示 */}
+      <div className={`h-full transition-all duration-300 ${selectedPrompt ? "flex-1" : "w-full"}`}>
         {renderCurrentView()}
       </div>
 
-      {/* 提示词编辑器 */}
-      {selectedPrompt && (
-        <div className={`min-h-[150vh] h-full border-l fixed md:relative right-0 top-[64px] bottom-0 z-10 bg-background md:z-0 w-full md:w-1/2 transition-all duration-300 overflow-auto ${showEditor ? "translate-x-0" : "translate-x-full md:translate-x-0"}`}>
-          <PromptEditorModular />
-        </div>
-      )}
+
     </div>
   );
 }
 
 export function Index({ sidebarOpen: propsSidebarOpen, setSidebarOpen: propSetSidebarOpen, onToggleSidebarRef }: IndexProps) {
   const [localSidebarOpen, setLocalSidebarOpen] = useState(true);
+  const { selectedPrompt } = usePrompts();
   
   // 使用props传递的状态或本地状态
   const sidebarOpen = propsSidebarOpen !== undefined ? propsSidebarOpen : localSidebarOpen;
@@ -151,10 +147,30 @@ export function Index({ sidebarOpen: propsSidebarOpen, setSidebarOpen: propSetSi
 
   return (
     <div className="flex h-full">
+      {/* 左侧边栏 */}
       {sidebarOpen && <Sidebar />}
-      <ScrollArea className="flex-1 h-full">
-        <ContentArea onToggleSidebar={toggleSidebar} />
-      </ScrollArea>
+      
+      {/* 中间内容区域 */}
+      <div className={cn(
+        "flex-1 h-full",
+        selectedPrompt ? "flex" : ""
+      )}>
+        <div className={cn(
+          "h-full transition-all duration-300 ease-in-out",
+          selectedPrompt ? "flex-1 border-r" : "w-full"
+        )}>
+          <ScrollArea className="h-full">
+            <ContentArea onToggleSidebar={toggleSidebar} />
+          </ScrollArea>
+        </div>
+        
+        {/* 右侧编辑面板 - 只在选中提示词时显示 */}
+        {selectedPrompt && (
+          <div className="w-96 h-full border-l bg-background animate-slide-in-panel shadow-lg">
+            <PromptEditorModular />
+          </div>
+        )}
+      </div>
     </div>
   );
 }
