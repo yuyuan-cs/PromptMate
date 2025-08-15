@@ -9,7 +9,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Star, Copy, Edit, Trash, Save, X } from "lucide-react";
+import { Star, Copy, Edit, Trash, Save, X, Eye } from "lucide-react";
+import { Icons } from "@/components/ui/icons";
 import { usePromptEditor } from "@/hooks/usePromptEditor";
 import { PromptEditForm } from "./PromptEditForm";
 import { PromptPreview } from "./PromptPreview";
@@ -62,6 +63,16 @@ export function PromptEditorModular() {
     enableSwitchConfirmation: true,
   });
 
+  // 选中新提示词时，默认进入预览模式
+  React.useEffect(() => {
+    if (selectedPrompt && state.isEditing) {
+      // 如果当前在编辑模式，切换到预览模式
+      if (!state.hasChanges) {
+        cancelEditing();
+      }
+    }
+  }, [selectedPrompt?.id]); // 只在选中不同提示词时触发
+
   if (!selectedPrompt) {
     return (
       <div className="flex-1 flex items-center justify-center text-muted-foreground">
@@ -92,7 +103,7 @@ export function PromptEditorModular() {
         <div className="flex items-center justify-between p-4">
           <div className="flex items-center gap-2">
             <h2 className="text-lg font-semibold truncate">
-              {state.isEditing ? "编辑提示词" : selectedPrompt.title}
+              {selectedPrompt.title}
             </h2>
             {state.hasChanges && (
               <span className="text-xs text-muted-foreground">
@@ -104,6 +115,26 @@ export function PromptEditorModular() {
           {/* 操作按钮 */}
           <div className="flex items-center gap-2">
             <TooltipProvider>
+              {/* 编辑/预览切换按钮 */}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={state.isEditing ? cancelEditing : startEditing}
+                  >
+                    {state.isEditing ? (
+                      <Eye className="h-4 w-4" />
+                    ) : (
+                      <Edit className="h-4 w-4" />
+                    )}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {state.isEditing ? "切换到预览模式" : "切换到编辑模式"}
+                </TooltipContent>
+              </Tooltip>
+
               {/* 收藏按钮 */}
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -135,50 +166,20 @@ export function PromptEditorModular() {
                 <TooltipContent>复制内容</TooltipContent>
               </Tooltip>
 
-              {/* 编辑/保存按钮 */}
-              {state.isEditing ? (
-                <>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={handleManualSave}
-                        disabled={!state.hasChanges}
-                      >
-                        <Save className="h-4 w-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>保存更改</TooltipContent>
-                  </Tooltip>
-                  
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={cancelEditing}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>取消编辑</TooltipContent>
-                  </Tooltip>
-                </>
-              ) : (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={startEditing}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>编辑</TooltipContent>
-                </Tooltip>
-              )}
+              {/* 手动保存按钮 */}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleManualSave}
+                    disabled={!state.hasChanges}
+                  >
+                    <Save className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>保存更改</TooltipContent>
+              </Tooltip>
 
               {/* 删除按钮 */}
               <Tooltip>
@@ -199,7 +200,7 @@ export function PromptEditorModular() {
         </div>
       </div>
 
-      {/* 内容区域 */}
+      {/* 主要内容区域 */}
       <div className="flex-1 overflow-hidden">
         <ScrollArea className="h-full">
           <div className="p-6">
@@ -210,6 +211,7 @@ export function PromptEditorModular() {
                 allTags={allTags}
                 onFieldChange={updateField}
                 onImageUpload={() => fileInputRef.current?.click()}
+                onImageUploadChange={handleImageUpload}
                 onImageSelect={selectImage}
                 onImageDelete={deleteImage}
                 onImageCaptionUpdate={updateImageCaption}
@@ -218,20 +220,15 @@ export function PromptEditorModular() {
                 onOpenSettings={() => setShowAISettings(true)}
               />
             ) : (
-              <PromptPreview prompt={selectedPrompt} />
+              <PromptPreview
+                prompt={selectedPrompt}
+              />
             )}
           </div>
         </ScrollArea>
       </div>
 
-      {/* 隐藏的文件输入 */}
-      <input
-        type="file"
-        ref={fileInputRef}
-        className="hidden"
-        accept="image/*"
-        onChange={handleImageUpload}
-      />
+
 
       {/* 确认删除对话框 */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

@@ -117,18 +117,23 @@ function usePromptsState() {
     });
   }, [displayedPrompts, showRecommended, prompts, activeCategory, showFavorites, refreshCounter]);
 
-  // 获取所有标签
+  // 获取所有标签（支持按分类过滤）
   const allTags = useMemo(() => {
     const tagsSet = new Set<string>();
     
-    // 合并所有标签
-    prompts.forEach(prompt => {
+    // 如果有选中的分类，只显示该分类下的标签
+    const targetPrompts = activeCategory 
+      ? prompts.filter(prompt => prompt.category === activeCategory)
+      : prompts;
+    
+    // 合并标签
+    targetPrompts.forEach(prompt => {
       prompt.tags.forEach(tag => tagsSet.add(tag));
     });
     
     return Array.from(tagsSet).sort();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [refreshCounter, searchTerm]);
+  }, [refreshCounter, searchTerm, activeCategory, prompts]);
 
   // 过滤提示词基于当前分类、标签和搜索词
   const filteredPrompts = useMemo(() => {
@@ -405,12 +410,29 @@ function usePromptsState() {
     });
   };
 
-  // 添加删除标签功能
-  const deleteTag = (tagToDelete: string) => {
-    // 1. 从所有提示词中删除该标签
+  // 获取指定分类的标签
+  const getTagsForCategory = useCallback((categoryId: string | null) => {
+    const tagsSet = new Set<string>();
+    const targetPrompts = categoryId 
+      ? prompts.filter(prompt => prompt.category === categoryId)
+      : prompts;
+    
+    targetPrompts.forEach(prompt => {
+      prompt.tags.forEach(tag => tagsSet.add(tag));
+    });
+    
+    return Array.from(tagsSet).sort();
+  }, [prompts]);
+
+  // 添加删除标签功能（支持分类范围删除）
+  const deleteTag = (tagToDelete: string, categoryScope: string | null = null) => {
+    // 1. 从指定分类或所有提示词中删除该标签
     setPrompts(prevPrompts => {
       const updatedPrompts = prevPrompts.map(prompt => {
-        if (prompt.tags.includes(tagToDelete)) {
+        // 如果指定了分类范围，只处理该分类下的提示词
+        const shouldProcess = categoryScope ? prompt.category === categoryScope : true;
+        
+        if (shouldProcess && prompt.tags.includes(tagToDelete)) {
           // 创建一个不包含要删除标签的新标签数组
           const updatedTags = prompt.tags.filter(tag => tag !== tagToDelete);
           
@@ -418,15 +440,13 @@ function usePromptsState() {
           if (selectedPrompt && selectedPrompt.id === prompt.id) {
             setSelectedPrompt({
               ...selectedPrompt,
-              tags: updatedTags,
-              updatedAt: new Date().toISOString()
+              tags: updatedTags
             });
           }
           
           return {
             ...prompt,
-            tags: updatedTags,
-            updatedAt: new Date().toISOString()
+            tags: updatedTags
           };
         }
         return prompt;
@@ -435,7 +455,7 @@ function usePromptsState() {
       return updatedPrompts;
     });
     
-    // 2. 如果当前选中的标签就是被删除的标签，重置标签筛选
+    // 2. 如果当前选中的标签就是要删除的标签，清除选中状态
     if (selectedTag === tagToDelete) {
       setSelectedTag(null);
     }
@@ -477,6 +497,7 @@ function usePromptsState() {
     forceRefresh,
     refreshCounter,
     deleteTag,
+    getTagsForCategory,
     setCheckUnsavedChangesCallback,
     hasUnsavedChanges
   };

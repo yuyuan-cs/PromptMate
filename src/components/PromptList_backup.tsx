@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Plus, Star, Search, X, Copy, Edit, Trash, MoreVertical, Menu } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useState, useEffect, memo, useCallback, useRef } from "react";
-import { Prompt, Category, PromptImage, PromptVersion } from "@/types";
+import { Prompt, Category, PromptImage } from "@/types";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -199,7 +199,8 @@ export const PromptList = memo(function PromptList({
   const [editPromptCategory, setEditPromptCategory] = useState("");
   const [editPromptTags, setEditPromptTags] = useState("");
   const [localRefreshKey, setLocalRefreshKey] = useState(0);
-
+  const [detailPrompt, setDetailPrompt] = useState<Prompt | null>(null);
+  const [showDetailDialog, setShowDetailDialog] = useState(false);
   
   // 图片上传相关状态
   const [newPromptImages, setNewPromptImages] = useState<PromptImage[]>([]);
@@ -267,20 +268,15 @@ export const PromptList = memo(function PromptList({
     setShowNewPromptDialog(false);
   }, [newPromptTitle, newPromptContent, newPromptCategory, newPromptTags, newPromptImages, addPrompt, toast]);
 
-  // 处理选择提示词（显示在右侧编辑面板）
-  const handleSelectPrompt = useCallback((prompt: Prompt) => {
-    // 如果点击的是当前已选中的提示词，则关闭预览面板
-    if (selectedPrompt && selectedPrompt.id === prompt.id) {
-      setSelectedPrompt(null);
-    } else {
-      // 否则选中新的提示词
-      setSelectedPrompt(prompt);
-    }
-  }, [selectedPrompt, setSelectedPrompt]);
+  // 处理查看提示词详情
+  const handleViewPromptDetail = useCallback((prompt: Prompt) => {
+    setDetailPrompt(prompt);
+    setShowDetailDialog(true);
+  }, []);
 
   // 处理复制提示词
-  const handleCopyPrompt = useCallback((promptId: string) => {
-    copyPromptContent(promptId);
+  const handleCopyPrompt = useCallback((content: string) => {
+    copyPromptContent(content);
   }, [copyPromptContent]);
 
   // 处理收藏切换
@@ -328,86 +324,6 @@ export const PromptList = memo(function PromptList({
       setTagAffectedCount(0);
     }
   };
-
-  // 处理编辑提示词
-  const handleOpenEditDialog = useCallback((prompt: Prompt) => {
-    setPromptToEdit(prompt);
-    setEditPromptTitle(prompt.title);
-    setEditPromptContent(prompt.content);
-    setEditPromptCategory(prompt.category);
-    setEditPromptTags(prompt.tags.join(", "));
-    setEditDialogImages(prompt.images || []);
-    setSelectedEditDialogImageIndex(null);
-    setEditDialogImageCaption("");
-    setShowEditPromptDialog(true);
-  }, []);
-
-  // 处理删除提示词
-  const handleOpenDeleteDialog = useCallback((prompt: Prompt) => {
-    setPromptToDelete(prompt);
-    setShowDeletePromptDialog(true);
-  }, []);
-
-  // 处理从推荐添加
-  const handleAddFromRecommended = useCallback((prompt: Prompt) => {
-    addFromRecommended(prompt);
-    toast({
-      title: "添加成功",
-      description: "提示词已添加到您的收藏",
-      variant: "success",
-    });
-  }, [addFromRecommended, toast]);
-
-  // 处理更新提示词
-  const handleUpdatePrompt = useCallback(() => {
-    if (!promptToEdit || !editPromptTitle.trim() || !editPromptContent.trim()) {
-      toast({
-        title: "错误",
-        description: "标题和内容不能为空",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    const tags = editPromptTags.split(",").map(tag => tag.trim()).filter(Boolean);
-    
-    updatePrompt(promptToEdit.id, {
-      title: editPromptTitle,
-      content: editPromptContent,
-      category: editPromptCategory,
-      tags,
-      images: editDialogImages.length > 0 ? editDialogImages : undefined,
-    });
-    
-    toast({
-      title: "更新成功",
-      description: "提示词已更新",
-      variant: "success",
-    });
-    
-    setShowEditPromptDialog(false);
-    setPromptToEdit(null);
-    setEditPromptTitle("");
-    setEditPromptContent("");
-    setEditPromptTags("");
-    setEditDialogImages([]);
-    setSelectedEditDialogImageIndex(null);
-    setEditDialogImageCaption("");
-  }, [promptToEdit, editPromptTitle, editPromptContent, editPromptCategory, editPromptTags, editDialogImages, updatePrompt, toast]);
-
-  // 处理确认删除提示词
-  const handleConfirmDeletePrompt = useCallback(() => {
-    if (promptToDelete) {
-      deletePrompt(promptToDelete.id);
-      toast({
-        title: "删除成功",
-        description: "提示词已删除",
-        variant: "success",
-      });
-      setShowDeletePromptDialog(false);
-      setPromptToDelete(null);
-    }
-  }, [promptToDelete, deletePrompt, toast]);
 
   return (
     <div className="flex flex-col h-full">
@@ -528,29 +444,23 @@ export const PromptList = memo(function PromptList({
               </div>
             </div>
           ) : (
-            <div className={`grid gap-4 ${
-              isEditPanelOpen 
-                ? 'grid-cols-1' 
-                : 'grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5'
-            }`}>
+            <div className={`grid grid-cols-1 ${isEditPanelOpen ? '' : 'md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3'} gap-4`}>
               {filteredPrompts.map((prompt) => (
                 <Card 
                   key={prompt.id}
                   className={cn(
-                    "prompt-card cursor-pointer transition-all duration-300 ease-in-out rounded-md p-0.5",
-                    "w-full max-w-none", // 确保卡片占满网格单元格
+                    "prompt-card cursor-pointer transition-all duration-200 ease-in-out rounded-md p-0.5 min-w-[280px]",
                     "focus-visible:ring-1 focus-visible:ring-offset-0 focus-visible:shadow-lg",
-                    "hover:scale-[1.02] hover:-translate-y-1",
                     selectedPrompt?.id === prompt.id 
-                      ? "ring-2 ring-primary/30 shadow-xl border-primary/30 bg-primary/5 scale-[1.02] -translate-y-1"
-                      : "border border-transparent hover:border-primary/20 hover:shadow-xl hover:shadow-primary/10"
+                      ? "ring-0.2 ring-primary/20 shadow-xl border-primary/25 bg-primary/1"
+                      : "border border-transparent hover:border-primary/10 hover:shadow-lg"
                   )}
-                  onClick={() => handleSelectPrompt(prompt)}
+                  onClick={() => handleViewPromptDetail(prompt)}
                   tabIndex={0}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
                       e.preventDefault();
-                      handleSelectPrompt(prompt);
+                      handleViewPromptDetail(prompt);
                     }
                   }}
                 >
@@ -564,7 +474,7 @@ export const PromptList = memo(function PromptList({
                           className="h-8 w-8"
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleCopyPrompt(prompt.id);
+                            handleCopyPrompt(prompt.content);
                           }}
                           title="复制提示词"
                         >
@@ -586,7 +496,7 @@ export const PromptList = memo(function PromptList({
                             {!showRecommended && (
                               <DropdownMenuItem onClick={(e) => {
                                 e.stopPropagation();
-                                handleOpenEditDialog(prompt);
+                                // handleOpenEditDialog(prompt);
                               }}>
                                 <Icons.pencil className="mr-2 h-4 w-4" />
                                 编辑
@@ -595,7 +505,7 @@ export const PromptList = memo(function PromptList({
                             <DropdownMenuItem onClick={(e) => {
                               e.stopPropagation();
                               if (showRecommended) {
-                                handleAddFromRecommended(prompt);
+                                // handleAddFromRecommended(prompt);
                               } else {
                                 handleToggleFavorite(e, prompt.id);
                               }
@@ -648,7 +558,7 @@ export const PromptList = memo(function PromptList({
                                 <DropdownMenuItem 
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    handleOpenDeleteDialog(prompt);
+                                    // handleOpenDeleteDialog(prompt);
                                   }}
                                   className="text-destructive focus:text-destructive"
                                 >
@@ -727,43 +637,24 @@ export const PromptList = memo(function PromptList({
         </div>
       </ScrollArea>
 
-
+      {/* 提示词详情查看对话框 */}
+      <PromptDetailDialog 
+        prompt={detailPrompt} 
+        open={showDetailDialog} 
+        onOpenChange={setShowDetailDialog} 
+      />
 
       {/* 版本管理对话框 */}
       {enhancementPrompt && (
         <PromptVersionManager
           prompt={enhancementPrompt}
-          isOpen={showVersionDialog}
-          onClose={() => setShowVersionDialog(false)}
-          onRestoreVersion={(version) => {
-            const updatedPrompt = {
-              ...enhancementPrompt,
-              title: version.title,
-              content: version.content,
-              description: version.description,
-              images: version.images,
-              version: (enhancementPrompt.version || 1) + 1
-            };
+          open={showVersionDialog}
+          onOpenChange={setShowVersionDialog}
+          onVersionRestore={(updatedPrompt) => {
             updatePrompt(enhancementPrompt.id, updatedPrompt);
             setShowVersionDialog(false);
           }}
-          onCreateVersion={(changeNotes) => {
-            // 创建新版本的逻辑
-            const newVersion: PromptVersion = {
-              id: Date.now().toString(),
-              version: (enhancementPrompt.version || 1) + 1,
-              title: enhancementPrompt.title,
-              content: enhancementPrompt.content,
-              description: enhancementPrompt.description,
-              images: enhancementPrompt.images,
-              createdAt: new Date().toISOString(),
-              changeNotes: changeNotes || '手动创建版本'
-            };
-            const updatedPrompt = {
-              ...enhancementPrompt,
-              versions: [...(enhancementPrompt.versions || []), newVersion],
-              version: newVersion.version
-            };
+          onVersionCreate={(updatedPrompt) => {
             updatePrompt(enhancementPrompt.id, updatedPrompt);
           }}
         />
@@ -773,14 +664,9 @@ export const PromptList = memo(function PromptList({
       {enhancementPrompt && (
         <PromptRatingManager
           prompt={enhancementPrompt}
-          isOpen={showRatingDialog}
-          onClose={() => setShowRatingDialog(false)}
-          onSaveRating={(rating, notes) => {
-            const updatedPrompt = {
-              ...enhancementPrompt,
-              rating: rating,
-              ratingNotes: notes
-            };
+          open={showRatingDialog}
+          onOpenChange={setShowRatingDialog}
+          onRatingUpdate={(updatedPrompt) => {
             updatePrompt(enhancementPrompt.id, updatedPrompt);
             setShowRatingDialog(false);
           }}
@@ -791,114 +677,10 @@ export const PromptList = memo(function PromptList({
       {enhancementPrompt && (
         <PromptComparisonManager
           prompt={enhancementPrompt}
-          isOpen={showComparisonDialog}
-          onClose={() => setShowComparisonDialog(false)}
-          onRunComparison={async (selectedModels, testInput) => {
-            // 这里应该调用AI服务进行对比
-            // 暂时返回空数组，实际实现需要调用AI服务
-            return [];
-          }}
-          onSaveComparison={(comparison) => {
-            // 保存对比结果的逻辑
-            console.log('保存对比结果:', comparison);
-          }}
-          existingComparisons={[]}
+          open={showComparisonDialog}
+          onOpenChange={setShowComparisonDialog}
         />
       )}
-
-      {/* 编辑提示词对话框 */}
-      <Dialog open={showEditPromptDialog} onOpenChange={setShowEditPromptDialog}>
-        <DialogContent className="max-w-2xl max-h-[90vh]">
-          <DialogHeader>
-            <DialogTitle>编辑提示词</DialogTitle>
-            <DialogDescription>修改提示词的内容和属性</DialogDescription>
-          </DialogHeader>
-          <ScrollArea className="max-h-[60vh] pr-4">
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="edit-title">标题</Label>
-                <Input
-                  id="edit-title"
-                  value={editPromptTitle}
-                  onChange={(e) => setEditPromptTitle(e.target.value)}
-                  placeholder="输入提示词标题"
-                />
-              </div>
-              <div>
-                <Label htmlFor="edit-content">内容</Label>
-                <Textarea
-                  id="edit-content"
-                  value={editPromptContent}
-                  onChange={(e) => setEditPromptContent(e.target.value)}
-                  placeholder="输入提示词内容"
-                  className="min-h-[200px]"
-                />
-              </div>
-              <div>
-                <Label htmlFor="edit-category">分类</Label>
-                <Select value={editPromptCategory} onValueChange={setEditPromptCategory}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="选择分类" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.map((category) => (
-                      <SelectItem key={category.id} value={category.id}>
-                        {category.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="edit-tags">标签</Label>
-                <Input
-                  id="edit-tags"
-                  value={editPromptTags}
-                  onChange={(e) => setEditPromptTags(e.target.value)}
-                  placeholder="输入标签，用逗号分隔"
-                />
-              </div>
-            </div>
-          </ScrollArea>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowEditPromptDialog(false)}>
-              取消
-            </Button>
-            <Button onClick={handleUpdatePrompt}>
-              保存修改
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* 删除提示词确认对话框 */}
-      <Dialog open={showDeletePromptDialog} onOpenChange={setShowDeletePromptDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>确认删除</DialogTitle>
-            <DialogDescription>
-              您确定要删除提示词 "{promptToDelete?.title}" 吗？此操作无法撤销。
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowDeletePromptDialog(false)}>
-              取消
-            </Button>
-            <Button variant="destructive" onClick={handleConfirmDeletePrompt}>
-              确认删除
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* 新建提示词对话框 */}
-      <CreatePromptDialog
-        open={showNewPromptDialog}
-        onOpenChange={setShowNewPromptDialog}
-        options={{
-          defaultCategory: activeCategory || categories[0]?.id || "general"
-        }}
-      />
 
       {/* 自定义标签删除确认对话框 */}
       <TagDeleteDialog

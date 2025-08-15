@@ -106,13 +106,25 @@ export const CreatePromptDialog: React.FC<CreatePromptDialogProps> = ({
             {/* 内容 */}
             <div className="space-y-2">
               <Label htmlFor="content">内容</Label>
-              <Textarea 
-                id="content" 
-                placeholder="请输入提示词内容" 
-                className="h-[200px]"
-                value={formData.content}
-                onChange={(e) => updateField('content', e.target.value)}
-              />
+              <div className="relative">
+                <Textarea 
+                  id="content" 
+                  placeholder="请输入提示词内容" 
+                  className="h-[200px] pr-12"
+                  value={formData.content}
+                  onChange={(e) => updateField('content', e.target.value)}
+                />
+                {/* AI优化按钮 - 内联模式，位于输入框右下角 */}
+                <div className="absolute bottom-2 right-2 z-10">
+                  <AIOptimizeButton
+                    content={formData.content}
+                    title={formData.title}
+                    onOptimize={handleAIOptimize}
+                    onOpenSettings={() => setShowAISettings(true)}
+                    variant="inline"
+                  />
+                </div>
+              </div>
               
               {/* Markdown 预览 */}
               {showMarkdownPreview && formData.content && (
@@ -214,7 +226,7 @@ export const CreatePromptDialog: React.FC<CreatePromptDialogProps> = ({
                         onClick={() => selectImage(index)}
                       >
                         <img 
-                          src={image.url} 
+                          src={image.data} 
                           alt={image.caption || `图片 ${index + 1}`}
                           className="w-full h-20 object-cover rounded"
                         />
@@ -266,13 +278,7 @@ export const CreatePromptDialog: React.FC<CreatePromptDialogProps> = ({
           </Button>
         </DialogFooter>
 
-        {/* AI优化按钮 */}
-        <AIOptimizeButton
-          content={formData.content}
-          title={formData.title}
-          onOptimize={handleAIOptimize}
-          onOpenSettings={() => setShowAISettings(true)}
-        />
+
       </DialogContent>
 
       {/* AI设置对话框 */}

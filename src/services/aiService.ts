@@ -1,5 +1,14 @@
 import { useToast } from "@/hooks/use-toast";
 
+// AI模型定义接口
+export interface AIModel {
+  id: string;
+  name: string;
+  description?: string;
+  contextLength?: number;
+  category?: 'chat' | 'embedding' | 'vision' | 'code';
+}
+
 // AI服务配置接口
 export interface AIConfig {
   apiKey: string;
@@ -27,6 +36,123 @@ export interface StreamCallback {
   onChunk: (chunk: string) => void;
   onComplete: (fullResponse: string) => void;
   onError: (error: Error) => void;
+}
+
+// 各服务商支持的模型列表
+export const AI_MODELS: Record<string, AIModel[]> = {
+  openai: [
+    { id: 'gpt-4o', name: 'GPT-4o', description: '最新多模态模型，支持文本、图像、音频', contextLength: 128000 },
+    { id: 'gpt-4o-2024-11-20', name: 'GPT-4o (2024-11-20)', description: '最新版本GPT-4o', contextLength: 128000 },
+    { id: 'gpt-4o-2024-08-06', name: 'GPT-4o (2024-08-06)', description: '稳定版GPT-4o', contextLength: 128000 },
+    { id: 'gpt-4o-mini', name: 'GPT-4o Mini', description: '轻量版GPT-4o，速度更快成本更低', contextLength: 128000 },
+    { id: 'gpt-4o-mini-2024-07-18', name: 'GPT-4o Mini (2024-07-18)', description: '稳定版GPT-4o Mini', contextLength: 128000 },
+    { id: 'o1-preview', name: 'o1-preview', description: '推理增强模型，适合复杂问题', contextLength: 128000 },
+    { id: 'o1-mini', name: 'o1-mini', description: '轻量版推理模型', contextLength: 128000 },
+    { id: 'gpt-4-turbo', name: 'GPT-4 Turbo', description: '高性能GPT-4模型', contextLength: 128000 },
+    { id: 'gpt-4-turbo-2024-04-09', name: 'GPT-4 Turbo (2024-04-09)', description: '稳定版GPT-4 Turbo', contextLength: 128000 },
+    { id: 'gpt-4', name: 'GPT-4', description: '经典GPT-4模型', contextLength: 8192 },
+    { id: 'gpt-4-0613', name: 'GPT-4 (0613)', description: '稳定版GPT-4', contextLength: 8192 },
+    { id: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo', description: '性价比优选模型', contextLength: 16385 },
+    { id: 'gpt-3.5-turbo-0125', name: 'GPT-3.5 Turbo (0125)', description: '最新版GPT-3.5', contextLength: 16385 }
+  ],
+  anthropic: [
+    { id: 'claude-3-5-sonnet-20241022', name: 'Claude 3.5 Sonnet', description: '最新Claude模型，推理能力强', contextLength: 200000 },
+    { id: 'claude-3-5-sonnet-20240620', name: 'Claude 3.5 Sonnet (20240620)', description: '稳定版Claude 3.5 Sonnet', contextLength: 200000 },
+    { id: 'claude-3-5-haiku-20241022', name: 'Claude 3.5 Haiku', description: '快速响应版本', contextLength: 200000 },
+    { id: 'claude-3-opus-20240229', name: 'Claude 3 Opus', description: '最强推理能力', contextLength: 200000 },
+    { id: 'claude-3-sonnet-20240229', name: 'Claude 3 Sonnet', description: '平衡性能与成本', contextLength: 200000 },
+    { id: 'claude-3-haiku-20240307', name: 'Claude 3 Haiku', description: '快速轻量版本', contextLength: 200000 },
+    { id: 'claude-2.1', name: 'Claude 2.1', description: '经典Claude 2.1模型', contextLength: 200000 },
+    { id: 'claude-2.0', name: 'Claude 2.0', description: '经典Claude 2.0模型', contextLength: 100000 },
+    { id: 'claude-instant-1.2', name: 'Claude Instant 1.2', description: '快速响应模型', contextLength: 100000 }
+  ],
+  gemini: [
+    { id: 'gemini-2.0-flash-exp', name: 'Gemini 2.0 Flash (实验)', description: '最新实验版Gemini 2.0', contextLength: 1000000 },
+    { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro', description: '最新Gemini模型，支持长上下文', contextLength: 2000000 },
+    { id: 'gemini-1.5-pro-002', name: 'Gemini 1.5 Pro-002', description: '改进版Gemini 1.5 Pro', contextLength: 2000000 },
+    { id: 'gemini-1.5-flash', name: 'Gemini 1.5 Flash', description: '快速版本，适合实时应用', contextLength: 1000000 },
+    { id: 'gemini-1.5-flash-002', name: 'Gemini 1.5 Flash-002', description: '改进版Gemini 1.5 Flash', contextLength: 1000000 },
+    { id: 'gemini-1.5-flash-8b', name: 'Gemini 1.5 Flash-8B', description: '轻量版Flash模型', contextLength: 1000000 },
+    { id: 'gemini-pro', name: 'Gemini Pro', description: '经典Gemini模型', contextLength: 32768 },
+    { id: 'gemini-pro-vision', name: 'Gemini Pro Vision', description: '支持图像理解', contextLength: 16384 }
+  ],
+  deepseek: [
+    { id: 'deepseek-chat', name: 'DeepSeek Chat', description: 'DeepSeek主力对话模型', contextLength: 32768 },
+    { id: 'deepseek-reasoner', name: 'DeepSeek Reasoner', description: '推理增强模型，类似o1', contextLength: 32768 },
+    { id: 'deepseek-coder', name: 'DeepSeek Coder', description: '专业代码生成模型', contextLength: 16384 },
+    { id: 'deepseek-coder-v2', name: 'DeepSeek Coder V2', description: '新一代代码模型', contextLength: 32768 },
+    { id: 'deepseek-math', name: 'DeepSeek Math', description: '数学专用模型', contextLength: 32768 }
+  ],
+  kimi: [
+    { id: 'moonshot-v1-8k', name: 'Moonshot v1 8K', description: '8K上下文版本', contextLength: 8192 },
+    { id: 'moonshot-v1-32k', name: 'Moonshot v1 32K', description: '32K上下文版本', contextLength: 32768 },
+    { id: 'moonshot-v1-128k', name: 'Moonshot v1 128K', description: '128K长上下文版本', contextLength: 131072 }
+  ],
+  doubao: [
+    { id: 'doubao-pro-4k', name: '豆包 Pro 4K', description: '4K上下文版本', contextLength: 4096 },
+    { id: 'doubao-pro-32k', name: '豆包 Pro 32K', description: '32K上下文版本', contextLength: 32768 },
+    { id: 'doubao-pro-128k', name: '豆包 Pro 128K', description: '128K长上下文版本', contextLength: 131072 }
+  ],
+  qwen: [
+    { id: 'qwen-turbo', name: 'Qwen Turbo', description: '通义千问快速版', contextLength: 8192 },
+    { id: 'qwen-plus', name: 'Qwen Plus', description: '通义千问增强版', contextLength: 32768 },
+    { id: 'qwen-max', name: 'Qwen Max', description: '通义千问旗舰版', contextLength: 8192 },
+    { id: 'qwen-max-longcontext', name: 'Qwen Max Long', description: '长上下文版本', contextLength: 30000 }
+  ],
+  baidu: [
+    { id: 'ernie-4.0-8k', name: '文心一言 4.0 8K', description: '8K上下文版本', contextLength: 8192 },
+    { id: 'ernie-3.5-8k', name: '文心一言 3.5 8K', description: '3.5版本', contextLength: 8192 },
+    { id: 'ernie-turbo-8k', name: '文心一言 Turbo', description: '快速版本', contextLength: 8192 }
+  ],
+  siliconflow: [
+    { id: 'deepseek-ai/DeepSeek-V2.5', name: 'DeepSeek V2.5', description: 'DeepSeek最新版本', contextLength: 32768 },
+    { id: 'deepseek-ai/deepseek-llm-67b-chat', name: 'DeepSeek 67B Chat', description: 'DeepSeek 67B对话模型', contextLength: 4096 },
+    { id: 'Qwen/Qwen2.5-7B-Instruct', name: 'Qwen2.5 7B', description: 'Qwen2.5 7B指令模型', contextLength: 32768 },
+    { id: 'Qwen/Qwen2.5-14B-Instruct', name: 'Qwen2.5 14B', description: 'Qwen2.5 14B指令模型', contextLength: 32768 },
+    { id: 'Qwen/Qwen2.5-32B-Instruct', name: 'Qwen2.5 32B', description: 'Qwen2.5 32B指令模型', contextLength: 32768 },
+    { id: 'Qwen/Qwen2.5-72B-Instruct', name: 'Qwen2.5 72B', description: 'Qwen2.5 72B指令模型', contextLength: 32768 },
+    { id: 'meta-llama/Meta-Llama-3.1-8B-Instruct', name: 'Llama 3.1 8B', description: 'Meta Llama 3.1 8B', contextLength: 128000 },
+    { id: 'meta-llama/Meta-Llama-3.1-70B-Instruct', name: 'Llama 3.1 70B', description: 'Meta Llama 3.1 70B', contextLength: 128000 },
+    { id: 'meta-llama/Meta-Llama-3.1-405B-Instruct', name: 'Llama 3.1 405B', description: 'Meta Llama 3.1 405B旗舰模型', contextLength: 128000 },
+    { id: 'mistralai/Mixtral-8x7B-Instruct-v0.1', name: 'Mixtral 8x7B', description: 'Mistral专家混合模型', contextLength: 32768 },
+    { id: 'mistralai/Mixtral-8x22B-Instruct-v0.1', name: 'Mixtral 8x22B', description: 'Mistral大型专家混合模型', contextLength: 65536 },
+    { id: 'google/gemma-2-9b-it', name: 'Gemma 2 9B', description: 'Google Gemma 2 9B模型', contextLength: 8192 },
+    { id: 'google/gemma-2-27b-it', name: 'Gemma 2 27B', description: 'Google Gemma 2 27B模型', contextLength: 8192 }
+  ],
+  groq: [
+    { id: 'llama-3.1-70b-versatile', name: 'Llama 3.1 70B', description: '70B参数多用途模型', contextLength: 131072 },
+    { id: 'llama-3.1-8b-instant', name: 'Llama 3.1 8B', description: '8B参数快速模型', contextLength: 131072 },
+    { id: 'mixtral-8x7b-32768', name: 'Mixtral 8x7B', description: 'Mixtral专家混合模型', contextLength: 32768 }
+  ],
+  perplexity: [
+    { id: 'llama-3.1-sonar-large-128k-online', name: 'Sonar Large Online', description: '在线搜索增强模型', contextLength: 127072 },
+    { id: 'llama-3.1-sonar-small-128k-online', name: 'Sonar Small Online', description: '轻量在线搜索模型', contextLength: 127072 },
+    { id: 'llama-3.1-8b-instruct', name: 'Llama 3.1 8B', description: '基础对话模型', contextLength: 131072 }
+  ],
+  together: [
+    { id: 'meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo', name: 'Llama 3.1 70B Turbo', description: '加速版70B模型', contextLength: 131072 },
+    { id: 'meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo', name: 'Llama 3.1 8B Turbo', description: '加速版8B模型', contextLength: 131072 },
+    { id: 'mistralai/Mixtral-8x7B-Instruct-v0.1', name: 'Mixtral 8x7B', description: 'Mistral专家混合模型', contextLength: 32768 }
+  ],
+  ollama: [
+    { id: 'llama3.1:8b', name: 'Llama 3.1 8B', description: '本地部署8B模型', contextLength: 131072 },
+    { id: 'llama3.1:70b', name: 'Llama 3.1 70B', description: '本地部署70B模型', contextLength: 131072 },
+    { id: 'qwen2.5:7b', name: 'Qwen 2.5 7B', description: '本地部署Qwen模型', contextLength: 32768 },
+    { id: 'deepseek-coder:6.7b', name: 'DeepSeek Coder', description: '本地代码生成模型', contextLength: 16384 }
+  ],
+  lmstudio: [
+    { id: 'local-model', name: '本地模型', description: '请在LM Studio中加载模型', contextLength: 4096 }
+  ],
+  oneapi: [
+    { id: 'gpt-4o', name: 'GPT-4o (代理)', description: '通过OneAPI代理的GPT-4o', contextLength: 128000 },
+    { id: 'claude-3-5-sonnet-20241022', name: 'Claude 3.5 Sonnet (代理)', description: '通过OneAPI代理的Claude', contextLength: 200000 },
+    { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro (代理)', description: '通过OneAPI代理的Gemini', contextLength: 1000000 }
+  ]
+};
+
+// 获取指定服务商的模型列表
+export function getModelsForProvider(provider: string): AIModel[] {
+  return AI_MODELS[provider] || [];
 }
 
 // 精简的提示词优化模板

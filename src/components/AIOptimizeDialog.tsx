@@ -77,26 +77,28 @@ export const AIOptimizeDialog: React.FC<AIOptimizeDialogProps> = ({
   if (isLoading || isStreaming) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-4xl h-[80vh] flex flex-col">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Sparkles className="h-5 w-5 animate-pulse text-purple-500" />
-              {isStreaming ? 'AI正在生成内容...' : 'AI正在优化您的提示词...'}
-            </DialogTitle>
-          </DialogHeader>
+        <DialogContent className="max-w-4xl w-[90vw] h-[90vh] flex flex-col p-0">
+          <div className="flex-shrink-0 p-6 pb-0">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Sparkles className="h-5 w-5 animate-pulse text-purple-500" />
+                {isStreaming ? 'AI正在生成内容...' : 'AI正在优化您的提示词...'}
+              </DialogTitle>
+            </DialogHeader>
+          </div>
           
           {isStreaming && streamingContent ? (
-            <div className="flex-1 flex flex-col">
+            <div className="flex-1 overflow-y-auto px-6 py-4">
               <div className="mb-4">
                 <Badge variant="secondary" className="animate-pulse">
                   实时生成中...
                 </Badge>
               </div>
-              <ScrollArea className="flex-1 border rounded-lg p-4">
+              <div className="border rounded-lg p-4">
                 <div className="prose prose-sm max-w-none">
                   <ReactMarkdown>{streamingContent}</ReactMarkdown>
                 </div>
-              </ScrollArea>
+              </div>
             </div>
           ) : (
             <div className="flex-1 flex items-center justify-center">
@@ -108,6 +110,8 @@ export const AIOptimizeDialog: React.FC<AIOptimizeDialogProps> = ({
               </div>
             </div>
           )}
+          
+          <div className="flex-shrink-0 h-6"></div>
         </DialogContent>
       </Dialog>
     );
@@ -119,17 +123,18 @@ export const AIOptimizeDialog: React.FC<AIOptimizeDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl h-[80vh] flex flex-col">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-purple-500" />
-            AI优化结果
-          </DialogTitle>
-        </DialogHeader>
+      <DialogContent className="max-w-4xl w-[90vw] h-[90vh] flex flex-col p-0">
+        <div className="flex-shrink-0 p-6 pb-0">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-purple-500" />
+              AI优化结果
+            </DialogTitle>
+          </DialogHeader>
+        </div>
 
-        <div className="flex-1 overflow-hidden">
-          <ScrollArea className="h-full">
-            <div className="space-y-6 p-1">
+        <div className="flex-1 overflow-y-auto px-6 py-4">
+          <div className="space-y-6">
               {/* 优化后的提示词 */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
@@ -186,29 +191,30 @@ export const AIOptimizeDialog: React.FC<AIOptimizeDialogProps> = ({
                           <Badge variant="secondary" className="mt-0.5 text-xs">
                             {index + 1}
                           </Badge>
-                          <p className="text-sm text-green-900 dark:text-green-100 flex-1">
-                            {suggestion}
-                          </p>
+                          <div className="text-sm text-green-900 dark:text-green-100 flex-1">
+                            <div className="prose prose-sm max-w-none">
+                              <ReactMarkdown>{suggestion}</ReactMarkdown>
+                            </div>
+                          </div>
                         </div>
                       ))}
                     </div>
                   </div>
                 </>
               )}
-            </div>
-          </ScrollArea>
+          </div>
         </div>
 
-        <DialogFooter className="flex-shrink-0 gap-2">
-          <Button variant="outline" onClick={handleReject}>
-            <X className="h-4 w-4 mr-2" />
-            取消
-          </Button>
-          <Button onClick={handleAccept} className="bg-purple-600 hover:bg-purple-700">
-            <Check className="h-4 w-4 mr-2" />
-            应用优化
-          </Button>
-        </DialogFooter>
+        <div className="flex-shrink-0 p-6 pt-0">
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={handleReject}>
+              拒绝
+            </Button>
+            <Button onClick={handleAccept}>
+              接受
+            </Button>
+          </DialogFooter>
+        </div>
       </DialogContent>
     </Dialog>
   );

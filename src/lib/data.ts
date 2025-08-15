@@ -20,7 +20,8 @@ export const samplePrompts: Prompt[] = [
     tags: ["代码", "解释", "编程"],
     isFavorite: false,
     createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
+    updatedAt: new Date().toISOString(),
+    version: 1
   },
   {
     id: "2",
@@ -30,7 +31,8 @@ export const samplePrompts: Prompt[] = [
     tags: ["写作", "创意", "故事"],
     isFavorite: true,
     createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
+    updatedAt: new Date().toISOString(),
+    version: 1
   },
   {
     id: "3",
@@ -40,7 +42,8 @@ export const samplePrompts: Prompt[] = [
     tags: ["邮件", "商务", "沟通"],
     isFavorite: false,
     createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
+    updatedAt: new Date().toISOString(),
+    version: 1
   },
   {
     id: "4",
@@ -50,7 +53,8 @@ export const samplePrompts: Prompt[] = [
     tags: ["学术", "论文", "写作"],
     isFavorite: false,
     createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
+    updatedAt: new Date().toISOString(),
+    version: 1
   },
   {
     id: "5",
@@ -60,7 +64,8 @@ export const samplePrompts: Prompt[] = [
     tags: ["会议", "总结", "效率"],
     isFavorite: true,
     createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
+    updatedAt: new Date().toISOString(),
+    version: 1
   },
   {
     id: "6",
@@ -70,7 +75,8 @@ export const samplePrompts: Prompt[] = [
     tags: ["总结", "学习", "知识"],
     isFavorite: false,
     createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
+    updatedAt: new Date().toISOString(),
+    version: 1
   },
   {
     id: "7",
@@ -80,7 +86,8 @@ export const samplePrompts: Prompt[] = [
     tags: ["代码", "优化", "性能"],
     isFavorite: false,
     createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
+    updatedAt: new Date().toISOString(),
+    version: 1
   },
   {
     id: "8",
@@ -90,7 +97,8 @@ export const samplePrompts: Prompt[] = [
     tags: ["bug", "调试", "错误"],
     isFavorite: false,
     createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
+    updatedAt: new Date().toISOString(),
+    version: 1
   },
   {
     id: "9",
@@ -100,7 +108,8 @@ export const samplePrompts: Prompt[] = [
     tags: ["社交媒体", "营销", "内容"],
     isFavorite: false,
     createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
+    updatedAt: new Date().toISOString(),
+    version: 1
   },
   {
     id: "10",
@@ -110,7 +119,8 @@ export const samplePrompts: Prompt[] = [
     tags: ["产品", "文案", "说明书"],
     isFavorite: false,
     createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
+    updatedAt: new Date().toISOString(),
+    version: 1
   },
   {
     id: "11",
@@ -120,7 +130,8 @@ export const samplePrompts: Prompt[] = [
     tags: ["学习", "计划", "自我提升"],
     isFavorite: false,
     createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
+    updatedAt: new Date().toISOString(),
+    version: 1
   },
   {
     id: "12",
@@ -130,7 +141,8 @@ export const samplePrompts: Prompt[] = [
     tags: ["教学", "解释", "概念"],
     isFavorite: false,
     createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
+    updatedAt: new Date().toISOString(),
+    version: 1
   },
   {
     id: "13",
@@ -140,7 +152,8 @@ export const samplePrompts: Prompt[] = [
     tags: ["绘画", "AI绘画", "创意"],
     isFavorite: false,
     createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
+    updatedAt: new Date().toISOString(),
+    version: 1
   },
   {
     id: "14",
@@ -150,7 +163,8 @@ export const samplePrompts: Prompt[] = [
     tags: ["创意", "解决问题", "头脑风暴"],
     isFavorite: false,
     createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
+    updatedAt: new Date().toISOString(),
+    version: 1
   },
   {
     id: "15",
@@ -160,7 +174,8 @@ export const samplePrompts: Prompt[] = [
     tags: ["效率", "时间管理", "自我提升"],
     isFavorite: false,
     createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
+    updatedAt: new Date().toISOString(),
+    version: 1
   },
   {
     id: "16",
@@ -170,7 +185,8 @@ export const samplePrompts: Prompt[] = [
     tags: ["项目管理", "计划", "组织"],
     isFavorite: false,
     createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
+    updatedAt: new Date().toISOString(),
+    version: 1
   },
   {
     id: "17",
@@ -180,7 +196,8 @@ export const samplePrompts: Prompt[] = [
     tags: ["架构", "系统设计", "评审"],
     isFavorite: false,
     createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
+    updatedAt: new Date().toISOString(),
+    version: 1
   },
   {
     id: "18",
@@ -190,7 +207,8 @@ export const samplePrompts: Prompt[] = [
     tags: ["面试", "职业发展", "准备"],
     isFavorite: false,
     createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
+    updatedAt: new Date().toISOString(),
+    version: 1
   },
   {
     id: "19",
@@ -200,7 +218,8 @@ export const samplePrompts: Prompt[] = [
     tags: ["辩论", "论证", "演讲"],
     isFavorite: false,
     createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
+    updatedAt: new Date().toISOString(),
+    version: 1
   },
   {
     id: "20",
@@ -210,7 +229,8 @@ export const samplePrompts: Prompt[] = [
     tags: ["健康", "生活方式", "计划"],
     isFavorite: false,
     createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
+    updatedAt: new Date().toISOString(),
+    version: 1
   },
   {
     id: "21",
@@ -220,7 +240,8 @@ export const samplePrompts: Prompt[] = [
     tags: ["翻译", "语言", "本地化"],
     isFavorite: false,
     createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
+    updatedAt: new Date().toISOString(),
+    version: 1
   },
   {
     id: "22",
@@ -230,7 +251,8 @@ export const samplePrompts: Prompt[] = [
     tags: ["分析", "思考", "决策"],
     isFavorite: false,
     createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
+    updatedAt: new Date().toISOString(),
+    version: 1
   },
   {
     id: "23",
@@ -240,7 +262,8 @@ export const samplePrompts: Prompt[] = [
     tags: ["品牌", "命名", "创意"],
     isFavorite: false,
     createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
+    updatedAt: new Date().toISOString(),
+    version: 1
   },
   {
     id: "24",
@@ -250,7 +273,8 @@ export const samplePrompts: Prompt[] = [
     tags: ["数据分析", "报告", "决策"],
     isFavorite: false,
     createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
+    updatedAt: new Date().toISOString(),
+    version: 1
   },
   {
     id: "25",

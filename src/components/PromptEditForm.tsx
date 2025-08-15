@@ -1,4 +1,5 @@
 import React from "react";
+import ReactMarkdown from 'react-markdown';
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -26,6 +27,7 @@ interface PromptEditFormProps {
   allTags: string[];
   onFieldChange: <K extends keyof PromptEditorState>(field: K, value: PromptEditorState[K]) => void;
   onImageUpload: () => void;
+  onImageUploadChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
   onImageSelect: (index: number) => void;
   onImageDelete: (index: number) => void;
   onImageCaptionUpdate: (index: number, caption: string) => void;
@@ -40,6 +42,7 @@ export const PromptEditForm: React.FC<PromptEditFormProps> = ({
   allTags,
   onFieldChange,
   onImageUpload,
+  onImageUploadChange,
   onImageSelect,
   onImageDelete,
   onImageCaptionUpdate,
@@ -105,15 +108,48 @@ export const PromptEditForm: React.FC<PromptEditFormProps> = ({
         </Select>
       </div>
 
-      {/* 内容编辑 */}
-      <div className="space-y-2">
+      {/* 内容编辑 - 上下分屏显示 */}
+      <div className="space-y-4">
         <label className="text-sm font-medium">内容</label>
-        <Textarea
-          value={state.content}
-          onChange={(e) => onFieldChange('content', e.target.value)}
-          placeholder="输入提示词内容，支持 Markdown 格式"
-          className="min-h-[200px] resize-none"
-        />
+        
+        {/* 编辑器区域 */}
+        <div className="space-y-2">
+          <div className="text-xs text-muted-foreground">编辑器</div>
+          <div className="relative">
+            <Textarea
+              value={state.content}
+              onChange={(e) => onFieldChange('content', e.target.value)}
+              placeholder="输入提示词内容，支持 Markdown 格式"
+              className="min-h-[200px] resize-none pr-12"
+            />
+            {/* AI优化按钮 - 内联模式，位于输入框右下角 */}
+            <div className="absolute bottom-2 right-2 z-10">
+              <AIOptimizeButton
+                content={state.content}
+                title={state.title}
+                onOptimize={handleAIOptimize}
+                onOpenSettings={onOpenSettings}
+                variant="inline"
+              />
+            </div>
+          </div>
+        </div>
+        
+        {/* 预览区域 */}
+        <div className="space-y-2">
+          <div className="text-xs text-muted-foreground">实时预览</div>
+          <div className="border rounded-md min-h-[200px] p-4 bg-muted/30 overflow-auto">
+            {state.content ? (
+              <div className="markdown-body">
+                <ReactMarkdown>{state.content}</ReactMarkdown>
+              </div>
+            ) : (
+              <div className="text-muted-foreground text-sm">
+                在上方编辑器中输入内容，这里将显示 Markdown 预览
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* 标签输入 */}
@@ -245,19 +281,11 @@ export const PromptEditForm: React.FC<PromptEditFormProps> = ({
         ref={fileInputRef}
         className="hidden"
         accept="image/*"
-        onChange={(e) => {
-          // 父组件会通过 usePromptEditor hook 处理文件上传逻辑
-          // 这里不需要额外处理，onChange 事件会被 hook 捕获
-        }}
+        multiple
+        onChange={onImageUploadChange}
       />
 
-      {/* AI优化按钮 */}
-      <AIOptimizeButton
-        content={state.content}
-        title={state.title}
-        onOptimize={handleAIOptimize}
-        onOpenSettings={onOpenSettings}
-      />
+
     </div>
   );
 };
