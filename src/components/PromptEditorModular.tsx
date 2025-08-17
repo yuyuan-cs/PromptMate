@@ -9,7 +9,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Star, Copy, Edit, Trash, Save, X, Eye } from "lucide-react";
+import { Star, Copy, Edit, Trash, Save, X, Eye, PenTool, RotateCcw } from "lucide-react";
 import { Icons } from "@/components/ui/icons";
 import { usePromptEditor } from "@/hooks/usePromptEditor";
 import { PromptEditForm } from "./PromptEditForm";
@@ -25,6 +25,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { VariableDisplay } from "./VariableHighlighter";
+import { VariableForm } from "./VariableForm";
+import { applyVariableValues } from "@/lib/variableUtils";
+import { cn } from "@/lib/utils";
+
 
 export function PromptEditorModular() {
   const isMobile = useMediaQuery("(max-width: 768px)");
@@ -114,6 +119,57 @@ export function PromptEditorModular() {
           
           {/* 操作按钮 */}
           <div className="flex items-center gap-2">
+            {/* 预览模式下的变量操作按钮 */}
+            {!state.isEditing && (
+              <div className="flex-shrink-0">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant={state.showVariableForm ? "default" : "outline"}
+                            size="icon"
+                            onClick={() => updateField('showVariableForm', !state.showVariableForm)}
+                                                         className={cn(
+                               "h-9 w-9 transition-all duration-300",
+                               state.showVariableForm 
+                                 ? "bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg hover:shadow-xl hover:from-blue-600 hover:to-purple-700 transform hover:scale-105" 
+                                 : "hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 hover:border-blue-200"
+                             )}
+                          >
+                                                         <PenTool className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          {state.showVariableForm ? "隐藏变量表单" : "填写变量"}
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                    
+                    {/* {state.variableValues && Object.keys(state.variableValues).length > 0 && (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              onClick={() => updateField('variableValues', {})}
+                              className="h-9 w-9 transition-all duration-300 hover:bg-gradient-to-r hover:from-gray-50 hover:to-blue-50 hover:border-blue-200 hover:shadow-md"
+                            >
+                              <RotateCcw className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            重置变量
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )} */}
+                  </div>
+                </div>
+              </div>
+            )}
             <TooltipProvider>
               {/* 编辑/预览切换按钮 */}
               <Tooltip>
@@ -136,7 +192,7 @@ export function PromptEditorModular() {
               </Tooltip>
 
               {/* 收藏按钮 */}
-              <Tooltip>
+              {/* <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
                     variant="ghost"
@@ -150,9 +206,9 @@ export function PromptEditorModular() {
                 <TooltipContent>
                   {state.isFavorite ? "取消收藏" : "收藏"}
                 </TooltipContent>
-              </Tooltip>
+              </Tooltip> */}
 
-              {/* 复制按钮 */}
+              {/* 复制按钮 - 合并复制功能 */}
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
@@ -163,11 +219,13 @@ export function PromptEditorModular() {
                     <Copy className="h-4 w-4" />
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent>复制内容</TooltipContent>
+                <TooltipContent>
+                  {state.isEditing ? "复制原始内容" : "复制最终内容"}
+                </TooltipContent>
               </Tooltip>
 
               {/* 手动保存按钮 */}
-              <Tooltip>
+              {/* <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
                     variant="ghost"
@@ -179,7 +237,7 @@ export function PromptEditorModular() {
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>保存更改</TooltipContent>
-              </Tooltip>
+              </Tooltip> */}
 
               {/* 删除按钮 */}
               <Tooltip>
@@ -199,6 +257,8 @@ export function PromptEditorModular() {
           </div>
         </div>
       </div>
+
+      
 
       {/* 主要内容区域 */}
       <div className="flex-1 overflow-hidden">
@@ -222,6 +282,13 @@ export function PromptEditorModular() {
             ) : (
               <PromptPreview
                 prompt={selectedPrompt}
+                showVariableForm={state.showVariableForm}
+                variableValues={state.variableValues}
+                onVariableChange={(values) => updateField('variableValues', values)}
+                onPreviewChange={(content) => {
+                  // 这里可以添加预览内容变化的处理逻辑
+                  console.log('Preview content changed:', content);
+                }}
               />
             )}
           </div>

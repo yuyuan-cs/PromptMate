@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 import { Badge } from './ui/badge';
 import { Separator } from './ui/separator';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
-import { ExternalLink, Download, Info, CheckCircle, AlertCircle } from 'lucide-react';
+import { ExternalLink, Download, Info, CheckCircle, AlertCircle, RefreshCw } from 'lucide-react';
 
 // 应用信息接口
 interface AppInfo {
@@ -49,6 +49,7 @@ export function About() {
   const [updateStatus, setUpdateStatus] = useState<string | null>(null);
   const [updateAvailable, setUpdateAvailable] = useState(false);
   const [updateResult, setUpdateResult] = useState<UpdateResult | null>(null);
+  const [lastCheckTime, setLastCheckTime] = useState<Date | null>(null);
   
   // 加载应用信息
   useEffect(() => {
@@ -58,28 +59,51 @@ export function About() {
           const info = await window.electronAPI.getAppInfo();
           setAppInfo(info);
         } else {
-          // Web环境下的默认信息
-          setAppInfo({
-            version: '1.0.2',
-            name: 'PromptMate',
-            description: '帮助您创建和管理提示词的桌面应用',
-            author: {
-              name: '泺源',
-              email: 'yuyuan3162021@163.com'
-            },
-            homepage: 'https://github.com/yy0691/PromptMate',
-            repository: 'https://github.com/yy0691/PromptMate',
-            buildDate: new Date().toISOString(),
-            electronVersion: 'Web版本',
-            nodeVersion: 'Web版本',
-            chromeVersion: 'Web版本'
-          });
+          // Web环境下的默认信息 - 尝试从package.json获取
+          try {
+            // 在Web环境下，我们可以尝试从环境变量或其他方式获取版本信息
+            const webVersion = import.meta.env.VITE_APP_VERSION || '1.0.14';
+            const webBuildDate = import.meta.env.VITE_BUILD_DATE || new Date().toISOString();
+            
+            setAppInfo({
+              version: webVersion,
+              name: 'PromptMate',
+              description: '帮助您创建和管理提示词的桌面应用',
+              author: {
+                name: '泺源',
+                email: 'yuyuan3162021@163.com'
+              },
+              homepage: 'https://github.com/yy0691/PromptMate',
+              repository: 'https://github.com/yy0691/PromptMate',
+              buildDate: webBuildDate,
+              electronVersion: 'Web版本',
+              nodeVersion: 'Web版本',
+              chromeVersion: 'Web版本'
+            });
+          } catch (error) {
+            // 如果无法获取，使用默认值
+            setAppInfo({
+              version: '1.0.14',
+              name: 'PromptMate',
+              description: '帮助您创建和管理提示词的桌面应用',
+              author: {
+                name: '泺源',
+                email: 'yuyuan3162021@163.com'
+              },
+              homepage: 'https://github.com/yy0691/PromptMate',
+              repository: 'https://github.com/yy0691/PromptMate',
+              buildDate: new Date().toISOString(),
+              electronVersion: 'Web版本',
+              nodeVersion: 'Web版本',
+              chromeVersion: 'Web版本'
+            });
+          }
         }
       } catch (error) {
         console.error('获取应用信息失败:', error);
         // 设置默认信息
         setAppInfo({
-          version: '1.0.2',
+          version: '1.0.14',
           name: 'PromptMate',
           description: '帮助您创建和管理提示词的桌面应用',
           author: {
@@ -122,6 +146,7 @@ export function About() {
     try {
       setIsLoading(true);
       setUpdateStatus('正在检查更新...');
+      setLastCheckTime(new Date());
       
       const result: UpdateResult = await window.electronAPI.checkForUpdates();
       setUpdateResult(result);
@@ -165,13 +190,17 @@ export function About() {
 
   // 格式化日期
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('zh-CN', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    try {
+      return new Date(dateString).toLocaleDateString('zh-CN', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch (error) {
+      return '未知日期';
+    }
   };
 
   // 获取更新类型标签
@@ -186,6 +215,30 @@ export function About() {
       default:
         return { label: '未知', color: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400' };
     }
+  };
+
+  // 获取版本状态
+  const getVersionStatus = () => {
+    if (!updateResult) return null;
+    
+    if (updateResult.hasUpdate) {
+      return (
+        <div className="flex items-center gap-2">
+          <Badge variant="destructive" className="text-xs">
+            有新版本 {updateResult.latestVersion}
+          </Badge>
+          <Badge className={getUpdateTypeLabel(updateResult.updateType).color}>
+            {getUpdateTypeLabel(updateResult.updateType).label}
+          </Badge>
+        </div>
+      );
+    }
+    
+    return (
+      <Badge variant="secondary" className="text-xs">
+        已是最新版本
+      </Badge>
+    );
   };
   
   return (
@@ -216,12 +269,8 @@ export function About() {
             <div>
               <Label className="text-muted-foreground">当前版本</Label>
               <div className="flex items-center gap-2 mt-1">
-                <span className="font-medium">{appInfo?.version || '1.0.0'}</span>
-                {updateResult?.hasUpdate && (
-                  <Badge variant="destructive" className="text-xs">
-                    有新版本
-                  </Badge>
-                )}
+                <span className="font-medium">{appInfo?.version || '1.0.14'}</span>
+                {getVersionStatus()}
               </div>
             </div>
             <div>
@@ -239,6 +288,15 @@ export function About() {
               <div className="mt-1">{appInfo?.nodeVersion || '未知'}</div>
             </div>
           </div>
+          
+          {/* 版本状态信息 */}
+          {updateResult && (
+            <div className="pt-2 border-t">
+              <div className="text-xs text-muted-foreground">
+                最后检查时间: {lastCheckTime ? formatDate(lastCheckTime.toISOString()) : '未知'}
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -251,15 +309,29 @@ export function About() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <Button 
-            onClick={checkForUpdates} 
-            disabled={isLoading || !window.electronAPI}
-            className="w-full"
-          >
-            {isLoading && <Icons.loader className="mr-2 h-4 w-4 animate-spin" />}
-            {!isLoading && <Icons.refresh className="mr-2 h-4 w-4" />}
-            {!window.electronAPI ? 'Web环境不支持更新检查' : '检查更新'}
-          </Button>
+          <div className="flex gap-2">
+            <Button 
+              onClick={checkForUpdates} 
+              disabled={isLoading || !window.electronAPI}
+              className="flex-1"
+            >
+              {isLoading && <Icons.loader className="mr-2 h-4 w-4 animate-spin" />}
+              {!isLoading && <RefreshCw className="mr-2 h-4 w-4" />}
+              {!window.electronAPI ? 'Web环境不支持更新检查' : '检查更新'}
+            </Button>
+            
+            {window.electronAPI && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.open('https://github.com/yy0691/PromptMate/releases', '_blank')}
+                className="shrink-0"
+              >
+                <ExternalLink className="mr-2 h-4 w-4" />
+                查看发布页
+              </Button>
+            )}
+          </div>
           
           {updateStatus && (
             <div className={`text-sm p-3 rounded-lg border ${

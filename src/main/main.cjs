@@ -28,18 +28,44 @@ const GITHUB_REPO_NAME = 'PromptMate';
 
 // 版本比较函数
 function compareVersions(version1, version2) {
-  const v1Parts = version1.split('.').map(Number);
-  const v2Parts = version2.split('.').map(Number);
-  
-  for (let i = 0; i < Math.max(v1Parts.length, v2Parts.length); i++) {
-    const v1Part = v1Parts[i] || 0;
-    const v2Part = v2Parts[i] || 0;
+  try {
+    // 验证版本号格式
+    if (!version1 || !version2) {
+      throw new Error('版本号不能为空');
+    }
     
-    if (v1Part > v2Part) return 1;
-    if (v1Part < v2Part) return -1;
+    if (typeof version1 !== 'string' || typeof version2 !== 'string') {
+      throw new Error('版本号必须是字符串');
+    }
+    
+    // 移除版本号前缀（如 'v'）
+    const cleanVersion1 = version1.replace(/^[vV]/, '');
+    const cleanVersion2 = version2.replace(/^[vV]/, '');
+    
+    // 验证版本号格式
+    const versionRegex = /^\d+(\.\d+)*$/;
+    if (!versionRegex.test(cleanVersion1) || !versionRegex.test(cleanVersion2)) {
+      throw new Error('版本号格式无效');
+    }
+    
+    const v1Parts = cleanVersion1.split('.').map(Number);
+    const v2Parts = cleanVersion2.split('.').map(Number);
+    
+    // 确保两个版本号有相同的段数
+    const maxLength = Math.max(v1Parts.length, v2Parts.length);
+    for (let i = 0; i < maxLength; i++) {
+      const v1Part = v1Parts[i] || 0;
+      const v2Part = v2Parts[i] || 0;
+      
+      if (v1Part > v2Part) return 1;
+      if (v1Part < v2Part) return -1;
+    }
+    
+    return 0;
+  } catch (error) {
+    log.error('版本比较失败:', error);
+    throw new Error(`版本比较失败: ${error.message}`);
   }
-  
-  return 0;
 }
 
 // 获取GitHub最新发布版本
@@ -47,11 +73,13 @@ async function getLatestGitHubRelease() {
   return new Promise((resolve, reject) => {
     const url = `${GITHUB_API_BASE}/repos/${GITHUB_REPO_OWNER}/${GITHUB_REPO_NAME}/releases/latest`;
     
-    https.get(url, {
+    // 设置请求超时
+    const request = https.get(url, {
       headers: {
         'User-Agent': 'PromptMate-Update-Checker',
         'Accept': 'application/vnd.github.v3+json'
-      }
+      },
+      timeout: 10000 // 10秒超时
     }, (res) => {
       let data = '';
       
@@ -63,14 +91,26 @@ async function getLatestGitHubRelease() {
         try {
           if (res.statusCode === 200) {
             const release = JSON.parse(data);
+            
+            // 验证版本号格式
+            const version = release.tag_name.replace('v', '');
+            if (!/^\d+\.\d+\.\d+$/.test(version)) {
+              reject(new Error('无效的版本号格式'));
+              return;
+            }
+            
             resolve({
-              version: release.tag_name.replace('v', ''),
-              name: release.name,
-              body: release.body,
+              version: version,
+              name: release.name || release.tag_name,
+              body: release.body || '',
               published_at: release.published_at,
               html_url: release.html_url,
-              assets: release.assets
+              assets: release.assets || []
             });
+          } else if (res.statusCode === 404) {
+            reject(new Error('未找到发布版本'));
+          } else if (res.statusCode === 403) {
+            reject(new Error('GitHub API访问受限，可能达到请求限制'));
           } else {
             reject(new Error(`GitHub API返回状态码: ${res.statusCode}`));
           }
@@ -78,7 +118,15 @@ async function getLatestGitHubRelease() {
           reject(new Error(`解析GitHub响应失败: ${error.message}`));
         }
       });
-    }).on('error', (error) => {
+    });
+    
+    // 设置超时处理
+    request.setTimeout(10000, () => {
+      request.destroy();
+      reject(new Error('GitHub API请求超时'));
+    });
+    
+    request.on('error', (error) => {
       reject(new Error(`GitHub API请求失败: ${error.message}`));
     });
   });
@@ -107,19 +155,58 @@ function checkForUpdates() {
 
 // 获取应用信息
 function getAppInfo() {
-  const packageJson = require('../../package.json');
-  return {
-    version: app.getVersion(),
-    name: app.getName(),
-    description: packageJson.description,
-    author: packageJson.author,
-    homepage: packageJson.homepage || `https://github.com/${GITHUB_REPO_OWNER}/${GITHUB_REPO_NAME}`,
-    repository: packageJson.repository || `https://github.com/${GITHUB_REPO_OWNER}/${GITHUB_REPO_NAME}`,
-    buildDate: packageJson.buildDate || new Date().toISOString(),
-    electronVersion: process.versions.electron,
-    nodeVersion: process.versions.node,
-    chromeVersion: process.versions.chrome
-  };
+  try {
+    const packageJson = require('../../package.json');
+    
+    // 获取构建日期，优先使用package.json中的buildDate
+    let buildDate = packageJson.buildDate;
+    if (!buildDate) {
+      // 如果没有buildDate，尝试从文件修改时间获取
+      try {
+        const fs = require('fs');
+        const packageJsonPath = require('path').join(__dirname, '../../package.json');
+        const stats = fs.statSync(packageJsonPath);
+        buildDate = stats.mtime.toISOString();
+      } catch (error) {
+        log.warn('无法获取文件修改时间，使用当前时间:', error);
+        buildDate = new Date().toISOString();
+      }
+    }
+    
+    // 验证版本号格式
+    const version = app.getVersion();
+    if (!/^\d+\.\d+\.\d+$/.test(version)) {
+      log.warn(`应用版本号格式无效: ${version}`);
+    }
+    
+    return {
+      version: version,
+      name: app.getName(),
+      description: packageJson.description || 'PromptMate is a desktop application that allows you to create and manage your prompts.',
+      author: packageJson.author || { name: '泺源', email: 'yuyuan3162021@163.com' },
+      homepage: packageJson.homepage || `https://github.com/${GITHUB_REPO_OWNER}/${GITHUB_REPO_NAME}`,
+      repository: packageJson.repository?.url || `https://github.com/${GITHUB_REPO_OWNER}/${GITHUB_REPO_NAME}`,
+      buildDate: buildDate,
+      electronVersion: process.versions.electron || '未知',
+      nodeVersion: process.versions.node || '未知',
+      chromeVersion: process.versions.chrome || '未知'
+    };
+  } catch (error) {
+    log.error('获取应用信息失败:', error);
+    // 返回默认信息
+    return {
+      version: app.getVersion() || '1.0.0',
+      name: app.getName() || 'PromptMate',
+      description: 'PromptMate is a desktop application that allows you to create and manage your prompts.',
+      author: { name: '泺源', email: 'yuyuan3162021@163.com' },
+      homepage: `https://github.com/${GITHUB_REPO_OWNER}/${GITHUB_REPO_NAME}`,
+      repository: `https://github.com/${GITHUB_REPO_OWNER}/${GITHUB_REPO_NAME}`,
+      buildDate: new Date().toISOString(),
+      electronVersion: process.versions.electron || '未知',
+      nodeVersion: process.versions.node || '未知',
+      chromeVersion: process.versions.chrome || '未知'
+    };
+  }
 }
 
 // 检查更新（增强版）
@@ -131,26 +218,51 @@ async function checkForUpdatesEnhanced() {
     const currentVersion = app.getVersion();
     log.info(`当前版本: ${currentVersion}`);
     
+    // 验证当前版本格式
+    if (!/^\d+\.\d+\.\d+$/.test(currentVersion)) {
+      log.warn(`当前版本格式无效: ${currentVersion}`);
+      return {
+        success: false,
+        hasUpdate: false,
+        error: '当前版本格式无效',
+        currentVersion: currentVersion
+      };
+    }
+    
     // 获取GitHub最新发布
-    const latestRelease = await getLatestGitHubRelease();
-    log.info(`GitHub最新版本: ${latestRelease.version}`);
+    let latestRelease;
+    try {
+      latestRelease = await getLatestGitHubRelease();
+      log.info(`GitHub最新版本: ${latestRelease.version}`);
+    } catch (error) {
+      log.error('获取GitHub发布信息失败:', error);
+      return {
+        success: false,
+        hasUpdate: false,
+        error: `获取GitHub发布信息失败: ${error.message}`,
+        currentVersion: currentVersion
+      };
+    }
     
     // 比较版本
     const versionComparison = compareVersions(currentVersion, latestRelease.version);
+    log.info(`版本比较结果: ${versionComparison} (当前: ${currentVersion}, 最新: ${latestRelease.version})`);
     
     if (versionComparison < 0) {
       // 有新版本
-      log.info(`发现新版本: ${latestRelease.version}`);
+      const updateType = getUpdateType(currentVersion, latestRelease.version);
+      log.info(`发现新版本: ${latestRelease.version}, 更新类型: ${updateType}`);
+      
       return {
         success: true,
         hasUpdate: true,
         currentVersion: currentVersion,
         latestVersion: latestRelease.version,
         releaseInfo: latestRelease,
-        updateType: getUpdateType(currentVersion, latestRelease.version)
+        updateType: updateType
       };
-    } else {
-      // 已是最新版本
+    } else if (versionComparison === 0) {
+      // 版本相同
       log.info('当前已是最新版本');
       return {
         success: true,
@@ -158,6 +270,17 @@ async function checkForUpdatesEnhanced() {
         currentVersion: currentVersion,
         latestVersion: latestRelease.version,
         releaseInfo: latestRelease
+      };
+    } else {
+      // 当前版本比GitHub版本新（可能是开发版本）
+      log.info(`当前版本 ${currentVersion} 比GitHub版本 ${latestRelease.version} 新`);
+      return {
+        success: true,
+        hasUpdate: false,
+        currentVersion: currentVersion,
+        latestVersion: latestRelease.version,
+        releaseInfo: latestRelease,
+        isDevelopment: true
       };
     }
   } catch (error) {

@@ -4,7 +4,7 @@
   "version": "1.0.14",
   "type": "commonjs",
   "main": "dist-electron/main/main.cjs",
-  "buildDate": "2025-08-03T14:28:09.355Z",
+  "buildDate": "2025-08-17T12:30:32.123Z",
   "author": {
     "name": "泺源",
     "email": "yuyuan3162021@163.com"
@@ -26,7 +26,8 @@
   "license": "MIT",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && npm run build:electron",
+    "build": "npm run build:info && vite build && npm run build:electron",
+    "build:info": "node scripts/build-info.js",
     "build:electron": "node -e \"const fs=require('fs');const path=require('path');const srcDir='src/main';const destDir='dist-electron/main';if(!fs.existsSync(destDir))fs.mkdirSync(destDir,{recursive:true});fs.readdirSync(srcDir).forEach(file=>{if(file.endsWith('.cjs'))fs.copyFileSync(path.join(srcDir,file),path.join(destDir,file));});\"",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",

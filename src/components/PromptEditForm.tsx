@@ -20,6 +20,8 @@ import { Plus, X } from "lucide-react";
 import { PromptEditorState } from "@/hooks/usePromptEditor";
 import { Category } from "@/types";
 import { AIOptimizeButton } from "./AIOptimizeButton";
+import { VariableForm } from "./VariableForm";
+import { VariableTextArea } from "./VariableHighlighter";
 
 interface PromptEditFormProps {
   state: PromptEditorState;
@@ -75,6 +77,39 @@ export const PromptEditForm: React.FC<PromptEditFormProps> = ({
     }
   };
 
+  // 处理拖拽和粘贴的图片文件
+  const handleImageFiles = (files: File[]) => {
+    files.forEach(file => {
+      // 检查文件大小（10MB限制）
+      if (file.size > 10 * 1024 * 1024) {
+        console.warn(`文件 ${file.name} 超过10MB限制`);
+        return;
+      }
+      
+      // 检查文件类型
+      if (!file.type.startsWith('image/')) {
+        console.warn(`文件 ${file.name} 不是有效的图片格式`);
+        return;
+      }
+      
+      // 创建 FileReader 来读取文件
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const imageData = e.target?.result as string;
+        if (imageData) {
+          // 模拟文件输入事件，复用现有的图片上传逻辑
+          const mockEvent = {
+            target: {
+              files: [file]
+            }
+          } as unknown as React.ChangeEvent<HTMLInputElement>;
+          onImageUploadChange(mockEvent);
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
   return (
     <div className="space-y-4 relative">
       {/* 标题输入 */}
@@ -108,36 +143,56 @@ export const PromptEditForm: React.FC<PromptEditFormProps> = ({
         </Select>
       </div>
 
-      {/* 内容编辑 - 上下分屏显示 */}
-      <div className="space-y-4">
-        <label className="text-sm font-medium">内容</label>
-        
-        {/* 编辑器区域 */}
-        <div className="space-y-2">
-          <div className="text-xs text-muted-foreground">编辑器</div>
-          <div className="relative">
-            <Textarea
-              value={state.content}
-              onChange={(e) => onFieldChange('content', e.target.value)}
-              placeholder="输入提示词内容，支持 Markdown 格式"
-              className="min-h-[200px] resize-none pr-12"
-            />
-            {/* AI优化按钮 - 内联模式，位于输入框右下角 */}
-            <div className="absolute bottom-2 right-2 z-10">
-              <AIOptimizeButton
-                content={state.content}
-                title={state.title}
-                onOptimize={handleAIOptimize}
-                onOpenSettings={onOpenSettings}
-                variant="inline"
+      {/* 内容编辑 - 左右分屏显示 */}
+      <div className="flex flex-col gap-6">
+        {/* 内容编辑器区域 */}
+        <div className="space-y-4">
+          <label className="text-sm font-medium">内容编辑</label>
+          <div className="space-y-2">
+            {/* 注释掉变量占位符说明，避免编辑时显示未填充变量内容 */}
+            {/* <div className="text-xs text-muted-foreground">
+              支持变量占位符：&#123;variable&#125;、&#123;&#123;variable&#125;&#125;、[variable]、$variable
+            </div> */}
+            <div className="relative">
+              <VariableTextArea
+                value={state.content}
+                onChange={(value) => onFieldChange('content', value)}
+                placeholder="输入提示词内容，支持 Markdown 格式和变量占位符"
+                rows={8}
+                showVariables={false}
               />
+              {/* AI优化按钮 - 内联模式，位于输入框右下角 */}
+              <div className="absolute bottom-2 right-2 z-10">
+                <AIOptimizeButton
+                  content={state.content}
+                  title={state.title}
+                  onOptimize={handleAIOptimize}
+                  onOpenSettings={onOpenSettings}
+                  variant="inline"
+                />
+              </div>
             </div>
           </div>
         </div>
-        
-        {/* 预览区域 */}
+
+        {/* 变量表单 */}
+        {/* <div className="space-y-4">
+          <VariableForm
+            content={state.content}
+            onVariableChange={(values) => {
+              // 这里可以保存变量值到状态中
+              console.log('Variable values changed:', values);
+            }}
+            onPreviewChange={(previewContent) => {
+              // 这里可以更新预览内容
+              console.log('Preview content changed:', previewContent);
+            }}
+          />
+        </div> */}
+
+        {/* Markdown 预览 - 编辑模式下注释掉，避免显示未填充变量内容 */}
         <div className="space-y-2">
-          <div className="text-xs text-muted-foreground">实时预览</div>
+          <div className="text-xs text-muted-foreground">Markdown 预览</div>
           <div className="border rounded-md min-h-[200px] p-4 bg-muted/30 overflow-auto">
             {state.content ? (
               <div className="markdown-body">
@@ -198,6 +253,68 @@ export const PromptEditForm: React.FC<PromptEditFormProps> = ({
             <Plus className="h-4 w-4 mr-1" />
             添加图片
           </Button>
+        </div>
+        {/* 拖拽和粘贴图片区域 */}
+        <div 
+          className="border-2 border-dashed border-muted-foreground/30 rounded-lg p-8 text-center transition-all hover:border-muted-foreground/50 hover:bg-muted/20"
+          onDragOver={(e) => {
+            e.preventDefault();
+            e.currentTarget.classList.add('border-primary', 'bg-primary/5');
+          }}
+          onDragLeave={(e) => {
+            e.preventDefault();
+            e.currentTarget.classList.remove('border-primary', 'bg-primary/5');
+          }}
+          onDrop={(e) => {
+            e.preventDefault();
+            e.currentTarget.classList.remove('border-primary', 'bg-primary/5');
+            
+            const files = Array.from(e.dataTransfer.files);
+            const imageFiles = files.filter(file => file.type.startsWith('image/'));
+            
+            if (imageFiles.length > 0) {
+              handleImageFiles(imageFiles);
+            }
+          }}
+          onPaste={(e) => {
+            const items = Array.from(e.clipboardData.items);
+            const imageItems = items.filter(item => item.type.startsWith('image/'));
+            
+            if (imageItems.length > 0) {
+              const imageFiles = imageItems.map(item => item.getAsFile()).filter(Boolean);
+              handleImageFiles(imageFiles);
+            }
+          }}
+        >
+          <div className="space-y-3">
+            <div className="flex flex-col items-center gap-2">
+              <div className="w-12 h-12 rounded-full bg-muted/50 flex items-center justify-center">
+                <svg className="w-6 h-6 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <div>
+                <p className="text-sm font-medium">拖拽图片到此处或粘贴图片</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  支持 JPG、PNG、GIF 等格式，最大 10MB
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
+              <span>或者</span>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={onImageUpload}
+                className="h-6 text-xs"
+              >
+                <Plus className="h-3 w-3 mr-1" />
+                选择文件
+              </Button>
+            </div>
+          </div>
         </div>
 
         {/* 图片网格 */}

@@ -48,6 +48,25 @@ export const AIOptimizeButton: React.FC<AIOptimizeButtonProps> = ({
     setIsConfigured(aiService.isConfigured());
   }, [content, title]);
 
+  // 定期检查AI配置状态变化
+  useEffect(() => {
+    const checkConfig = () => {
+      const currentConfig = aiService.isConfigured();
+      if (currentConfig !== isConfigured) {
+        setIsConfigured(currentConfig);
+      }
+    };
+
+    // 立即检查一次
+    checkConfig();
+
+    // 设置定时器，每2秒检查一次配置状态
+    const interval = setInterval(checkConfig, 2000);
+
+    // 清理定时器
+    return () => clearInterval(interval);
+  }, [isConfigured]);
+
   const handleOptimize = async () => {
     // 检查AI服务是否已配置
     if (!aiService.isConfigured()) {
@@ -189,10 +208,10 @@ export const AIOptimizeButton: React.FC<AIOptimizeButtonProps> = ({
               className={getButtonStyles()}
             >
               {variant === 'inline' ? (
-                <Settings className="h-4 w-4" />
+                <Settings className="h-2 w-2" />
               ) : (
                 <>
-                  <Settings className="h-4 w-4 mr-2" />
+                  <Settings className="h-2 w-2 mr-2" />
                   配置AI
                 </>
               )}
