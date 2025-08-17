@@ -156,7 +156,7 @@ export function Index({ sidebarOpen: propsSidebarOpen, setSidebarOpen: propSetSi
         selectedPrompt ? "flex" : ""
       )}>
         <div className={cn(
-          "h-full transition-all duration-300 ease-in-out",
+          "h-full", // 注释掉过渡动画: transition-all duration-400 ease-out
           selectedPrompt ? "flex-1 border-r" : "w-full"
         )}>
           <ScrollArea className="h-full">
