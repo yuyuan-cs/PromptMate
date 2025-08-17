@@ -3,6 +3,7 @@ import { usePrompts } from "@/hooks/usePrompts";
 import { useToast } from "@/hooks/use-toast";
 import { PromptImage, Prompt } from "@/types";
 import { generateId } from "@/lib/data";
+import { applyVariableValues } from "@/lib/variableUtils";
 
 // 防抖函数
 function debounce<T extends (...args: any[]) => any>(func: T, wait: number): (...args: Parameters<T>) => void {
@@ -39,6 +40,8 @@ export interface PromptEditorState {
   selectedImageIndex: number | null;
   imageCaption: string;
   autoSaveStatus: "idle" | "saving" | "saved";
+  showVariableForm: boolean;
+  variableValues: Record<string, string>;
 }
 
 export const usePromptEditor = (options: PromptEditorOptions = {}) => {
@@ -78,6 +81,8 @@ export const usePromptEditor = (options: PromptEditorOptions = {}) => {
     selectedImageIndex: null,
     imageCaption: "",
     autoSaveStatus: "idle",
+    showVariableForm: false,
+    variableValues: {},
   });
 
   // 内部状态管理
@@ -132,6 +137,8 @@ export const usePromptEditor = (options: PromptEditorOptions = {}) => {
         selectedImageIndex: null,
         imageCaption: "",
         autoSaveStatus: "idle",
+        showVariableForm: false,
+        variableValues: {},
       });
     }
   }, [prompt]);
@@ -281,12 +288,39 @@ export const usePromptEditor = (options: PromptEditorOptions = {}) => {
     }
   }, [prompt, deletePrompt, onDelete]);
 
-  // 复制内容
+  // 复制内容 - 根据当前状态复制不同内容
   const handleCopy = useCallback(() => {
     if (prompt) {
-      copyPromptContent(prompt.id);
+      if (state.isEditing) {
+        // 编辑模式：复制原始内容
+        copyPromptContent(prompt.id);
+      } else {
+        // 预览模式：如果有变量值，复制最终内容；否则复制原始内容
+        if (state.variableValues && Object.keys(state.variableValues).length > 0) {
+          // 应用变量值后的最终内容
+          const finalContent = applyVariableValues(prompt.content, state.variableValues);
+          navigator.clipboard.writeText(finalContent)
+            .then(() => {
+              toast({
+                title: "复制成功",
+                description: "最终内容已复制到剪贴板",
+                variant: "success",
+              });
+            })
+            .catch(() => {
+              toast({
+                title: "复制失败",
+                description: "无法复制到剪贴板，请手动复制",
+                variant: "destructive",
+              });
+            });
+        } else {
+          // 复制原始内容
+          copyPromptContent(prompt.id);
+        }
+      }
     }
-  }, [prompt, copyPromptContent]);
+  }, [prompt, state.isEditing, state.variableValues, copyPromptContent, toast]);
 
   // 处理AI优化结果
   const handleAIOptimize = useCallback((optimizedContent: string) => {

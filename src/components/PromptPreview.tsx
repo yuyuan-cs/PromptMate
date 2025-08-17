@@ -1,27 +1,101 @@
-import React from "react";
+import React, { useState } from "react";
 import ReactMarkdown from 'react-markdown';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
 import { Prompt } from "@/types";
+import { VariableDisplay } from "./VariableHighlighter";
+import { VariableForm } from "./VariableForm";
+import { applyVariableValues } from "@/lib/variableUtils";
 
 interface PromptPreviewProps {
   prompt: Prompt;
   className?: string;
+  showVariableForm: boolean;
+  variableValues: Record<string, string>;
+  onVariableChange: (values: Record<string, string>) => void;
+  onPreviewChange: (content: string) => void;
 }
 
 export const PromptPreview: React.FC<PromptPreviewProps> = ({
   prompt,
   className = "",
+  showVariableForm,
+  variableValues,
+  onVariableChange,
+  onPreviewChange,
 }) => {
+  // 计算预览内容
+  const previewContent = variableValues && Object.keys(variableValues).length > 0
+    ? applyVariableValues(prompt.content, variableValues)
+    : prompt.content;
+
+  // 确保 variableValues 有默认值
+  const safeVariableValues = variableValues || {};
+
   return (
     <div className={`space-y-4 ${className}`}>
-      {/* Markdown 内容预览 */}
-      <div className="bg-muted/30 rounded-md p-4 markdown-body">
-        <ReactMarkdown>{prompt.content}</ReactMarkdown>
+      
+
+      {/* 内容预览区域 */}
+      <div className="bg-muted/30 rounded-md p-4 space-y-4">
+        <div className="flex items-center justify-between">
+          
+          <h3 className="text-sm font-medium">
+            {Object.keys(safeVariableValues).length > 0 ? "最终预览" : "原始内容"}
+          </h3>
+          {Object.keys(safeVariableValues).length > 0 && (
+            <div className="text-xs text-muted-foreground">
+              已填写 {Object.keys(safeVariableValues).length} 个变量
+            </div>
+          )}
+        </div>
+
+        {/* 原始内容（带变量高亮） */}
+        {!Object.keys(safeVariableValues).length && (
+          <div className="space-y-3">
+            {/* <div className="text-xs text-muted-foreground">变量占位符高亮显示：</div> */}
+            <VariableDisplay
+              content={prompt.content}
+              showVariableCount={true}
+            />
+          </div>
+        )}
+
+        {/* 最终预览内容 */}
+        {Object.keys(safeVariableValues).length > 0 && (
+          <div className="space-y-3">
+            <div className="text-xs text-muted-foreground">变量替换后的最终内容：</div>
+            <div className="markdown-body">
+              <ReactMarkdown>{previewContent}</ReactMarkdown>
+            </div>
+          </div>
+        )}
       </div>
+
+      {/* 变量填写控制区域 */}
+      {/* 变量操作按钮已移动到顶部工具栏 */}
+
+      {/* 变量填写表单 */}
+      {showVariableForm && (
+        <div className="bg-muted/30 rounded-md p-4 space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-medium">变量填写</h3>
+            <div className="text-xs text-muted-foreground">
+              填写变量后，下方将显示最终预览效果
+            </div>
+          </div>
+          
+          <VariableForm
+            content={prompt.content}
+            onVariableChange={onVariableChange}
+            onPreviewChange={onPreviewChange}
+          />
+        </div>
+      )}
       
       {/* 图片预览区域 */}
       {prompt.images && prompt.images.length > 0 && (

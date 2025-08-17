@@ -31,6 +31,7 @@ import { AI_MODELS } from '@/services/aiService';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
+import { PromptPreview } from './PromptPreview';
 
 interface PromptComparisonManagerProps {
   isOpen: boolean;

@@ -7,6 +7,7 @@ import { Icons } from "@/components/ui/icons";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 
 interface IndexProps {
   sidebarOpen?: boolean;
@@ -151,26 +152,36 @@ export function Index({ sidebarOpen: propsSidebarOpen, setSidebarOpen: propSetSi
       {sidebarOpen && <Sidebar />}
       
       {/* 中间内容区域 */}
-      <div className={cn(
-        "flex-1 h-full",
-        selectedPrompt ? "flex" : ""
-      )}>
-        <div className={cn(
-          "h-full", // 注释掉过渡动画: transition-all duration-400 ease-out
-          selectedPrompt ? "flex-1 border-r" : "w-full"
-        )}>
+      {selectedPrompt ? (
+        // 使用 ResizablePanelGroup 实现可拖拽调节宽度
+        <ResizablePanelGroup direction="horizontal" className="flex-1 h-full">
+          {/* 左侧：提示词列表 */}
+          <ResizablePanel defaultSize={60} minSize={30} maxSize={70}>
+            <div className="h-full border-r">
+              <ScrollArea className="h-full">
+                <ContentArea onToggleSidebar={toggleSidebar} />
+              </ScrollArea>
+            </div>
+          </ResizablePanel>
+          
+          {/* 拖拽手柄 */}
+          <ResizableHandle withHandle />
+          
+          {/* 右侧：编辑面板 */}
+          <ResizablePanel defaultSize={40} minSize={30} maxSize={70}>
+            <div className="h-full bg-background shadow-lg">
+              <PromptEditorModular />
+            </div>
+          </ResizablePanel>
+        </ResizablePanelGroup>
+      ) : (
+        // 没有选中提示词时，显示全宽内容
+        <div className="flex-1 h-full">
           <ScrollArea className="h-full">
             <ContentArea onToggleSidebar={toggleSidebar} />
           </ScrollArea>
         </div>
-        
-        {/* 右侧编辑面板 - 只在选中提示词时显示 */}
-        {selectedPrompt && (
-          <div className="w-96 h-full border-l bg-background animate-slide-in-panel shadow-lg">
-            <PromptEditorModular />
-          </div>
-        )}
-      </div>
+      )}
     </div>
   );
 }
