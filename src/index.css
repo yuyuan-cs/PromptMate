@@ -347,7 +347,7 @@
   animation: breathing 2s ease-in-out infinite;
 }
 
-/* 编辑面板滑入动画 - 丝滑平滑效果 */
+/* 编辑面板滑入动画 - 从右侧平滑滑入 */
 @keyframes slide-in-panel {
   0% {
     transform: translateX(100%);
@@ -371,11 +371,11 @@
 }
 
 .animate-slide-in-panel {
-  animation: slide-in-panel 0.35s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  animation: slide-in-panel 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
 }
 
 .animate-slide-out-panel {
-  animation: slide-out-panel 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  animation: slide-out-panel 0.3s cubic-bezier(0.55, 0.06, 0.68, 0.19) forwards;
 }
 
 /* Custom scrollbar styles matching ScrollArea component */
