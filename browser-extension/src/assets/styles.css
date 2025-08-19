@@ -1,0 +1,284 @@
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 221.2 83.2% 53.3%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222.2 84% 4.9%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96%;
+    --accent-foreground: 222.2 84% 4.9%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 221.2 83.2% 53.3%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 217.2 91.2% 59.8%;
+    --primary-foreground: 222.2 84% 4.9%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 224.3 76.3% 94.1%;
+  }
+}
+
+@layer base {
+  * {
+    border-color: hsl(var(--border));
+  }
+  
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+  
+  html, body, #root {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+  }
+}
+
+@layer components {
+  .prompt-card {
+    transition: all 0.2s ease-in-out;
+  }
+  
+  .prompt-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+  
+  .search-input {
+    transition: all 0.2s ease-in-out;
+  }
+  
+  .search-input:focus {
+    box-shadow: 0 0 0 2px hsl(var(--ring));
+  }
+
+  /* Markdown预览样式 */
+  .prose {
+    color: hsl(var(--foreground));
+    max-width: none;
+  }
+  
+  .prose h1,
+  .prose h2,
+  .prose h3,
+  .prose h4,
+  .prose h5,
+  .prose h6 {
+    color: hsl(var(--foreground));
+    font-weight: 600;
+    margin-top: 1.5em;
+    margin-bottom: 0.5em;
+  }
+  
+  .prose h1 { font-size: 1.5em; }
+  .prose h2 { font-size: 1.3em; }
+  .prose h3 { font-size: 1.2em; }
+  .prose h4 { font-size: 1.1em; }
+  
+  .prose p {
+    margin-top: 0.75em;
+    margin-bottom: 0.75em;
+    line-height: 1.6;
+  }
+  
+  .prose ul,
+  .prose ol {
+    margin-top: 0.75em;
+    margin-bottom: 0.75em;
+    padding-left: 1.5em;
+  }
+  
+  .prose li {
+    margin-top: 0.25em;
+    margin-bottom: 0.25em;
+  }
+  
+  .prose strong {
+    font-weight: 600;
+    color: hsl(var(--foreground));
+  }
+  
+  .prose em {
+    font-style: italic;
+  }
+  
+  .prose code {
+    background-color: hsl(var(--muted));
+    padding: 0.2em 0.4em;
+    border-radius: 3px;
+    font-size: 0.85em;
+    font-family: 'Courier New', monospace;
+  }
+  
+  .prose pre {
+    background-color: hsl(var(--muted));
+    border: 1px solid hsl(var(--border));
+    border-radius: 6px;
+    padding: 1em;
+    overflow-x: auto;
+    margin: 1em 0;
+  }
+  
+  .prose pre code {
+    background-color: transparent;
+    padding: 0;
+    font-size: 0.9em;
+  }
+  
+  .prose blockquote {
+    border-left: 4px solid hsl(var(--primary));
+    padding-left: 1em;
+    margin: 1em 0;
+    font-style: italic;
+    color: hsl(var(--muted-foreground));
+  }
+  
+  .prose table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1em 0;
+  }
+  
+  .prose th,
+  .prose td {
+    border: 1px solid hsl(var(--border));
+    padding: 0.5em;
+    text-align: left;
+  }
+  
+  .prose th {
+    background-color: hsl(var(--muted));
+    font-weight: 600;
+  }
+  
+  .prose a {
+    color: hsl(var(--primary));
+    text-decoration: underline;
+  }
+  
+  .prose a:hover {
+    color: hsl(var(--primary) / 0.8);
+  }
+  
+  .prose hr {
+    border: none;
+    border-top: 1px solid hsl(var(--border));
+    margin: 2em 0;
+  }
+  
+  .prose-sm {
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+  
+  .prose-sm h1 { font-size: 1.4em; }
+  .prose-sm h2 { font-size: 1.25em; }
+  .prose-sm h3 { font-size: 1.15em; }
+  .prose-sm h4 { font-size: 1.1em; }
+}
+
+/* ===== 侧边栏专用设计系统 ===== */
+@layer components {
+  :root {
+    /* 空间密度 - 为侧边栏优化的紧凑间距 */
+    --sidebar-spacing-xs: 2px;
+    --sidebar-spacing-sm: 4px;
+    --sidebar-spacing-md: 8px;
+    --sidebar-spacing-lg: 12px;
+    --sidebar-spacing-xl: 16px;
+    
+    /* 组件尺寸 - 紧凑但可触控 */
+    --sidebar-item-height: 75px;
+    --sidebar-button-height: 28px;
+    --sidebar-icon-size: 14px;
+    
+    /* 视觉层级 - 微妙的深度感 */
+    --sidebar-border-subtle: hsl(var(--border) / 0.3);
+    --sidebar-border-hover: hsl(var(--border) / 0.6);
+    --sidebar-bg-hover: hsl(var(--muted) / 0.3);
+    --sidebar-bg-active: hsl(var(--muted) / 0.5);
+    
+    /* 字体层级 - 清晰的信息等级 */
+    --sidebar-text-primary: 14px;
+    --sidebar-text-secondary: 12px;
+    --sidebar-text-caption: 11px;
+  }
+
+  /* 深色模式优化 */
+  .dark {
+    --sidebar-border-subtle: hsl(var(--border) / 0.2);
+    --sidebar-border-hover: hsl(var(--border) / 0.4);
+    --sidebar-bg-hover: hsl(var(--muted) / 0.2);
+    --sidebar-bg-active: hsl(var(--muted) / 0.3);
+  }
+
+  /* 侧边栏专用组件类 */
+  .sidebar-card {
+    background: hsl(var(--background));
+    border: 1px solid var(--sidebar-border-subtle);
+    border-radius: 8px;
+    transition: all 200ms ease-out;
+  }
+  
+  .sidebar-card:hover {
+    border-color: var(--sidebar-border-hover);
+    box-shadow: 0 1px 3px hsl(var(--foreground) / 0.1);
+  }
+  
+  .sidebar-card.selected {
+    border-color: hsl(var(--primary) / 0.3);
+    box-shadow: 0 0 0 1px hsl(var(--primary) / 0.2);
+  }
+  
+  .sidebar-button-primary {
+    height: var(--sidebar-button-height);
+    font-size: var(--sidebar-text-caption);
+    font-weight: 500;
+    padding: 0 12px;
+  }
+  
+  .sidebar-button-ghost {
+    height: 24px;
+    font-size: var(--sidebar-text-caption);
+    padding: 0 8px;
+    color: hsl(var(--muted-foreground));
+  }
+  
+  .sidebar-button-ghost:hover {
+    background: var(--sidebar-bg-hover);
+    color: hsl(var(--foreground));
+  }
+}
