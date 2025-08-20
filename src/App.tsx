@@ -4,37 +4,60 @@ import { useSettings } from "@/hooks/useSettings";
 // import { Index } from "@/pages/Index"; // Remove direct import
 import { Header } from "@/components/Header";
 import { PromptsProvider } from "@/hooks/usePrompts";
+import { AppViewProvider, useAppView } from "@/hooks/useAppView";
 import { Toaster } from "@/components/ui/toaster";
 import { Icons } from "@/components/ui/icons"; // Import Icons for fallback
 
 // Lazy load the Index component (handle named export)
 const Index = lazy(() => import("@/pages/Index").then(module => ({ default: module.Index })));
+// Lazy load the WorkflowView component
+const WorkflowView = lazy(() => import("@/views/WorkflowView").then(module => ({ default: module.WorkflowView })));
 
-export default function App() {
-  const { settings } = useSettings();
+function AppContent() {
+  const { currentView } = useAppView();
   const [sidebarOpen, setSidebarOpen] = useState(true);
-
-  // 移除字体设置逻辑，避免与useSettings中的字体设置产生冲突
-  // 字体设置现在完全由useSettings hook管理
 
   // 切换侧边栏显示状态 (Memoized with useCallback)
   const toggleSidebar = useCallback(() => {
     setSidebarOpen(prev => !prev);
   }, []); // Empty dependency array as it doesn't depend on any props/state from App scope
 
-  return (
-    // 移除ThemeProvider，避免与useSettings中的主题管理产生冲突
-    <PromptsProvider>
-      <main className="h-screen overflow-hidden flex flex-col">
-        <Header />
-        <div className="flex-1 overflow-hidden flex">
-          {/* Use Suspense to show a fallback while Index is loading */}
+  // 根据当前视图渲染不同的组件
+  const renderCurrentView = () => {
+    switch (currentView) {
+      case 'workflows':
+        return (
+          <Suspense fallback={<div className="flex-1 flex items-center justify-center"><Icons.workflow className="h-8 w-8 animate-spin text-muted-foreground" /></div>}>
+            <WorkflowView />
+          </Suspense>
+        );
+      case 'prompts':
+      default:
+        return (
           <Suspense fallback={<div className="flex-1 flex items-center justify-center"><Icons.fileText className="h-8 w-8 animate-spin text-muted-foreground" /></div>}>
             <Index sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
           </Suspense>
-        </div>
-        <Toaster />
-      </main>
-    </PromptsProvider>
+        );
+    }
+  };
+
+  return (
+    <main className="min-h-screen flex flex-col">
+      <Header />
+      <div className="flex-1 flex">
+        {renderCurrentView()}
+      </div>
+      <Toaster />
+    </main>
+  );
+}
+
+export default function App() {
+  return (
+    <AppViewProvider>
+      <PromptsProvider>
+        <AppContent />
+      </PromptsProvider>
+    </AppViewProvider>
   );
 }

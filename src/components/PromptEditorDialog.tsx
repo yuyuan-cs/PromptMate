@@ -220,7 +220,13 @@ export const PromptEditorDialog: React.FC<PromptEditorDialogProps> = ({
                     fileInputRef={fileInputRef}
                   />
                 ) : (
-                  <PromptPreview prompt={prompt} />
+                  <PromptPreview 
+                    prompt={prompt} 
+                    showVariableForm={false}
+                    variableValues={{}}
+                    onVariableChange={() => {}}
+                    onPreviewChange={() => {}}
+                  />
                 )}
               </div>
             </ScrollArea>
