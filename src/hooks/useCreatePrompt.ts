@@ -154,6 +154,7 @@ export const useCreatePrompt = (options: CreatePromptOptions = {}) => {
       tags,
       isFavorite: false,
       images: formData.images.length > 0 ? formData.images : undefined,
+      version: 1,
     });
 
     toast({

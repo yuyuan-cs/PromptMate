@@ -1,4 +1,5 @@
 import { Prompt, Category, Settings } from "../types";
+import { Workflow, WorkflowExecution, WorkflowTemplate } from "../types/workflow";
 
 // Default categories
 export const defaultCategories: Category[] = [
@@ -301,7 +302,9 @@ export const defaultSettings: Settings = {
 const STORAGE_KEYS = {
   PROMPTS: 'promptmate-prompts',
   CATEGORIES: 'promptmate-categories',
-  SETTINGS: 'promptmate-settings'
+  SETTINGS: 'promptmate-settings',
+  WORKFLOWS: 'promptmate-workflows',
+  WORKFLOW_EXECUTIONS: 'promptmate-workflow-executions'
 };
 
 // 加载提示词
@@ -490,7 +493,178 @@ export const resetToDefaults = (): void => {
     savePrompts(samplePrompts);
     saveCategories(defaultCategories);
     saveSettings(defaultSettings);
+    saveWorkflows([]);
+    saveWorkflowExecutions([]);
   } catch (error) {
     console.error("重置为默认数据时出错:", error);
   }
 };
+
+// 工作流相关数据操作
+export const loadWorkflows = (): Workflow[] => {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEYS.WORKFLOWS);
+    if (saved) {
+      return JSON.parse(saved);
+    }
+    return [];
+  } catch (error) {
+    console.error("加载工作流时出错:", error);
+    return [];
+  }
+};
+
+export const saveWorkflows = (workflows: Workflow[]): void => {
+  try {
+    localStorage.setItem(STORAGE_KEYS.WORKFLOWS, JSON.stringify(workflows));
+  } catch (error) {
+    console.error("保存工作流时出错:", error);
+  }
+};
+
+export const loadWorkflowExecutions = (): WorkflowExecution[] => {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEYS.WORKFLOW_EXECUTIONS);
+    if (saved) {
+      return JSON.parse(saved);
+    }
+    return [];
+  } catch (error) {
+    console.error("加载工作流执行记录时出错:", error);
+    return [];
+  }
+};
+
+export const saveWorkflowExecutions = (executions: WorkflowExecution[]): void => {
+  try {
+    localStorage.setItem(STORAGE_KEYS.WORKFLOW_EXECUTIONS, JSON.stringify(executions));
+  } catch (error) {
+    console.error("保存工作流执行记录时出错:", error);
+  }
+};
+
+// 内置工作流模板
+export const builtInWorkflowTemplates: WorkflowTemplate[] = [
+  {
+    id: "template-content-creation",
+    name: "内容创作工作流",
+    description: "从主题研究到最终内容输出的完整创作流程",
+    category: "creative",
+    tags: ["内容创作", "写作", "研究"],
+    author: "PromptMate",
+    isBuiltIn: true,
+    workflow: {
+      name: "内容创作工作流",
+      description: "从主题研究到最终内容输出的完整创作流程",
+      category: "creative",
+      tags: ["内容创作", "写作", "研究"],
+      steps: [
+        {
+          id: "step-1",
+          name: "主题研究",
+          customPrompt: "请对主题「{{topic}}」进行深入研究，提供以下信息：\n1. 主题背景和重要性\n2. 当前趋势和发展\n3. 目标受众分析\n4. 关键要点和角度\n5. 可能的争议点",
+          order: 1,
+          inputVariables: ["topic"],
+          outputVariable: "research_result",
+          isOptional: false
+        },
+        {
+          id: "step-2", 
+          name: "内容大纲",
+          customPrompt: "基于以下研究结果，为「{{topic}}」创建详细的内容大纲：\n\n{{research_result}}\n\n请提供：\n1. 引人入胜的标题建议\n2. 逻辑清晰的章节结构\n3. 每个章节的要点\n4. 预估字数分配",
+          order: 2,
+          inputVariables: ["topic", "research_result"],
+          outputVariable: "content_outline",
+          isOptional: false
+        },
+        {
+          id: "step-3",
+          name: "内容撰写",
+          customPrompt: "根据以下大纲撰写完整内容：\n\n{{content_outline}}\n\n要求：\n1. 语言生动有趣\n2. 逻辑清晰连贯\n3. 包含具体例子\n4. 适合{{target_audience}}阅读",
+          order: 3,
+          inputVariables: ["content_outline", "target_audience"],
+          outputVariable: "final_content",
+          isOptional: false
+        }
+      ],
+      variables: [
+        {
+          name: "topic",
+          type: "text",
+          description: "要创作的主题",
+          required: true
+        },
+        {
+          name: "target_audience", 
+          type: "text",
+          description: "目标受众",
+          defaultValue: "一般读者",
+          required: false
+        }
+      ],
+      isFavorite: false,
+      version: 1
+    }
+  },
+  {
+    id: "template-code-review",
+    name: "代码审查工作流",
+    description: "全面的代码质量检查和优化建议流程",
+    category: "development",
+    tags: ["代码审查", "质量检查", "优化"],
+    author: "PromptMate",
+    isBuiltIn: true,
+    workflow: {
+      name: "代码审查工作流",
+      description: "全面的代码质量检查和优化建议流程",
+      category: "development", 
+      tags: ["代码审查", "质量检查", "优化"],
+      steps: [
+        {
+          id: "step-1",
+          name: "代码结构分析",
+          customPrompt: "请分析以下代码的整体结构和架构：\n\n```{{language}}\n{{code}}\n```\n\n请评估：\n1. 代码组织和模块化\n2. 设计模式使用\n3. 架构合理性\n4. 可扩展性",
+          order: 1,
+          inputVariables: ["code", "language"],
+          outputVariable: "structure_analysis",
+          isOptional: false
+        },
+        {
+          id: "step-2",
+          name: "代码质量检查",
+          customPrompt: "基于结构分析结果，检查代码质量：\n\n结构分析：{{structure_analysis}}\n\n原代码：\n```{{language}}\n{{code}}\n```\n\n请检查：\n1. 命名规范\n2. 代码复杂度\n3. 重复代码\n4. 错误处理\n5. 性能问题",
+          order: 2,
+          inputVariables: ["structure_analysis", "code", "language"],
+          outputVariable: "quality_report",
+          isOptional: false
+        },
+        {
+          id: "step-3",
+          name: "优化建议",
+          customPrompt: "基于质量检查报告，提供具体的优化建议：\n\n{{quality_report}}\n\n请提供：\n1. 优先级排序的改进建议\n2. 具体的代码示例\n3. 最佳实践推荐\n4. 重构步骤",
+          order: 3,
+          inputVariables: ["quality_report"],
+          outputVariable: "optimization_suggestions",
+          isOptional: false
+        }
+      ],
+      variables: [
+        {
+          name: "code",
+          type: "text",
+          description: "要审查的代码",
+          required: true
+        },
+        {
+          name: "language",
+          type: "text", 
+          description: "编程语言",
+          defaultValue: "javascript",
+          required: true
+        }
+      ],
+      isFavorite: false,
+      version: 1
+    }
+  }
+];

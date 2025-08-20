@@ -263,6 +263,7 @@ export class AIService {
         requestBody = {
           contents: [
             {
+              role: 'user',
               parts: [
                 {
                   text: 'Hello, this is a test message.'
@@ -388,7 +389,11 @@ export class AIService {
           hasValidResponse = !!(data.content?.[0]?.text);
           break;
         case 'gemini':
-          hasValidResponse = !!(data.candidates?.[0]?.content?.parts?.[0]?.text);
+          hasValidResponse = !!(
+            (Array.isArray(data?.candidates) &&
+              Array.isArray(data.candidates[0]?.content?.parts) &&
+              data.candidates[0].content.parts.some((p: any) => p?.text && p.text.length > 0))
+          );
           break;
         default:
           hasValidResponse = !!(data.choices?.[0]?.message?.content);
@@ -441,9 +446,14 @@ export class AIService {
     try {
       const { requestBody, headers, requestUrl } = this.buildRequest(prompt, true);
       
+      const streamHeaders: Record<string, string> = { ...headers };
+      if (this.config.provider === 'gemini') {
+        streamHeaders['Accept'] = 'text/event-stream';
+      }
+
       const response = await fetch(requestUrl, {
         method: 'POST',
-        headers,
+        headers: streamHeaders,
         body: JSON.stringify(requestBody)
       });
 
@@ -452,6 +462,8 @@ export class AIService {
         throw new Error(`API调用失败: ${response.status} ${errorText}`);
       }
 
+      const contentType = response.headers.get('content-type') || '';
+      const isSSE = contentType.includes('text/event-stream');
       const reader = response.body?.getReader();
       if (!reader) {
         throw new Error('无法获取流式响应');
@@ -459,29 +471,66 @@ export class AIService {
 
       const decoder = new TextDecoder();
       
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
+      if (isSSE) {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
 
-        const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split('\n');
+          const chunk = decoder.decode(value, { stream: true });
+          const lines = chunk.split('\n');
 
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const data = line.slice(6);
-            if (data === '[DONE]') continue;
-            
-            try {
-              const parsed = JSON.parse(data);
-              const content = this.extractStreamContent(parsed, provider);
-              if (content) {
-                fullResponse += content;
-                callback.onChunk(content);
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const data = line.slice(6);
+              if (data === '[DONE]') continue;
+              
+              try {
+                const parsed = JSON.parse(data);
+                const content = this.extractStreamContent(parsed, provider);
+                if (content) {
+                  fullResponse += content;
+                  callback.onChunk(content);
+                }
+              } catch (e) {
+                // 忽略解析错误的行
               }
-            } catch (e) {
-              // 忽略解析错误的行
             }
           }
+        }
+      } else {
+        // 非SSE，作为一次性JSON响应处理
+        const text = await response.text();
+        try {
+          const json = JSON.parse(text);
+          const content = this.extractStreamContent(json, provider) ||
+                          (this.config!.provider === 'gemini' ?
+                            (json?.candidates?.[0]?.content?.parts?.map((p: any) => p?.text || '').join('') || '')
+                            : (json?.choices?.[0]?.message?.content || ''));
+          if (content) {
+            fullResponse += content;
+            callback.onChunk(content);
+          }
+        } catch {
+          // 直接回传原文本
+          if (text) {
+            fullResponse += text;
+            callback.onChunk(text);
+          }
+        }
+      }
+
+      // 如果是Gemini且未获取到任何内容，降级为非流式调用
+      if (!fullResponse || fullResponse.trim().length === 0) {
+        try {
+          if (provider === 'gemini') {
+            const fallback = await this.callAI(prompt);
+            if (fallback && fallback.trim().length > 0) {
+              fullResponse = fallback;
+              callback.onChunk(fallback);
+            }
+          }
+        } catch (e) {
+          // 忽略降级错误，维持原逻辑
         }
       }
 
@@ -501,8 +550,18 @@ export class AIService {
         return data.choices?.[0]?.delta?.content || '';
       case 'anthropic':
         return data.delta?.text || '';
-      case 'gemini':
-        return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      case 'gemini': {
+        // Gemini SSE 可能出现两种：candidates[0].content.parts 或 candidates[0].delta.parts
+        const deltaParts = data?.candidates?.[0]?.delta?.parts;
+        if (Array.isArray(deltaParts)) {
+          return deltaParts.map((p: any) => p?.text || '').join('');
+        }
+        const parts = data?.candidates?.[0]?.content?.parts;
+        if (Array.isArray(parts)) {
+          return parts.map((p: any) => p?.text || '').join('');
+        }
+        return '';
+      }
       default:
         return data.choices?.[0]?.delta?.content || '';
     }
@@ -549,7 +608,7 @@ export class AIService {
 
       case 'gemini':
         requestBody = {
-          contents: [{ parts: [{ text: prompt }] }],
+          contents: [{ role: 'user', parts: [{ text: prompt }] }],
           generationConfig: {
             maxOutputTokens: 1500,
             temperature: 0.7
@@ -575,7 +634,18 @@ export class AIService {
     }
 
     // 构建请求URL
-    const requestUrl = this.buildRequestUrl(provider, baseUrl, model, apiKey);
+    let requestUrl = this.buildRequestUrl(provider, baseUrl, model, apiKey);
+    // Gemini 流式专用端点与头
+    if (provider === 'gemini' && stream) {
+      // 仅当使用官方域名时改为流式端点
+      if (baseUrl === 'https://generativelanguage.googleapis.com' || baseUrl === 'https://generativelanguage.googleapis.com/' || baseUrl.includes('generativelanguage.googleapis.com')) {
+        const root = baseUrl.includes('generativelanguage.googleapis.com')
+          ? baseUrl.replace(/\/$/, '')
+          : 'https://generativelanguage.googleapis.com';
+        // 重新构造完整URL，避免遗留查询参数导致的?/&判断错误
+        requestUrl = `${root}/v1beta/models/${model}:streamGenerateContent?alt=sse&key=${apiKey}`;
+      }
+    }
     
     return { requestBody, headers, requestUrl };
   }
@@ -643,8 +713,24 @@ export class AIService {
         return data.choices?.[0]?.message?.content || '';
       case 'anthropic':
         return data.content?.[0]?.text || '';
-      case 'gemini':
-        return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      case 'gemini': {
+        const parts = data?.candidates?.[0]?.content?.parts;
+        if (Array.isArray(parts)) {
+          const text = parts.map((p: any) => p?.text || '').join('');
+          if (text && text.trim().length > 0) return text;
+        }
+        // 尝试检测安全拦截与调试信息
+        const finishReason = data?.candidates?.[0]?.finishReason || data?.candidates?.[0]?.finish_reason;
+        const safety = data?.candidates?.[0]?.safetyRatings || data?.promptFeedback?.safetyRatings;
+        if (finishReason === 'SAFETY' || (Array.isArray(safety) && safety.length > 0)) {
+          throw new Error('Gemini返回为空：可能触发了安全策略，建议调整提示词重试');
+        }
+        console.warn('Gemini响应未包含文本parts，原始结构：', {
+          keys: Object.keys(data || {}),
+          candidatesKeys: data?.candidates && Object.keys(data.candidates[0] || {})
+        });
+        return '';
+      }
       default:
         return data.choices?.[0]?.message?.content || '';
     }

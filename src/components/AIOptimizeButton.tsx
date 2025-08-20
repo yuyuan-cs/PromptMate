@@ -108,7 +108,15 @@ export const AIOptimizeButton: React.FC<AIOptimizeButtonProps> = ({
         setIsStreaming(false);
         // 解析完整响应
         const result = aiService.parseResponse(fullResponse);
-        setOptimizeResult(result);
+        // 如果解析结果为空，使用流式累积内容作为回退
+        if (!result.optimizedContent || result.optimizedContent.trim().length === 0) {
+          const fallback = streamingContent && streamingContent.trim().length > 0
+            ? aiService.parseResponse(streamingContent)
+            : { optimizedContent: fullResponse, explanation: '', suggestions: [] } as AIOptimizeResponse;
+          setOptimizeResult(fallback);
+        } else {
+          setOptimizeResult(result);
+        }
       },
       onError: (error: Error) => {
         setIsStreaming(false);
@@ -122,11 +130,16 @@ export const AIOptimizeButton: React.FC<AIOptimizeButtonProps> = ({
     };
 
     try {
-      await aiService.optimizePrompt({
-        content,
-        title,
-        mode: hasContent ? 'optimize' : 'generate'
-      }, streamCallback);
+      const cfg = aiService.getConfig();
+      const payload = { content, title, mode: hasContent ? 'optimize' : 'generate' } as const;
+      if (cfg?.provider === 'gemini') {
+        // 对Gemini使用非流式，避免实验模型SSE兼容问题
+        setIsStreaming(false);
+        const res = await aiService.optimizePrompt(payload);
+        setOptimizeResult(res);
+      } else {
+        await aiService.optimizePrompt(payload, streamCallback);
+      }
     } catch (error) {
       console.error('AI优化失败:', error);
       setIsStreaming(false);

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -84,6 +84,21 @@ export const VariableForm: React.FC<VariableFormProps> = ({
       onPreviewChange?.(newPreview);
     }
   }, [variableValues, content, showPreview, onPreviewChange]);
+
+  // 自适应文本域高度（处理程序化赋值或初始化场景）
+  useEffect(() => {
+    // 下一帧执行，确保DOM已更新
+    const raf = requestAnimationFrame(() => {
+      formFields.forEach((field) => {
+        const el = document.getElementById(field.name) as HTMLTextAreaElement | null;
+        if (el && el.tagName.toLowerCase() === 'textarea') {
+          el.style.height = 'auto';
+          el.style.height = `${el.scrollHeight}px`;
+        }
+      });
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [formFields, variableValues]);
   
   // 处理变量值变化
   const handleVariableChange = useCallback((name: string, value: string) => {
@@ -197,17 +212,29 @@ export const VariableForm: React.FC<VariableFormProps> = ({
                 </Label>
               </div>
               
-              {/* 输入框 */}
-              <Input
+              {/* 输入框（自适应高度，不超出容器宽度） */}
+              <Textarea
                 id={field.name}
                 value={variableValues[field.name] || ''}
-                onChange={(e) => handleVariableChange(field.name, e.target.value)}
+                onChange={(e) => {
+                  // 自适应高度
+                  e.currentTarget.style.height = 'auto';
+                  e.currentTarget.style.height = `${e.currentTarget.scrollHeight}px`;
+                  handleVariableChange(field.name, e.target.value);
+                }}
+                onInput={(e) => {
+                  const el = e.currentTarget as HTMLTextAreaElement;
+                  el.style.height = 'auto';
+                  el.style.height = `${el.scrollHeight}px`;
+                }}
                 placeholder={field.placeholder}
+                rows={1}
+                style={{ overflow: 'hidden', resize: 'none' }}
                 className={cn(
-                  "flex-1 transition-all duration-200",
+                  "flex-1 w-full max-w-full transition-all duration-200",
                   // 根据填写状态改变输入框样式
-                  variableValues[field.name] 
-                    ? "border-green-500 bg-green-50 dark:bg-green-950/20" 
+                  variableValues[field.name]
+                    ? "border-green-500 bg-green-50 dark:bg-green-950/20"
                     : "border-gray-300 hover:border-gray-400 focus:border-blue-500"
                 )}
               />
