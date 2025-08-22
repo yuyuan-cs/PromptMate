@@ -44,6 +44,16 @@ export interface Settings {
   enableShortcuts: boolean;
   showUsageStats: boolean;
   compactMode: boolean;
+  // 数据同步：变更时自动导出为JSON（下载）
+  autoExportOnChange?: boolean;
+  // 站点控制：若 allowList 非空，则仅允许列表内域名；否则按 blockList 排除
+  allowList?: string[];
+  blockList?: string[];
+}
+
+// 扩展设置类型（用于浏览器扩展）
+export interface ExtensionSettings extends Settings {
+  // 扩展特有的设置
 }
 
 // 使用记录

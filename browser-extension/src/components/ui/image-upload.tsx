@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Icons } from "@/components/ui/icons";
-import { cn } from "@/lib/utils";
+import { cn } from "../../lib/utils";
 
 interface ImageUploadProps {
   value?: string;
@@ -21,7 +21,7 @@ export function ImageUpload({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [previewUrl, setPreviewUrl] = useState<string | undefined>(value || undefined);
 
-  // 当外部value变化时更新预览
+  // 当外部value变化时更新预�?
   useEffect(() => {
     setPreviewUrl(value || undefined);
   }, [value]);
@@ -37,7 +37,7 @@ export function ImageUpload({
       return;
     }
 
-    // 验证文件大小（2MB 以内）
+    // 验证文件大小�?MB 以内�?
     if (file.size > 2 * 1024 * 1024) {
       alert('图片大小不能超过 2MB');
       return;
@@ -110,7 +110,7 @@ export function ImageUpload({
             <span className="text-xs text-muted-foreground text-center">
               支持 JPG、PNG 格式
               <br />
-              最大 2MB
+              最�?2MB
             </span>
           </div>
         </Button>

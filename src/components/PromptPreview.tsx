@@ -40,6 +40,24 @@ export const PromptPreview: React.FC<PromptPreviewProps> = ({
     <div className={`space-y-4 ${className}`}>
       
 
+      {/* 变量填写表单 */}
+      {showVariableForm && (
+        <div className="bg-muted/30 rounded-md p-4 space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-medium">变量填写</h3>
+            <div className="text-xs text-muted-foreground">
+              填写变量后，下方将显示最终预览效果
+            </div>
+          </div>
+          
+          <VariableForm
+            content={prompt.content}
+            onVariableChange={onVariableChange}
+            onPreviewChange={onPreviewChange}
+          />
+        </div>
+      )}
+      
       {/* 内容预览区域 */}
       <div className="bg-muted/30 rounded-md p-4 space-y-4">
         <div className="flex items-center justify-between">
@@ -76,26 +94,9 @@ export const PromptPreview: React.FC<PromptPreviewProps> = ({
         )}
       </div>
 
-      {/* 变量填写控制区域 */}
-      {/* 变量操作按钮已移动到顶部工具栏 */}
+    
 
-      {/* 变量填写表单 */}
-      {showVariableForm && (
-        <div className="bg-muted/30 rounded-md p-4 space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-medium">变量填写</h3>
-            <div className="text-xs text-muted-foreground">
-              填写变量后，下方将显示最终预览效果
-            </div>
-          </div>
-          
-          <VariableForm
-            content={prompt.content}
-            onVariableChange={onVariableChange}
-            onPreviewChange={onPreviewChange}
-          />
-        </div>
-      )}
+      
       
       {/* 图片预览区域 */}
       {prompt.images && prompt.images.length > 0 && (

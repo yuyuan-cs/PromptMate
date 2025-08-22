@@ -1,105 +1,112 @@
 # PromptMate
 
-PromptMate是一款轻量级桌面应用程序，用于存放和管理用户常用的Prompts，同时预置一组常用Prompts。应用界面追求苹果风格，支持多主题和多字体设置，确保在Windows系统下具有优异的显示效果，并具备全局快捷键唤出及窗口置顶功能。
+<div align="center">
+  <img src="URL_TO_YOUR_LOGO" alt="PromptMate Logo" width="150"/>
+  <p>
+    <strong>您的智能 AI 提示词管家</strong>
+  </p>
+  <p>
+    一款简洁、高效的桌面端生产力工具，旨在帮助您系统化管理、高效使用和优化您的 AI 提示词（Prompts）。
+  </p>
+  <p>
+    <a href="https://github.com/yy0691/PromptMate/releases">
+      <img src="https://img.shields.io/github/v/release/yy0691/PromptMate?display_name=tag&sort=semver&color=blue" alt="Latest Release">
+    </a>
+    <a href="https://github.com/yy0691/PromptMate/stargazers">
+      <img src="https://img.shields.io/github/stars/yy0691/PromptMate" alt="GitHub Stars">
+    </a>
+    <a href="https://github.com/yy0691/PromptMate/issues">
+      <img src="https://img.shields.io/github/issues/yy0691/PromptMate" alt="GitHub Issues">
+    </a>
+    <a href="https://github.com/yy0691/PromptMate/blob/main/LICENSE">
+      <img src="https://img.shields.io/github/license/yy0691/PromptMate" alt="License">
+    </a>
+  </p>
+</div>
 
-## 特色功能
+![PromptMate 软件截图](URL_TO_YOUR_SCREENSHOT_OR_GIF)
 
-- 🗂️ 提示语分类管理
-- 🔄 工作流管理（新增）
-- 🎨 多主题与字体设置
-- ⌨️ 全局快捷键调出
-- 📌 窗口置顶功能
-- 💾 本地数据存储
+---
 
-## 软件截图
+## 🚀 它是什么？
 
+在与 ChatGPT、Midjourney 等大模型频繁交互的过程中，您是否也曾为管理那些零散而宝贵的 Prompt 而烦恼？
 
-![首页](https://raw.githubusercontent.com/yy0691/img-bed/main/Blog/Ai_News首页.png)
+**PromptMate** 是一款专为此场景设计的桌面效率工具。它能帮助您告别混乱的文本文件和笔记，将所有提示词集中管理、快速检索并一键调用，极大地提升您的 AI 交互效率。
 
-![分类文件夹编辑](https://raw.githubusercontent.com/yy0691/img-bed/main/Blog/Ai_News分类文件夹编辑.png)
+## ✨ 特色功能
 
-![侧边栏收起状态](https://raw.githubusercontent.com/yy0691/img-bed/main/Blog/Ai_News侧边栏收起状态.png)
+- **🗂️ 多层级分类管理**:
+  - **文件夹层级**：通过创建不同的文件夹来归纳和整理不同场景的提示词。
+  - **标签层级**：为每个提示词打上自定义标签，实现更灵活的交叉分类和筛选。
 
-## 主要功能
+- **📇 卡片式视觉管理**:
+  - 以直观的卡片形式展示您的每一个提示词，信息结构一目了然。
 
-*   **提示词管理**
-    *   **创建与编辑：** 方便地创建新的提示词，或修改现有提示词的内容、标题、分类和标签。
-    *   **分类与标签：** 通过分类和标签有效地组织您的提示词，方便查找和筛选。
-    *   **删除：** 移除不再需要的提示词。
-*   **工作流管理（新增）**
-    *   **工作流创建：** 创建由多个步骤组成的工作流，每个步骤可以使用现有提示词或自定义提示词。
-    *   **变量系统：** 定义工作流变量，支持步骤间的数据传递和动态内容生成。
-    *   **执行控制：** 支持工作流的启动、暂停、继续和停止操作。
-    *   **模板库：** 内置常用工作流模板，如内容创作流程、代码审查流程等。
-    *   **执行历史：** 记录工作流执行历史和结果，便于回顾和分析。
-*   **快速访问与使用**
-    *   **快速搜索：** 通过顶部的搜索栏，根据关键词快速查找您的提示词。
-    *   **收藏夹：** 将常用或重要的提示词标记为"收藏"，方便在专属视图中快速访问。
-    *   **一键复制：** 在提示词列表或编辑界面快速将提示词内容复制到剪贴板。
-*   **模板与发现**
-    *   **推荐模板：** 内置一些常用的提示词模板，可以直接使用或一键添加到您的个人库中进行修改。
-*   **个性化与便捷性**
-    *   **主题切换：** 支持浅色模式和深色模式，适应不同光线环境。
-    *   **窗口置顶：** 可将应用窗口设置为"总在最前"，方便随时查看或复制提示词。
-    *   **自定义标题栏：** 提供最小化、最大化、关闭按钮，并支持拖拽移动窗口。
-    *   **(可能存在)** 全局快捷键：快速呼出或隐藏应用（具体快捷键请查看设置或代码）。
-    *   **(可能存在)** 字体设置：调整界面字体和大小（若设置界面支持）。
-*   **数据管理**
-    *   **(可能存在)** 导入/导出：支持导入导出提示词数据，方便备份和迁移。
+- **📝 变量化与表单编辑**:
+  - 自动识别提示词中的 `{{变量}}`，并生成简洁的表单。
+  - 您只需在表单中填写变量内容，即可快速生成最终版本，一键复制使用。
 
-## 基本使用
+- **🤖 AI 智能优化**:
+  - 支持接入通用大模型（LLM）的 API。
+  - 选中您的提示词，即可一键调用 AI 对其进行优化、补充或翻译，激发更多灵感。
 
-1.  **浏览与搜索：** 通过左侧边栏的分类、收藏夹、推荐模板或顶部的搜索框来查找您需要的提示词。
-2.  **查看/编辑：** 点击列表中的提示词卡片，将在右侧面板打开编辑器进行查看或修改。再次点击同一卡片可收起编辑器。
-3.  **复制内容：** 点击卡片上的复制图标，或在编辑面板中复制。
-4.  **创建：** 点击侧边栏底部的"新建提示词"按钮来创建您的自定义提示词。
-5.  **窗口操作：** 使用标题栏右上角的按钮控制窗口状态，拖拽标题栏空白区域移动窗口。
+- **🎨 高度个性化**:
+  - **自定义图标**: 为您的每个文件夹选择独特的图标，便于快速识别。
+  - **自定义主题**: 内置多种主题，或自定义您的专属软件界面风格。
 
+- **✍️ 支持 Markdown 语法**:
+  - 在提示词内容中轻松使用 Markdown 格式，如加粗、列表、代码块等，排版更清晰。
 
-## 安装
+- **📌 窗口置顶**:
+  - 需要频繁参考？将 PromptMate 窗口置顶显示，始终保持在其它应用之上，方便随时查看和复制。
 
-```bash
-# 克隆仓库
-git clone https://github.com/yourusername/promptmate.git
-cd promptmate
+- **💾 本地化数据存储**:
+  - 所有数据均存储在本地，确保您的提示词库私密、安全，并能离线访问。
 
-# 安装依赖
-npm install
+- **🔍 快捷搜索**:
+  - 内置强大的全文搜索引擎，输入关键词即可毫秒级定位到您需要的提示词。
 
+## 🛠️ 优化与开发计划
 
-# 启动应用
-npm run dev && npx electron .
+我们正在积极地让 PromptMate 变得更强大！
 
-npm run electron:start
-```
+### 正在优化中的功能
 
-## 开发
+- **🌐 浏览器插件**:
+  - 开发配套的浏览器插件，支持在网页端直接使用表单编辑变量，并一键将内容注入到对话框中。
 
-```bash
-# 开发模式启动
-npm run dev && npx electron .
+### 后续开发计划
 
-# 打包应用
-npm run build
-```
+- **🔄 版本管理功能**:
+  - 为您的重要提示词提供历史版本追溯与管理功能。
 
-## 技术栈
+- **🆚 多模型对比**:
+  - 集成多个大模型 API，方便您用同一个 Prompt 测试不同模型的输出效果。
 
-- Electron
-- React
-- TypeScript
-- Tailwind CSS
-- Radix UI
-- JSON 本地存储
+- **流程化管理**:
+  - 引入工作流（Workflow）模式，将多个提示词串联成一个任务流，实现更复杂的自动化操作。
 
-## 文档
+- **⌨️ 全局快捷键**:
+  - 支持自定义全局快捷键，随时随地一键呼出 PromptMate 主窗口。
 
-详细文档请查看 [/doc](./doc) 目录。
+## 📥 下载与安装
 
-## 贡献
+您可以前往我们的 **[Releases 页面](https://github.com/yy0691/PromptMate/releases)** 下载适用于您操作系统的最新版本。
 
-欢迎提交 Pull Request 或提出 Issue。
+目前支持 Windows 和 macOS。
 
-## 许可证
+## 快速开始
 
-[ISC](LICENSE) 
+1.  下载并安装应用程序。
+2.  创建您的第一个分类文件夹。
+3.  点击 "新建"，开始编写您的第一个提示词。尝试使用 `{{示例变量}}` 来创建一个变量。
+4.  保存后，在主界面点击该卡片，即可在右侧的表单中填充变量并复制结果！
+
+## 🤝 贡献
+
+我们欢迎任何形式的贡献！如果您有好的想法或发现了 Bug，请随时提交 [Issue](https://github.com/yy0691/PromptMate/issues) 或发起 [Pull Request](https://github.com/yy0691/PromptMate/pulls)。
+
+## 📄 许可证
+
+本项目基于 [MIT License](https://github.com/yy0691/PromptMate/blob/main/LICENSE) 开源。

@@ -13,21 +13,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 
-// 提示词类型定义
-export interface ExtensionPrompt {
-  id: string;
-  title: string;
-  content: string;
-  category: string;
-  tags: string[];
-  isFavorite: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
+import { Prompt } from '../shared/types';
 
 interface ExtensionPromptListProps {
-  prompts: ExtensionPrompt[];
-  onUsePrompt: (prompt: ExtensionPrompt) => void;
+  prompts: Prompt[];
+  onUsePrompt: (prompt: Prompt) => void;
   onCopyPrompt: (content: string) => void;
   onToggleFavorite: (promptId: string) => void;
   searchTerm: string;
@@ -63,15 +53,18 @@ export function ExtensionPromptList({
         prompt.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
         prompt.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
       
-      const matchesCategory = selectedCategory === '全部' || prompt.category === selectedCategory;
-      
-      return matchesSearch && matchesCategory;
+      return matchesSearch;
     });
+
+    // 分类过滤
+    if (selectedCategory !== '全部') {
+      filtered = filtered.filter(prompt => prompt.category === selectedCategory);
+    }
 
     // 排序
     filtered.sort((a, b) => {
-      let aValue = a[sortBy];
-      let bValue = b[sortBy];
+      let aValue: string | number = a[sortBy];
+      let bValue: string | number = b[sortBy];
       
       if (sortBy === 'createdAt' || sortBy === 'updatedAt') {
         aValue = new Date(aValue as string).getTime();

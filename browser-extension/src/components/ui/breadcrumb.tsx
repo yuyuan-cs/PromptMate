@@ -2,10 +2,10 @@ import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
 import { ChevronRight, MoreHorizontal } from "lucide-react"
 
-import { cn } from "@/lib/utils"
+import { cn } from "../../lib/utils"
 
 /**
- * 面包屑
+ * 面包�?
  */
 const Breadcrumb = React.forwardRef<
   HTMLElement,
@@ -16,7 +16,7 @@ const Breadcrumb = React.forwardRef<
 Breadcrumb.displayName = "Breadcrumb"
 
 /**
- * 面包屑列表
+ * 面包屑列�?
  */
 const BreadcrumbList = React.forwardRef<
   HTMLOListElement,

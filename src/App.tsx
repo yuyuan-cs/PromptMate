@@ -10,12 +10,13 @@ import { Icons } from "@/components/ui/icons"; // Import Icons for fallback
 
 // Lazy load the Index component (handle named export)
 const Index = lazy(() => import("@/pages/Index").then(module => ({ default: module.Index })));
-// Lazy load the WorkflowView component
+// Lazy load the WorkflowView component (dev only)
 const WorkflowView = lazy(() => import("@/views/WorkflowView").then(module => ({ default: module.WorkflowView })));
 
 function AppContent() {
   const { currentView } = useAppView();
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const isDev = import.meta.env.DEV;
 
   // 切换侧边栏显示状态 (Memoized with useCallback)
   const toggleSidebar = useCallback(() => {
@@ -24,6 +25,15 @@ function AppContent() {
 
   // 根据当前视图渲染不同的组件
   const renderCurrentView = () => {
+    // 在生产环境隐藏工作流视图
+    if (!isDev && currentView === 'workflows') {
+      return (
+        <Suspense fallback={<div className="flex-1 flex items-center justify-center"><Icons.fileText className="h-8 w-8 animate-spin text-muted-foreground" /></div>}>
+          <Index sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+        </Suspense>
+      );
+    }
+
     switch (currentView) {
       case 'workflows':
         return (
@@ -42,9 +52,9 @@ function AppContent() {
   };
 
   return (
-    <main className="min-h-screen flex flex-col">
+    <main className="h-screen flex flex-col">
       <Header />
-      <div className="flex-1 flex">
+      <div className="flex-1 flex min-h-0 overflow-hidden">
         {renderCurrentView()}
       </div>
       <Toaster />

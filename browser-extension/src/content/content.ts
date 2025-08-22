@@ -8,6 +8,38 @@ console.log('PromptMate 内容脚本已加载');
 if (!(window as any).__PROMPTMATE_INJECTED__) {
   (window as any).__PROMPTMATE_INJECTED__ = true;
 
+  // 读取设置
+  async function getSettings(): Promise<Partial<{ allowList: string[]; blockList: string[]; showNotifications: boolean }>> {
+    try {
+      const data = await chrome.storage.local.get(['settings']);
+      return data.settings || {};
+    } catch (e) {
+      console.warn('读取设置失败，使用默认空设置', e);
+      return {};
+    }
+  }
+
+  // 检查当前域名是否允许注入
+  function isHostMatched(host: string, pattern: string): boolean {
+    // 简单匹配：完全相等或以 .pattern 结尾
+    return host === pattern || host.endsWith('.' + pattern);
+  }
+
+  async function isDomainAllowed(): Promise<{ allowed: boolean; reason?: string }> {
+    const { allowList = [], blockList = [] } = await getSettings();
+    const host = location.hostname;
+
+    if (allowList.length > 0) {
+      const ok = allowList.some(p => isHostMatched(host, p));
+      return ok ? { allowed: true } : { allowed: false, reason: '当前站点不在白名单中' };
+    }
+    if (blockList.length > 0) {
+      const blocked = blockList.some(p => isHostMatched(host, p));
+      return blocked ? { allowed: false, reason: '当前站点在黑名单中' } : { allowed: true };
+    }
+    return { allowed: true };
+  }
+
   // 查找可编辑元素的函数
   function findEditableElement(): HTMLElement | null {
     console.log('开始查找可编辑元素...');
@@ -285,23 +317,32 @@ if (!(window as any).__PROMPTMATE_INJECTED__) {
     
     switch (message.type) {
       case 'INJECT_TEXT':
-        const text = message.payload.text;
-        const targetElement = findEditableElement();
-        
-        if (targetElement) {
-          const success = injectTextToElement(targetElement, text);
-          if (success) {
-            // 聚焦到元素
-            targetElement.focus();
-            sendResponse({ success: true, message: '文本注入成功' });
-          } else {
-            sendResponse({ success: false, error: '文本注入失败' });
+        (async () => {
+          const { allowed, reason } = await isDomainAllowed();
+          if (!allowed) {
+            showTemporaryMessage(`已阻止注入：${reason}`);
+            sendResponse({ success: false, error: reason || '域名未允许' });
+            return;
           }
-        } else {
-          // 创建临时提示
-          showTemporaryMessage('未找到可编辑的输入框，请先点击一个输入框');
-          sendResponse({ success: false, error: '未找到可编辑元素' });
-        }
+
+          const text = message.payload.text;
+          const targetElement = findEditableElement();
+          
+          if (targetElement) {
+            const success = injectTextToElement(targetElement, text);
+            if (success) {
+              // 聚焦到元素
+              targetElement.focus();
+              sendResponse({ success: true, message: '文本注入成功' });
+            } else {
+              sendResponse({ success: false, error: '文本注入失败' });
+            }
+          } else {
+            // 创建临时提示
+            showTemporaryMessage('未找到可编辑的输入框，请先点击一个输入框');
+            sendResponse({ success: false, error: '未找到可编辑元素' });
+          }
+        })();
         break;
         
       default:

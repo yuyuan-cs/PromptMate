@@ -13,10 +13,10 @@ import { Icons } from '../components/ui/icons';
 import { cn } from '../lib/utils';
 import { useExtensionPrompts } from '../hooks/useExtensionPrompts';
 import { Prompt, VariableValues } from '../shared/types';
-import { PromptEditDialog } from '../components/PromptEditDialog';
-import { SettingsDialog } from '../components/SettingsDialog';
-import { VariableFormDialog } from '../components/VariableFormDialog';
-import { VirtualizedPromptList } from '../components/VirtualizedPromptList';
+import { PromptEditView } from '../components/PromptEditView';
+import { SettingsView } from '../components/SettingsView';
+import { VariableFormView } from '../components/VariableFormView';
+import { NewPromptList } from '../components/NewPromptList';
 import { extractVariables, hasVariables } from '../shared/variableUtils';
 import { debounce, performSearch, sortPrompts } from '../utils/searchUtils';
 import '../assets/styles.css';
@@ -24,24 +24,77 @@ import '../assets/styles.css';
 interface SidePanelProps {}
 
 const SidePanel: React.FC<SidePanelProps> = () => {
+  console.log('🔄 SidePanel component rendering...');
+  // 在这里添加一个 alert 确认组件加载
+  //React.useEffect(() => {
+    //console.log('SidePanel 组件已挂载');
+    //alert('SidePanel 组件已加载'); // 这应该在页面加载时弹出
+  //}, []);
+  // Error boundary state
+  const [hasError, setHasError] = React.useState(false);
+  const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
+
+  // Error handling effect
+  React.useEffect(() => {
+    const handleError = (error: ErrorEvent) => {
+      console.error('SidePanel error:', error);
+      setHasError(true);
+      setErrorMessage('组件运行时错误: ' + error.message);
+    };
+
+    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+      console.error('SidePanel unhandled promise rejection:', event.reason);
+      setErrorMessage('异步操作失败: ' + (event.reason?.message || event.reason));
+    };
+
+    window.addEventListener('error', handleError);
+    window.addEventListener('unhandledrejection', handleUnhandledRejection);
+    
+    return () => {
+      window.removeEventListener('error', handleError);
+      window.removeEventListener('unhandledrejection', handleUnhandledRejection);
+    };
+  }, []);
+
+  // If there's a critical error, show error UI
+  if (hasError) {
+    return (
+      <div className="flex-1 flex items-center justify-center p-4">
+        <div className="text-center">
+          <div className="text-destructive mb-2">❌ 组件加载失败</div>
+          <p className="text-sm text-muted-foreground mb-4">{errorMessage}</p>
+          <Button 
+            onClick={() => {
+              setHasError(false);
+              setErrorMessage(null);
+              window.location.reload();
+            }}
+            variant="outline"
+            size="sm"
+          >
+            重新加载
+          </Button>
+        </div>
+      </div>
+    );
+  }
+  
   const {
     prompts,
     categories,
-    isLoading,
-    error,
+    settings,
+    loading,
     searchTerm,
-    setSearchTerm,
-    activeCategory,
-    setActiveCategory,
+    selectedCategory,
+    selectedTag,
     allTags,
-    toggleFavorite,
-    recordUsage,
-    totalPrompts,
-    favoritePrompts,
+    filteredPrompts,
+    setSearchTerm,
+    setSelectedCategory,
+    setSelectedTag,
     addPrompt,
     updatePrompt,
     deletePrompt,
-    settings,
     updateSettings,
     exportData,
     importData,
@@ -50,13 +103,64 @@ const SidePanel: React.FC<SidePanelProps> = () => {
     saveVariableHistory
   } = useExtensionPrompts();
   
+  // Component state
   const [selectedPrompt, setSelectedPrompt] = React.useState<Prompt | null>(null);
-  const [editDialogOpen, setEditDialogOpen] = React.useState(false);
   const [editingPrompt, setEditingPrompt] = React.useState<Prompt | null>(null);
-  const [settingsDialogOpen, setSettingsDialogOpen] = React.useState(false);
-  const [variableDialogOpen, setVariableDialogOpen] = React.useState(false);
+  const [currentView, setCurrentView] = React.useState<'list' | 'variables' | 'edit' | 'settings'>('list');
   const [currentPromptForVariables, setCurrentPromptForVariables] = React.useState<Prompt | null>(null);
   const [variableHistory, setVariableHistory] = React.useState<VariableValues[]>([]);
+  
+  // Additional state for UI controls
+  const [showFavorites, setShowFavorites] = React.useState<boolean>(false);
+  const [activeCategory, setActiveCategory] = React.useState<string>('all');
+  const [error, setError] = React.useState<string | null>(null);
+  
+  // 本地搜索输入（防抖）
+  const [searchInput, setSearchInput] = React.useState<string>(searchTerm);
+  const debouncedSetSearch = React.useMemo(() => debounce((val: string) => setSearchTerm(val), 250), [setSearchTerm]);
+  React.useEffect(() => { setSearchInput(searchTerm); }, [searchTerm]);
+
+  // Computed values
+  const favoritePrompts = React.useMemo(() => {
+    return prompts.filter(p => p.isFavorite).length;
+  }, [prompts]);
+
+  const totalPrompts = prompts.length;
+  const isLoading = loading;
+
+  // Record usage function
+  const recordUsage = React.useCallback(async (promptId: string, action: 'copy' | 'inject' | 'view') => {
+    try {
+      console.log(`Recording usage: ${promptId} - ${action}`);
+      // This would typically call a function from useExtensionPrompts
+      // For now, we'll just log it
+    } catch (error) {
+      console.error('记录使用情况失败:', error);
+    }
+  }, []);
+
+  // Toggle favorite function
+  const toggleFavorite = React.useCallback(async (promptId: string) => {
+    try {
+      const prompt = prompts.find(p => p.id === promptId);
+      if (!prompt) {
+        showToast('提示词不存在', 'error');
+        return;
+      }
+      
+      await updatePrompt(prompt.id, { 
+        ...prompt, 
+        isFavorite: !prompt.isFavorite 
+      });
+      showToast(
+        prompt.isFavorite ? '已取消收藏' : '已添加到收藏', 
+        'success'
+      );
+    } catch (error) {
+      console.error('切换收藏状态失败:', error);
+      showToast('操作失败', 'error');
+    }
+  }, [prompts, updatePrompt]);
 
   // 复制到剪贴板
   const handleCopy = React.useCallback(async (text: string, promptId: string) => {
@@ -73,11 +177,11 @@ const SidePanel: React.FC<SidePanelProps> = () => {
   // 处理带变量的复制
   const handleCopyWithVariables = React.useCallback(async (prompt: Prompt) => {
     if (hasVariables(prompt.content)) {
-      // 打开变量填写对话框
+      // 切换到变量填写视图
       setCurrentPromptForVariables(prompt);
       const history = await getVariableHistory(prompt.id);
       setVariableHistory(history);
-      setVariableDialogOpen(true);
+      setCurrentView('variables');
     } else {
       // 直接复制
       await handleCopy(prompt.content, prompt.id);
@@ -117,11 +221,11 @@ const SidePanel: React.FC<SidePanelProps> = () => {
   // 处理带变量的注入
   const handleInjectWithVariables = React.useCallback(async (prompt: Prompt) => {
     if (hasVariables(prompt.content)) {
-      // 打开变量填写对话框
+      // 切换到变量填写视图
       setCurrentPromptForVariables(prompt);
       const history = await getVariableHistory(prompt.id);
       setVariableHistory(history);
-      setVariableDialogOpen(true);
+      setCurrentView('variables');
     } else {
       // 直接注入
       handleInject(prompt.content, prompt.id);
@@ -174,32 +278,67 @@ const SidePanel: React.FC<SidePanelProps> = () => {
     }, 3000);
   }, []);
 
-  // 处理提示词选择
-  const handlePromptSelect = React.useCallback(async (prompt: Prompt) => {
-    setSelectedPrompt(prompt);
-    await recordUsage(prompt.id, 'view');
-  }, [recordUsage]);
 
-  // 打开新建提示词对话框
-  const handleCreatePrompt = React.useCallback(() => {
-    setEditingPrompt(null);
-    setEditDialogOpen(true);
+  // Type guard for prompt validation
+  const isValidPrompt = React.useCallback((prompt: any): prompt is Prompt => {
+    return prompt && 
+           typeof prompt.id === 'string' && 
+           typeof prompt.title === 'string' && 
+           typeof prompt.content === 'string';
   }, []);
 
-  // 打开编辑提示词对话框
+  // 处理提示词选择
+  const handlePromptSelect = React.useCallback(async (prompt: Prompt) => {
+    if (!isValidPrompt(prompt)) {
+      console.error('Invalid prompt object:', prompt);
+      showToast('提示词数据无效', 'error');
+      return;
+    }
+    
+    setSelectedPrompt(prompt);
+    await recordUsage(prompt.id, 'view');
+  }, [recordUsage, isValidPrompt]);
+
+  // 打开新建提示词视图
+  const handleCreatePrompt = React.useCallback(() => {
+    console.log('handleCreatePrompt called');
+    console.log('Current currentView:', currentView);
+    console.log('Setting editingPrompt to null and currentView to edit');
+    
+    setEditingPrompt(null);
+    setCurrentView('edit');
+    
+    // 验证状态是否更新
+    setTimeout(() => {
+      console.log('After state update - currentView should be edit');
+    }, 100);
+  }, [currentView]);
+
+  // 打开编辑提示词视图
   const handleEditPrompt = React.useCallback((prompt: Prompt) => {
     setEditingPrompt(prompt);
-    setEditDialogOpen(true);
+    setCurrentView('edit');
   }, []);
 
   // 保存新提示词
   const handleSavePrompt = React.useCallback(async (promptData: Omit<Prompt, 'id' | 'createdAt' | 'updatedAt'>) => {
     try {
+      // Validate prompt data
+      if (!promptData.title?.trim()) {
+        showToast('提示词标题不能为空', 'error');
+        return;
+      }
+      if (!promptData.content?.trim()) {
+        showToast('提示词内容不能为空', 'error');
+        return;
+      }
+      
       await addPrompt(promptData);
       showToast('提示词创建成功', 'success');
     } catch (error) {
       console.error('创建提示词失败:', error);
-      showToast('创建提示词失败', 'error');
+      const errorMessage = error instanceof Error ? error.message : '未知错误';
+      showToast(`创建提示词失败: ${errorMessage}`, 'error');
       throw error;
     }
   }, [addPrompt]);
@@ -232,17 +371,25 @@ const SidePanel: React.FC<SidePanelProps> = () => {
     }
   }, [deletePrompt, selectedPrompt]);
 
-  // 处理变量对话框的复制
-  const handleVariableCopy = React.useCallback(async (finalText: string) => {
+  // 处理变量视图的复制
+  const handleVariableCopy = React.useCallback(async (finalText: string, variableValues: VariableValues) => {
     if (currentPromptForVariables) {
       await handleCopy(finalText, currentPromptForVariables.id);
+      // 保存变量值到历史
+      if (Object.keys(variableValues).length > 0) {
+        await handleSaveVariableValues(variableValues);
+      }
     }
   }, [currentPromptForVariables, handleCopy]);
 
-  // 处理变量对话框的注入
-  const handleVariableInject = React.useCallback(async (finalText: string) => {
+  // 处理变量视图的注入
+  const handleVariableInject = React.useCallback(async (finalText: string, variableValues: VariableValues) => {
     if (currentPromptForVariables) {
       handleInject(finalText, currentPromptForVariables.id);
+      // 保存变量值到历史
+      if (Object.keys(variableValues).length > 0) {
+        await handleSaveVariableValues(variableValues);
+      }
     }
   }, [currentPromptForVariables, handleInject]);
 
@@ -253,11 +400,55 @@ const SidePanel: React.FC<SidePanelProps> = () => {
     }
   }, [currentPromptForVariables, saveVariableHistory]);
 
+  // 返回到提示词列表
+  const handleBackToList = React.useCallback(() => {
+    setCurrentView('list');
+    setCurrentPromptForVariables(null);
+    setVariableHistory([]);
+  }, []);
+
+  // 关闭变量视图
+  const handleCloseVariables = React.useCallback(() => {
+    setCurrentView('list');
+    setCurrentPromptForVariables(null);
+    setVariableHistory([]);
+  }, []);
+
+  // 关闭编辑视图
+  const handleCloseEdit = React.useCallback(() => {
+    setCurrentView('list');
+    setEditingPrompt(null);
+  }, []);
+
+  // 打开设置视图
+  const handleOpenSettings = React.useCallback(() => {
+    console.log('handleOpenSettings called, setting view to settings');
+    setCurrentView('settings');
+    console.log('currentView should now be settings');
+  }, []);
+
+  // 关闭设置视图
+  const handleCloseSettings = React.useCallback(() => {
+    setCurrentView('list');
+  }, []);
+
+  // 处理文件导入
+  const handleImportFile = React.useCallback(async (file: File) => {
+    try {
+      const text = await file.text();
+      await importData(text);
+    } catch (error) {
+      console.error('导入文件失败:', error);
+      showToast('导入文件失败', 'error');
+    }
+  }, [importData]);
+
   return (
-    <div className="flex flex-col h-full bg-background">
-      {/* 头部 - 紧凑设计 */}
-      <div className="flex-shrink-0 p-3 border-b border-border/30">
-        <div className="flex items-center justify-between mb-2">
+    <div className="flex flex-col h-screen bg-background overflow-hidden">
+      {/* 头部 - 紧凑设计 - 仅在列表视图显示 */}
+      {currentView === 'list' && (
+        <div className="flex-shrink-0 p-3 border-b border-border/30">
+        {/* <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 bg-primary rounded-md flex items-center justify-center">
               <span className="text-primary-foreground font-bold text-xs">P</span>
@@ -267,17 +458,29 @@ const SidePanel: React.FC<SidePanelProps> = () => {
           <div className="text-xs text-muted-foreground/80">
             {totalPrompts}
           </div>
-        </div>
+        </div> */}
         
-        {/* 搜索框 */}
+        {/* 搜索与筛选行 */}
         <div className="relative mb-2">
           <Icons.search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground/60" />
           <Input
             placeholder="搜索提示词..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            value={searchInput}
+            onChange={(e) => { const v = e.target.value; setSearchInput(v); debouncedSetSearch(v); }}
             className="pl-8 h-8 text-sm bg-background/80 border-border/40 focus:border-primary/50 transition-all duration-200"
           />
+          <div className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center gap-1">
+            <Button
+              variant={showFavorites ? 'default' : 'ghost'}
+              size="sm"
+              className="h-7 px-2 text-xs"
+              onClick={() => setShowFavorites(!showFavorites)}
+              title={showFavorites ? '显示全部' : '仅收藏'}
+            >
+              <span className={cn('mr-1', showFavorites ? 'text-yellow-400' : 'text-muted-foreground')}>⭐</span>
+              仅收藏
+            </Button>
+          </div>
         </div>
 
         {/* 分类筛选 - 紧凑标签设计 */}
@@ -318,48 +521,136 @@ const SidePanel: React.FC<SidePanelProps> = () => {
             </Button>
           ))}
         </div>
-      </div>
 
-      {/* 提示词列表 */}
-      <div className="flex-1 relative">
-        
+        {/* 标签筛选 - 可横向滚动的芯片 */}
+        {/* {allTags.length > 0 && (
+          <div className="flex items-center gap-1 overflow-x-auto pt-1 pb-1 scrollbar-none">
+            <Button
+              variant={!selectedTag ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setSelectedTag(null)}
+              className="h-6 px-3 text-xs whitespace-nowrap shrink-0 rounded-full"
+            >
+              全部标签
+            </Button>
+            {allTags.map((tag) => (
+              <Button
+                key={tag}
+                variant={selectedTag === tag ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setSelectedTag(selectedTag === tag ? null : tag)}
+                className="h-6 px-3 text-xs whitespace-nowrap shrink-0 rounded-full"
+              >
+                #{tag}
+              </Button>
+            ))}
+          </div>
+        )} */}
+        </div>
+      )}
+
+      {/* 主内容区域 */}
+      {(() => {
+        console.log('📍 Rendering main content - currentView:', currentView);
+        console.log('📍 editingPrompt:', editingPrompt);
+        console.log('📍 currentPromptForVariables:', currentPromptForVariables);
+        return null;
+      })()}
+      {currentView === 'settings' ? (
+        <SettingsView
+          isVisible={true}
+          settings={settings}
+          onBack={handleCloseSettings}
+          onClose={handleCloseSettings}
+          onUpdateSettings={updateSettings}
+          onExportData={exportData}
+          onImportData={handleImportFile}
+          onClearData={clearAllData}
+        />
+      ) : currentView === 'edit' ? (
+        <React.Suspense fallback={
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-center py-8 text-muted-foreground">
+              <div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-2"></div>
+              <p>加载编辑器...</p>
+            </div>
+          </div>
+        }>
+          <PromptEditView
+            isVisible={true}
+            prompt={editingPrompt}
+            categories={categories}
+            onBack={handleCloseEdit}
+            onClose={handleCloseEdit}
+            onSave={handleSavePrompt}
+            onUpdate={handleUpdatePrompt}
+          />
+        </React.Suspense>
+      ) : currentView === 'variables' && currentPromptForVariables ? (
+        <VariableFormView
+          isVisible={true}
+          promptTitle={currentPromptForVariables.title}
+          promptContent={currentPromptForVariables.content}
+          onBack={handleBackToList}
+          onClose={handleCloseVariables}
+          onCopy={handleVariableCopy}
+          onInject={handleVariableInject}
+          variableHistory={variableHistory}
+        />
+      ) : (
+        /* 提示词列表 */
+        <>
         {isLoading ? (
+        <div className="flex-1 min-h-0 relative">
           <div className="flex-1 flex items-center justify-center">
             <div className="text-center py-8 text-muted-foreground">
               <div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-2"></div>
               <p>加载中...</p>
             </div>
           </div>
-        ) : error ? (
-          <div className="flex-1 flex items-center justify-center">
-            <div className="text-center py-8 text-destructive">
-              <Icons.star className="w-12 h-12 mx-auto mb-2 opacity-50" />
-              <p>{error}</p>
-            </div>
+        </div>
+      ) : error ? (
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center py-8 text-destructive">
+            <Icons.star className="w-12 h-12 mx-auto mb-2 opacity-50" />
+            <p>{error}</p>
           </div>
-        ) : (
-          <VirtualizedPromptList
-            prompts={prompts}
-            selectedPrompt={selectedPrompt}
-            onPromptSelect={handlePromptSelect}
-            onCopyWithVariables={handleCopyWithVariables}
-            onInjectWithVariables={handleInjectWithVariables}
-            onToggleFavorite={toggleFavorite}
-            onEditPrompt={handleEditPrompt}
-            onDeletePrompt={handleDeletePrompt}
-            height={400}
-          />
-        )}
-      </div>
+        </div>
+      ) : prompts.length === 0 ? (
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center py-10 text-muted-foreground">
+            <Icons.search className="w-10 h-10 mx-auto mb-2 opacity-50" />
+            <p className="mb-1">没有匹配的提示词</p>
+            <p className="text-xs opacity-80">
+              尝试调整搜索关键词、切换分类或清除标签/收藏筛选
+            </p>
+          </div>
+        </div>
+      ) : (
+        <NewPromptList
+          prompts={prompts}
+          selectedPrompt={selectedPrompt}
+          onPromptSelect={handlePromptSelect}
+          onCopyWithVariables={handleCopyWithVariables}
+          onInjectWithVariables={handleInjectWithVariables}
+          onToggleFavorite={toggleFavorite}
+          onEditPrompt={handleEditPrompt}
+          onDeletePrompt={handleDeletePrompt}
+        />
+      )}
+        </>
+      )}
 
-      {/* 底部操作栏 */}
-      <div className="flex-shrink-0 p-4 border-t bg-muted/10">
+      {/* 底部操作栏 - 仅在列表视图显示 */}
+      {currentView === 'list' && (
+        <div className="flex-shrink-0 p-3 border-t bg-background/95 backdrop-blur-sm relative z-10">
         <div className="flex gap-2">
           <Button 
             variant="outline" 
             size="sm" 
             className="flex-1"
             onClick={handleCreatePrompt}
+          
           >
             <Icons.plus className="w-4 h-4 mr-1" />
             新建
@@ -368,65 +659,17 @@ const SidePanel: React.FC<SidePanelProps> = () => {
             variant="outline" 
             size="sm" 
             className="flex-1"
-            onClick={() => setSettingsDialogOpen(true)}
+            onClick={handleOpenSettings}
           >
             <Icons.settings className="w-4 h-4 mr-1" />
             设置
           </Button>
         </div>
-      </div>
-
-      {/* 编辑对话框 */}
-      <PromptEditDialog
-        open={editDialogOpen}
-        onOpenChange={setEditDialogOpen}
-        prompt={editingPrompt}
-        categories={categories}
-        onSave={handleSavePrompt}
-        onUpdate={handleUpdatePrompt}
-      />
-
-      {/* 设置对话框 */}
-      <SettingsDialog
-        open={settingsDialogOpen}
-        onOpenChange={setSettingsDialogOpen}
-        settings={settings}
-        onUpdateSettings={updateSettings}
-        onExportData={exportData}
-        onImportData={importData}
-        onClearData={clearAllData}
-      />
-
-      {/* 变量填写对话框 */}
-      {currentPromptForVariables && (
-        <VariableFormDialog
-          open={variableDialogOpen}
-          onOpenChange={(open) => {
-            setVariableDialogOpen(open);
-            if (!open) {
-              setCurrentPromptForVariables(null);
-              setVariableHistory([]);
-            }
-          }}
-          promptTitle={currentPromptForVariables.title}
-          promptContent={currentPromptForVariables.content}
-          variableHistory={variableHistory}
-          onCopy={async (finalText, variableValues) => {
-            await handleVariableCopy(finalText);
-            // 保存变量值到历史
-            if (Object.keys(variableValues).length > 0) {
-              await handleSaveVariableValues(variableValues);
-            }
-          }}
-          onInject={async (finalText, variableValues) => {
-            await handleVariableInject(finalText);
-            // 保存变量值到历史
-            if (Object.keys(variableValues).length > 0) {
-              await handleSaveVariableValues(variableValues);
-            }
-          }}
-        />
+        </div>
       )}
+
+
+
     </div>
   );
 };
