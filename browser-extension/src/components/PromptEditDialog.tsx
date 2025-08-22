@@ -14,8 +14,8 @@ interface PromptEditDialogProps {
   onOpenChange: (open: boolean) => void;
   prompt?: Prompt | null;
   categories: Category[];
-  onSave: (prompt: Omit<Prompt, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
-  onUpdate: (id: string, updates: Partial<Prompt>) => Promise<void>;
+  onSave: (prompt: Omit<Prompt, 'id' | 'createdAt' | 'updatedAt'> & { id?: string }) => Promise<void>;
+  onAddNewCategory: (name: string) => Promise<Category | null>;
 }
 
 export const PromptEditDialog: React.FC<PromptEditDialogProps> = ({
@@ -24,7 +24,7 @@ export const PromptEditDialog: React.FC<PromptEditDialogProps> = ({
   prompt,
   categories,
   onSave,
-  onUpdate
+  onAddNewCategory
 }) => {
   const isEdit = Boolean(prompt);
 
@@ -49,9 +49,8 @@ export const PromptEditDialog: React.FC<PromptEditDialogProps> = ({
             prompt={prompt}
             categories={categories}
             onSave={onSave}
-            onUpdate={onUpdate}
-            onBack={handleBack}
-            onClose={handleBack} // Also wiring up onClose to close the dialog
+            onCancel={handleBack}
+            onAddNewCategory={onAddNewCategory}
             showCloseButton={false} // Hide close button in view, dialog has its own
             showBackButton={true} // Show back button to act as cancel
           />

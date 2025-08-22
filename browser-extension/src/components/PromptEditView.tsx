@@ -1,487 +1,362 @@
-// 临时替换 PromptEditView - 用于测试
 import React from 'react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
+import { Textarea } from './ui/textarea';
 import { AutoResizeTextarea } from './ui/auto-resize-textarea';
-import { Checkbox } from './ui/checkbox';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { ScrollArea } from './ui/scroll-area';
-import { Badge } from './ui/badge';
-import { ArrowLeft, X, Save, Plus, Wand2 } from 'lucide-react';
+import { AIOptimizeButton } from './AIOptimizeButton';
 import { Prompt, Category } from '../shared/types';
 
-interface PromptEditViewProps {
+// Props for the component
+export interface PromptEditViewProps {
   prompt?: Prompt | null;
   categories: Category[];
-  onBack: () => void;
-  onClose: () => void;
-  onSave: (promptData: Omit<Prompt, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
-  onUpdate?: (id: string, updates: Partial<Prompt>) => Promise<void>;
+  onSave: (prompt: Omit<Prompt, 'id' | 'createdAt' | 'updatedAt'> & { id?: string }) => Promise<void>;
+  onCancel: () => void;
+  onAddNewCategory: (name: string) => Promise<Category | null>;
   showBackButton?: boolean;
   showCloseButton?: boolean;
 }
 
+// Main component
 export const PromptEditView: React.FC<PromptEditViewProps> = ({
   prompt,
   categories,
-  onBack,
-  onClose,
   onSave,
-  onUpdate,
+  onCancel,
+  onAddNewCategory,
   showBackButton = true,
   showCloseButton = true,
 }) => {
-  console.log('PromptEditView rendering:', { prompt, categories: categories?.length });
-  const isEditing = !!prompt;
-  
-  // 表单状态
-  const [formData, setFormData] = React.useState({
-    title: '',
-    content: '',
-    description: '',
-    category: 'general',
-    tags: [] as string[],
-    isFavorite: false
+  console.log('🚀 PromptEditView START - Props received:', {
+    prompt: prompt ? { id: prompt.id, title: prompt.title } : null,
+    categoriesCount: categories?.length,
+    onSave: typeof onSave,
+    onCancel: typeof onCancel,
+    showBackButton,
+    showCloseButton
   });
   
-  const [tagInput, setTagInput] = React.useState('');
-  const [isLoading, setIsLoading] = React.useState(false);
-  const [isOptimizing, setIsOptimizing] = React.useState(false);
-  const [errors, setErrors] = React.useState<string[]>([]);
+  // Add error boundary
+  const [hasError, setHasError] = React.useState(false);
+  const [errorMessage, setErrorMessage] = React.useState<string>('');
 
-  // 初始化表单数据
   React.useEffect(() => {
-    if (prompt) {
-      // 编辑模式 - 填充现有数据
-      setFormData({
-        title: prompt.title || '',
-        content: prompt.content || '',
-        description: prompt.description || '',
-        category: prompt.category || 'general',
-        tags: prompt.tags || [],
-        isFavorite: prompt.isFavorite || false
-      });
-    } else {
-      // 新建模式 - 重置表单
-      setFormData({
-        title: '',
-        content: '',
-        description: '',
-        category: 'general',
-        tags: [],
-        isFavorite: false
-      });
-    }
-    setTagInput('');
-    setErrors([]);
-  }, [prompt]);
+    console.log('🔧 PromptEditView useEffect - Setting up error handler');
+    const handleError = (error: any) => {
+      console.error('❌ PromptEditView window error:', error);
+      setHasError(true);
+      setErrorMessage(error.message || 'Unknown error');
+    };
 
-  // 更新表单字段
-  const updateField = React.useCallback((field: string, value: any) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-    // 清除该字段的错误
-    if (errors.includes(field)) {
-      setErrors(prev => prev.filter(error => error !== field));
-    }
-  }, [errors]);
-
-  // 添加标签
-  const addTag = React.useCallback(() => {
-    const tag = tagInput.trim();
-    if (tag && !formData.tags.includes(tag)) {
-      setFormData(prev => ({
-        ...prev,
-        tags: [...prev.tags, tag]
-      }));
-      setTagInput('');
-    }
-  }, [tagInput, formData.tags]);
-
-  // 移除标签
-  const removeTag = React.useCallback((tagToRemove: string) => {
-    setFormData(prev => ({
-      ...prev,
-      tags: prev.tags.filter(tag => tag !== tagToRemove)
-    }));
+    window.addEventListener('error', handleError);
+    return () => {
+      console.log('🧹 PromptEditView cleanup - Removing error handler');
+      window.removeEventListener('error', handleError);
+    };
   }, []);
 
-  // 处理标签输入的回车键
-  const handleTagKeyPress = React.useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      addTag();
-    }
-  }, [addTag]);
+  if (hasError) {
+    console.log('💥 PromptEditView has error, showing error UI');
+    return (
+      <div className="flex-1 flex items-center justify-center p-4">
+        <div className="text-center">
+          <div className="text-red-500 mb-2">❌ PromptEditView 错误</div>
+          <p className="text-sm text-gray-600 mb-4">{errorMessage}</p>
+          <button onClick={() => setHasError(false)} className="px-4 py-2 bg-blue-500 text-white rounded">
+            重试
+          </button>
+        </div>
+      </div>
+    );
+  }
 
-  // 验证表单
-  const validateForm = React.useCallback(() => {
-    const newErrors: string[] = [];
-    
-    if (!formData.title.trim()) {
-      newErrors.push('title');
-    }
-    
-    if (!formData.content.trim()) {
-      newErrors.push('content');
-    }
-    
-    setErrors(newErrors);
-    return newErrors.length === 0;
-  }, [formData]);
+  console.log('📝 PromptEditView - Determining edit mode');
+  const isEditMode = !!prompt;
+  console.log('📝 Edit mode:', isEditMode);
 
-  // AI优化提示词
-  const handleOptimize = React.useCallback(async () => {
-    if (!formData.content.trim()) {
-      return;
-    }
+  // Form state
+  console.log('🔧 PromptEditView - Initializing form state');
+  const [title, setTitle] = React.useState(() => {
+    console.log('📝 Initializing title:', prompt?.title || '');
+    return prompt?.title || '';
+  });
+  const [content, setContent] = React.useState(() => {
+    console.log('📝 Initializing content:', prompt?.content || '');
+    return prompt?.content || '';
+  });
+  const [description, setDescription] = React.useState(() => {
+    console.log('📝 Initializing description:', prompt?.description || '');
+    return prompt?.description || '';
+  });
+  const [category, setCategory] = React.useState(() => {
+    console.log('📝 Initializing category:', prompt?.category || '');
+    return prompt?.category || '';
+  });
+  const [isFavorite, setIsFavorite] = React.useState(() => {
+    console.log('📝 Initializing isFavorite:', prompt?.isFavorite || false);
+    return prompt?.isFavorite || false;
+  });
+  const [tags, setTags] = React.useState<string[]>(() => {
+    console.log('📝 Initializing tags:', prompt?.tags || []);
+    return prompt?.tags || [];
+  });
+  const [tagInput, setTagInput] = React.useState('');
 
-    setIsOptimizing(true);
+  // UI/Error state
+  console.log('🔧 PromptEditView - Initializing UI state');
+  const [isSaving, setIsSaving] = React.useState(false);
+  const [isOptimizing, setIsOptimizing] = React.useState(false);
+  const [errors, setErrors] = React.useState<{ title?: string; content?: string }>({});
+  
+  console.log('📊 PromptEditView - Current state:', {
+    title,
+    content: content.substring(0, 50) + (content.length > 50 ? '...' : ''),
+    description: description.substring(0, 30) + (description.length > 30 ? '...' : ''),
+    category,
+    isFavorite,
+    tagsCount: tags.length,
+    isSaving,
+    isOptimizing
+  });
+
+  const handleSave = async () => {
+    console.log('💾 PromptEditView - handleSave called');
     try {
-      const aiSettings = localStorage.getItem('promptmate_ai_settings');
-      if (!aiSettings) {
-        alert('请先在设置中配置AI服务');
+      // Simple validation
+      const newErrors: { title?: string; content?: string } = {};
+      if (!title.trim()) newErrors.title = '此项为必填项';
+      if (!content.trim()) newErrors.content = '此项为必填项';
+
+      if (Object.keys(newErrors).length > 0) {
+        console.log('❌ PromptEditView - Validation errors:', newErrors);
+        setErrors(newErrors);
         return;
       }
 
-      const settings = JSON.parse(aiSettings);
-      if (!settings.apiKey) {
-        alert('请先在设置中配置API密钥');
-        return;
-      }
-
-      // 构建优化请求
-      const optimizePrompt = `请优化以下提示词，使其更加清晰、具体和有效：
-
-原始提示词：
-${formData.content}
-
-请返回优化后的提示词，保持原有的变量格式（如{{变量名}}）不变。`;
-
-      let url = '';
-      let headers: Record<string, string> = {
-        'Content-Type': 'application/json'
-      };
-      let body: any = {};
-
-      switch (settings.provider) {
-        case 'openai':
-          url = settings.endpoint || 'https://api.openai.com/v1/chat/completions';
-          headers['Authorization'] = `Bearer ${settings.apiKey}`;
-          body = {
-            model: settings.model || 'gpt-3.5-turbo',
-            messages: [{ role: 'user', content: optimizePrompt }],
-            max_tokens: 1000
-          };
-          break;
-        case 'anthropic':
-          url = settings.endpoint || 'https://api.anthropic.com/v1/messages';
-          headers['x-api-key'] = settings.apiKey;
-          headers['anthropic-version'] = '2023-06-01';
-          body = {
-            model: settings.model || 'claude-3-haiku-20240307',
-            max_tokens: 1000,
-            messages: [{ role: 'user', content: optimizePrompt }]
-          };
-          break;
-        default:
-          alert('暂不支持该AI服务商');
-          return;
-      }
-
-      const response = await fetch(url, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(body)
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      let optimizedContent = '';
-
-      if (settings.provider === 'openai') {
-        optimizedContent = data.choices?.[0]?.message?.content || '';
-      } else if (settings.provider === 'anthropic') {
-        optimizedContent = data.content?.[0]?.text || '';
-      }
-
-      if (optimizedContent) {
-        updateField('content', optimizedContent.trim());
-      }
-    } catch (error) {
-      console.error('AI优化失败:', error);
-      alert('AI优化失败，请检查网络连接和API配置');
-    } finally {
-      setIsOptimizing(false);
-    }
-  }, [formData.content, updateField]);
-
-  // 保存提示词
-  const handleSave = React.useCallback(async () => {
-    if (!validateForm()) {
-      return;
-    }
-
-    setIsLoading(true);
-    try {
+      console.log('✅ PromptEditView - Validation passed, saving...');
+      setIsSaving(true);
       const promptData = {
-        title: formData.title.trim(),
-        content: formData.content.trim(),
-        description: formData.description.trim(),
-        category: formData.category,
-        tags: formData.tags,
-        isFavorite: formData.isFavorite,
-        usageCount: prompt?.usageCount || 0
+        ...(isEditMode ? { id: prompt.id } : {}),
+        title,
+        content,
+        description,
+        category: category || '',
+        isFavorite,
+        tags,
       };
 
-      if (isEditing && prompt && onUpdate) {
-        await onUpdate(prompt.id, promptData);
-      } else {
-        await onSave(promptData);
-      }
-      
-      onBack();
+      console.log('📤 PromptEditView - Calling onSave with data:', promptData);
+      await onSave(promptData);
+      console.log('✅ PromptEditView - Save completed successfully');
     } catch (error) {
-      console.error('保存失败:', error);
+      console.error('❌ PromptEditView - Save failed:', error);
+      setErrors({ title: '保存失败，请重试' });
     } finally {
-      setIsLoading(false);
+      console.log('🔄 PromptEditView - Resetting saving state');
+      setIsSaving(false);
     }
-  }, [validateForm, formData, isEditing, prompt, onUpdate, onSave, onBack]);
+  };
 
+  const handleTagKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault();
+      const newTag = tagInput.trim();
+      if (newTag && !tags.includes(newTag)) {
+        setTags([...tags, newTag]);
+      }
+      setTagInput('');
+    }
+  };
 
-  return (
-    <div className="flex flex-col h-full bg-background animate-in slide-in-from-right-full duration-300">
-      {/* 紧凑导航头部 */}
-      <div className="flex-shrink-0 flex items-center justify-between px-3 py-2 border-b border-border/30">
-        <div className="flex items-center gap-2 flex-1 min-w-0">
-          {showBackButton && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onBack}
-              className="h-7 w-7 p-0 hover:bg-muted/60"
-            >
-              <ArrowLeft className="w-4 h-4" />
-            </Button>
-          )}
-          <h2 className="font-medium text-sm truncate flex-1">
-            {isEditing ? '编辑提示词' : '新建提示词'}
+  const removeTag = (tagToRemove: string) => {
+    setTags(tags.filter(tag => tag !== tagToRemove));
+  };
+
+  const handleAiOptimize = (optimizedContent: string) => {
+    setContent(optimizedContent);
+    if (!title.trim() && optimizedContent.trim()) {
+      // Auto-generate title from first line of optimized content
+      const firstLine = optimizedContent.split('\n')[0].trim();
+      if (firstLine.length > 0 && firstLine.length <= 50) {
+        setTitle(firstLine);
+      }
+    }
+  };
+
+  // Draft protection
+  const hasUnsavedChanges = React.useMemo(() => {
+    if (!isEditMode) {
+      return title || content || description || category || isFavorite || tags.length > 0;
+    }
+    return (
+      title !== prompt?.title ||
+      content !== prompt?.content ||
+      description !== prompt?.description ||
+      category !== prompt?.category ||
+      isFavorite !== prompt?.isFavorite ||
+      JSON.stringify(tags.sort()) !== JSON.stringify(prompt?.tags?.sort() || [])
+    );
+  }, [prompt, title, content, description, category, isFavorite, tags, isEditMode]);
+
+  const handleCancel = () => {
+    if (hasUnsavedChanges) {
+      if (window.confirm('您有未保存的更改，确定要离开吗？')) {
+        onCancel();
+      }
+    } else {
+      onCancel();
+    }
+  };
+
+  // 简化版本以避免白屏
+  console.log('🎨 PromptEditView - Starting render process');
+  console.log('📋 PromptEditView - Render data check:', {
+    hasTitle: !!title,
+    hasContent: !!content,
+    categoriesAvailable: categories?.length || 0,
+    isEditMode,
+    isSaving,
+    hasErrors: Object.keys(errors).length > 0
+  });
+  
+  try {
+    console.log('🎨 PromptEditView - Entering try block for render');
+    
+    return (
+      <div className="flex flex-col h-full bg-white">
+        {/* Simple Header */}
+        <div className="p-4 border-b">
+          <h2 className="text-lg font-semibold">
+            {isEditMode ? '编辑提示词' : '新建提示词'}
           </h2>
         </div>
-        
-        {showCloseButton && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onClose}
-            className="h-7 w-7 p-0 hover:bg-muted/60"
-          >
-            <X className="w-4 h-4" />
-          </Button>
-        )}
-      </div>
 
-      {/* 主内容区 */}
-      <div className="flex-1 overflow-hidden">
-        <ScrollArea className="h-full">
-          <div className="p-3 space-y-4">
-            {/* 核心字段：标题和内容 */}
-            <div className="space-y-3">
-              {/* 标题 - 必填 */}
-              <div className="space-y-2">
-                <Label 
-                  htmlFor="title" 
-                  className={`text-xs font-medium ${errors.includes('title') ? 'text-destructive' : ''}`}
-                >
-                  标题
-                  {errors.includes('title') && <span className="text-destructive ml-1">*</span>}
-                </Label>
-                <Input
-                  id="title"
-                  value={formData.title}
-                  onChange={(e) => updateField('title', e.target.value)}
-                  placeholder="输入提示词标题..."
-                  className={`h-8 text-sm ${errors.includes('title') ? 'border-destructive focus:border-destructive' : ''}`}
-                />
-              </div>
-
-              {/* 提示词内容 - 必填 */}
-              <div className="space-y-2">
-                <Label 
-                  htmlFor="content" 
-                  className={`text-xs font-medium ${errors.includes('content') ? 'text-destructive' : ''}`}
-                >
-                  提示词内容
-                  {errors.includes('content') && <span className="text-destructive ml-1">*</span>}
-                </Label>
-                <AutoResizeTextarea
-                  id="content"
-                  value={formData.content}
-                  onChange={(e) => updateField('content', e.target.value)}
-                  placeholder="输入提示词内容..."
-                  className={`text-sm ${errors.includes('content') ? 'border-destructive focus:border-destructive' : ''}`}
-                />
-                {/* 变量使用提示 - 精简为小字说明 */}
-                <p className="text-xs text-muted-foreground/70">
-                  使用 <code className="bg-muted px-1 rounded text-xs">{'{{变量名}}'}</code> 来定义可替换的变量
-                </p>
-              </div>
-            </div>
-
-            {/* 分类和收藏 - 整合到一行 */}
-            <div className="flex items-end gap-3">
-              <div className="flex-1 space-y-2">
-                <Label htmlFor="category" className="text-xs font-medium">
-                  分类
-                </Label>
-                <Select
-                  value={formData.category}
-                  onValueChange={(value) => updateField('category', value)}
-                >
-                  <SelectTrigger className="h-8 text-sm">
-                    <SelectValue placeholder="选择分类" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="general">通用</SelectItem>
-                    {categories.map((category) => (
-                      <SelectItem key={category.id} value={category.id}>
-                        {category.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="flex items-center space-x-2 pb-1">
-                <Checkbox
-                  id="favorite"
-                  checked={formData.isFavorite}
-                  onCheckedChange={(checked) => updateField('isFavorite', checked)}
-                />
-                <Label htmlFor="favorite" className="text-xs font-medium">
-                  收藏
-                </Label>
-              </div>
-            </div>
-
-            {/* 次要字段：描述 */}
-            <div className="space-y-2">
-              <Label htmlFor="description" className="text-xs font-medium">
-                描述 <span className="text-muted-foreground/60">(可选)</span>
-              </Label>
-              <AutoResizeTextarea
-                id="description"
-                value={formData.description}
-                onChange={(e) => updateField('description', e.target.value)}
-                placeholder="简要描述这个提示词的用途..."
-                className="text-sm"
-              />
-            </div>
-
-            {/* 标签管理 - 紧凑设计 */}
-            <div className="space-y-2">
-              <Label htmlFor="tags" className="text-xs font-medium">
-                标签 <span className="text-muted-foreground/60">(可选)</span>
-              </Label>
-              
-              {/* 现有标签显示 */}
-              {formData.tags.length > 0 && (
-                <div className="flex flex-wrap gap-1 mb-2">
-                  {formData.tags.map((tag) => (
-                    <Badge
-                      key={tag}
-                      variant="secondary"
-                      className="text-xs h-6 px-2 cursor-pointer hover:bg-destructive hover:text-destructive-foreground"
-                      onClick={() => removeTag(tag)}
-                    >
-                      #{tag} ×
-                    </Badge>
-                  ))}
-                </div>
-              )}
-              
-              {/* 添加新标签 */}
-              <div className="flex gap-2">
-                <Input
-                  id="tags"
-                  value={tagInput}
-                  onChange={(e) => setTagInput(e.target.value)}
-                  onKeyPress={handleTagKeyPress}
-                  placeholder="输入标签名称..."
-                  className="h-8 text-sm flex-1"
-                />
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={addTag}
-                  disabled={!tagInput.trim()}
-                  className="h-8 px-3"
-                >
-                  <Plus className="w-3 h-3" />
-                </Button>
-              </div>
-            </div>
-
-            {/* 错误提示 */}
-            {errors.length > 0 && (
-              <div className="p-2 bg-destructive/10 border border-destructive/20 rounded-lg">
-                <div className="text-destructive text-xs font-medium">
-                  请填写必需字段：
-                  {errors.includes('title') && ' 标题'}
-                  {errors.includes('content') && ' 提示词内容'}
-                </div>
-              </div>
-            )}
+        {/* Simple Form */}
+        <div className="flex-1 p-4 space-y-4 overflow-y-auto">
+          <div>
+            <label className="block text-sm font-medium mb-1">标题 *</label>
+            <Input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="输入标题"
+              className="w-full"
+            />
+            {errors.title && <p className="text-red-500 text-xs mt-1">{errors.title}</p>}
           </div>
-        </ScrollArea>
-      </div>
 
-      {/* 底部操作按钮 - AI优化 + 保存 */}
-      <div className="flex-shrink-0 p-3 border-t bg-background/95 backdrop-blur-sm">
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            onClick={handleOptimize}
-            disabled={isOptimizing || isLoading || !formData.content.trim()}
-            className="flex-1 h-9 text-sm font-medium"
-          >
-            {isOptimizing ? (
-              <>
-                <div className="animate-spin w-3 h-3 border border-current border-t-transparent rounded-full mr-2" />
-                优化中...
-              </>
-            ) : (
-              <>
-                <Wand2 className="w-3 h-3 mr-2" />
-                AI 优化
-              </>
-            )}
-          </Button>
-          <Button
-            onClick={handleSave}
-            disabled={isLoading || isOptimizing}
-            className="flex-1 h-9 text-sm font-medium"
-          >
-            {isLoading ? (
-              <>
-                <div className="animate-spin w-3 h-3 border border-current border-t-transparent rounded-full mr-2" />
-                {isEditing ? '保存中...' : '创建中...'}
-              </>
-            ) : (
-              <>
-                {isEditing ? <Save className="w-3 h-3 mr-2" /> : <Plus className="w-3 h-3 mr-2" />}
-                {isEditing ? '保存' : '创建'}
-              </>
-            )}
-          </Button>
+          <div>
+            <label className="block text-sm font-medium mb-1">内容 *</label>
+            <AutoResizeTextarea
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              placeholder="输入内容"
+              className="w-full font-mono text-sm"
+              minRows={5}
+            />
+            {errors.content && <p className="text-red-500 text-xs mt-1">{errors.content}</p>}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">描述</label>
+            <AutoResizeTextarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="输入描述（可选）"
+              className="w-full"
+              minRows={2}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">分类</label>
+            <select
+              value={category || ''}
+              onChange={(e) => setCategory(e.target.value)}
+              className="w-full p-2 border rounded"
+            >
+              <option value="">无分类</option>
+              {categories.map((cat) => (
+                <option key={cat.id} value={cat.id}>{cat.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="flex items-center">
+              <input
+                type="checkbox"
+                checked={isFavorite}
+                onChange={(e) => setIsFavorite(e.target.checked)}
+                className="mr-2"
+              />
+              添加到收藏
+            </label>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">标签</label>
+            <div className="flex flex-wrap gap-2 mb-2">
+              {tags.map((tag) => (
+                <span key={tag} className="bg-gray-100 px-2 py-1 rounded text-sm flex items-center gap-1">
+                  {tag}
+                  <button 
+                    onClick={() => removeTag(tag)}
+                    className="text-gray-500 hover:text-red-500"
+                  >
+                    ×
+                  </button>
+                </span>
+              ))}
+            </div>
+            <Input
+              value={tagInput}
+              onChange={(e) => setTagInput(e.target.value)}
+              onKeyDown={handleTagKeyDown}
+              placeholder="输入标签后按回车添加"
+              className="w-full"
+            />
+          </div>
+        </div>
+
+        {/* Simple Footer */}
+        <div className="p-4 border-t">
+          <div className="flex gap-2">
+            <AIOptimizeButton
+              content={content}
+              title={title}
+              onOptimize={handleAiOptimize}
+              disabled={isOptimizing}
+              variant="inline"
+            />
+            <Button
+              onClick={handleCancel}
+              variant="outline"
+              className="flex-1"
+            >
+              取消
+            </Button>
+            <Button
+              onClick={handleSave}
+              disabled={isSaving}
+              className="flex-1"
+            >
+              {isSaving ? '保存中...' : (isEditMode ? '保存更改' : '创建')}
+            </Button>
+          </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  } catch (error) {
+    console.error('❌ PromptEditView render error:', error);
+    return (
+      <div className="flex-1 flex items-center justify-center p-4">
+        <div className="text-center">
+          <div className="text-red-500 mb-2">❌ 渲染错误</div>
+          <p className="text-sm text-gray-600 mb-4">{error.message}</p>
+          <Button onClick={handleCancel}>返回</Button>
+        </div>
+      </div>
+    );
+  }
 };

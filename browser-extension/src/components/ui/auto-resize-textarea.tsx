@@ -2,12 +2,14 @@ import * as React from 'react';
 import { cn } from '../../lib/utils';
 
 export interface AutoResizeTextareaProps
-  extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {}
+  extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
+  minRows?: number;
+}
 
 const AutoResizeTextarea = React.forwardRef<
   HTMLTextAreaElement,
   AutoResizeTextareaProps
->(({ className, onChange, ...props }, ref) => {
+>(({ className, onChange, minRows = 1, ...props }, ref) => {
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
   
   // 合并 refs
@@ -19,11 +21,14 @@ const AutoResizeTextarea = React.forwardRef<
     if (textarea) {
       // 重置高度以获取正确的 scrollHeight
       textarea.style.height = 'auto';
-      // 设置为内容高度，最小高度为单行（32px），最大高度为4行（128px）
-      const newHeight = Math.min(Math.max(textarea.scrollHeight, 32), 128);
+      // 设置为内容高度，最小高度基于 minRows
+      const computedStyle = getComputedStyle(textarea);
+      const lineHeight = parseFloat(computedStyle.lineHeight) || 20; // fallback to 20px
+      const minHeight = Math.max(minRows * lineHeight, 32); // minimum 32px
+      const newHeight = Math.max(textarea.scrollHeight, minHeight);
       textarea.style.height = `${newHeight}px`;
     }
-  }, []);
+  }, [minRows]);
 
   // 处理输入变化
   const handleChange = React.useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
