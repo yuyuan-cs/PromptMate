@@ -3,7 +3,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
-import { AutoResizeTextarea } from './ui/auto-resize-textarea';
+import { AutoResizeTextarea } from '@components/ui/auto-resize-textarea';
 import { Label } from './ui/label';
 import { Badge } from './ui/badge';
 import { ScrollArea } from './ui/scroll-area';
@@ -35,7 +35,6 @@ import {
 } from 'lucide-react';
 
 interface VariableFormViewProps {
-  isVisible: boolean;
   promptTitle: string;
   promptContent: string;
   onBack: () => void;
@@ -43,17 +42,20 @@ interface VariableFormViewProps {
   onCopy: (finalText: string, variableValues: VariableValues) => void;
   onInject: (finalText: string, variableValues: VariableValues) => void;
   variableHistory?: VariableValues[];
+  showBackButton?: boolean;
+  showCloseButton?: boolean;
 }
 
 export const VariableFormView: React.FC<VariableFormViewProps> = ({
-  isVisible,
   promptTitle,
   promptContent,
   onBack,
   onClose,
   onCopy,
   onInject,
-  variableHistory = []
+  variableHistory = [],
+  showBackButton = true,
+  showCloseButton = true
 }) => {
   const [values, setValues] = React.useState<VariableValues>({});
   const [errors, setErrors] = React.useState<string[]>([]);
@@ -68,7 +70,7 @@ export const VariableFormView: React.FC<VariableFormViewProps> = ({
 
   // 初始化变量值
   React.useEffect(() => {
-    if (isVisible && formFields.length > 0) {
+    if (formFields.length > 0) {
       const initialValues: VariableValues = {};
       formFields.forEach(field => {
         initialValues[field.name] = '';
@@ -76,7 +78,7 @@ export const VariableFormView: React.FC<VariableFormViewProps> = ({
       setValues(initialValues);
       setErrors([]);
     }
-  }, [isVisible, formFields]);
+  }, [formFields]);
 
   // 实时更新预览
   React.useEffect(() => {
@@ -190,21 +192,22 @@ export const VariableFormView: React.FC<VariableFormViewProps> = ({
     return Array.from(suggestions).slice(0, 3);
   }, [variableHistory]);
 
-  if (!isVisible) return null;
 
   return (
     <div className="flex flex-col h-full bg-background animate-in slide-in-from-right-full duration-300">
       {/* 精简头部 - 单行设计 */}
       <div className="flex-shrink-0 flex items-center justify-between px-3 py-2 border-b border-border/30">
         <div className="flex items-center gap-2 flex-1 min-w-0">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onBack}
-            className="h-7 w-7 p-0 hover:bg-muted/60"
-          >
-            <ArrowLeft className="w-4 h-4" />
-          </Button>
+          {showBackButton && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onBack}
+              className="h-7 w-7 p-0 hover:bg-muted/60"
+            >
+              <ArrowLeft className="w-4 h-4" />
+            </Button>
+          )}
           <h2 className="font-medium text-sm truncate flex-1">
             {promptTitle}
           </h2>
@@ -237,14 +240,16 @@ export const VariableFormView: React.FC<VariableFormViewProps> = ({
             </DropdownMenuContent>
           </DropdownMenu>
           
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onClose}
-            className="h-7 w-7 p-0 hover:bg-muted/60"
-          >
-            <X className="w-4 h-4" />
-          </Button>
+          {showCloseButton && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onClose}
+              className="h-7 w-7 p-0 hover:bg-muted/60"
+            >
+              <X className="w-4 h-4" />
+            </Button>
+          )}
         </div>
       </div>
 

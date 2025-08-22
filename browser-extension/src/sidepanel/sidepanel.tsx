@@ -80,18 +80,18 @@ const SidePanel: React.FC<SidePanelProps> = () => {
   }
   
   const {
-    prompts,
+    prompts, // This is now the filtered list
     categories,
     settings,
-    loading,
+    isLoading, // Corrected from 'loading'
+    error: hookError,
     searchTerm,
-    selectedCategory,
-    selectedTag,
-    allTags,
-    filteredPrompts,
     setSearchTerm,
-    setSelectedCategory,
+    activeCategory, // Corrected from 'selectedCategory'
+    setActiveCategory, // Corrected from 'setSelectedCategory'
+    selectedTag,
     setSelectedTag,
+    allTags,
     addPrompt,
     updatePrompt,
     deletePrompt,
@@ -112,8 +112,9 @@ const SidePanel: React.FC<SidePanelProps> = () => {
   
   // Additional state for UI controls
   const [showFavorites, setShowFavorites] = React.useState<boolean>(false);
-  const [activeCategory, setActiveCategory] = React.useState<string>('all');
-  const [error, setError] = React.useState<string | null>(null);
+  // 'activeCategory' and 'setActiveCategory' are now from the hook.
+  // 'error' state is replaced by 'hookError' from the hook.
+  // The 'error' state is now managed by the 'hookError' variable from the useExtensionPrompts hook.
   
   // 本地搜索输入（防抖）
   const [searchInput, setSearchInput] = React.useState<string>(searchTerm);
@@ -126,7 +127,7 @@ const SidePanel: React.FC<SidePanelProps> = () => {
   }, [prompts]);
 
   const totalPrompts = prompts.length;
-  const isLoading = loading;
+  // const isLoading = loading; // This is now directly from the hook as 'isLoading'
 
   // Record usage function
   const recordUsage = React.useCallback(async (promptId: string, action: 'copy' | 'inject' | 'view') => {
@@ -301,59 +302,73 @@ const SidePanel: React.FC<SidePanelProps> = () => {
 
   // 打开新建提示词视图
   const handleCreatePrompt = React.useCallback(() => {
-    console.log('handleCreatePrompt called');
-    console.log('Current currentView:', currentView);
-    console.log('Setting editingPrompt to null and currentView to edit');
+    console.log('🚀 handleCreatePrompt called');
+    console.log('📍 Current currentView:', currentView);
+    console.log('📍 Current editingPrompt:', editingPrompt);
+    console.log('📍 Categories length:', categories?.length);
+    console.log('📍 Setting editingPrompt to null and currentView to edit');
     
-    setEditingPrompt(null);
-    setCurrentView('edit');
-    
-    // 验证状态是否更新
-    setTimeout(() => {
-      console.log('After state update - currentView should be edit');
-    }, 100);
-  }, [currentView]);
+    try {
+      setEditingPrompt(null);
+      setCurrentView('edit');
+      
+      // 验证状态是否更新
+      setTimeout(() => {
+        console.log('✅ After state update - currentView should be edit');
+        console.log('📍 Updated currentView:', currentView);
+      }, 100);
+    } catch (error) {
+      console.error('❌ Error in handleCreatePrompt:', error);
+    }
+  }, [currentView, editingPrompt, categories]);
 
   // 打开编辑提示词视图
   const handleEditPrompt = React.useCallback((prompt: Prompt) => {
+    console.log('📝 SidePanel - handleEditPrompt called with:', prompt.title);
     setEditingPrompt(prompt);
     setCurrentView('edit');
   }, []);
 
-  // 保存新提示词
-  const handleSavePrompt = React.useCallback(async (promptData: Omit<Prompt, 'id' | 'createdAt' | 'updatedAt'>) => {
-    try {
-      // Validate prompt data
-      if (!promptData.title?.trim()) {
-        showToast('提示词标题不能为空', 'error');
-        return;
-      }
-      if (!promptData.content?.trim()) {
-        showToast('提示词内容不能为空', 'error');
-        return;
-      }
-      
-      await addPrompt(promptData);
-      showToast('提示词创建成功', 'success');
-    } catch (error) {
-      console.error('创建提示词失败:', error);
-      const errorMessage = error instanceof Error ? error.message : '未知错误';
-      showToast(`创建提示词失败: ${errorMessage}`, 'error');
-      throw error;
-    }
-  }, [addPrompt]);
+  // 关闭编辑视图
+  const handleCloseEdit = React.useCallback(() => {
+    setCurrentView('list');
+    setEditingPrompt(null);
+  }, []);
 
-  // 更新提示词
-  const handleUpdatePrompt = React.useCallback(async (id: string, updates: Partial<Prompt>) => {
+  // 保存或更新提示词
+  const handleSaveOrUpdatePrompt = React.useCallback(async (promptData: Omit<Prompt, 'id' | 'createdAt' | 'updatedAt'> & { id?: string }) => {
     try {
-      await updatePrompt(id, updates);
-      showToast('提示词更新成功', 'success');
+      if (!promptData.title?.trim() || !promptData.content?.trim()) {
+        showToast('标题和内容为必填项', 'error');
+        throw new Error('Validation failed');
+      }
+
+      if (promptData.id) {
+        // Update existing prompt
+        await updatePrompt(promptData.id, promptData);
+        showToast('提示词更新成功', 'success');
+      } else {
+        // Create new prompt
+        await addPrompt(promptData);
+        showToast('提示词创建成功', 'success');
+      }
+      handleCloseEdit(); // Go back to list view on success
     } catch (error) {
-      console.error('更新提示词失败:', error);
-      showToast('更新提示词失败', 'error');
-      throw error;
+      console.error('保存提示词失败:', error);
+      showToast('保存失败', 'error');
+      throw error; // Re-throw to let the component handle its saving state
     }
-  }, [updatePrompt]);
+  }, [addPrompt, updatePrompt, handleCloseEdit]);
+
+  // 添加新分类 (占位符)
+  const handleAddNewCategory = React.useCallback(async (name: string) => {
+    console.log(`Attempting to add new category: ${name}`);
+    showToast(`功能暂未实现: 添加分类 "${name}"`, 'error');
+    // In a real implementation, you would call a method from the hook
+    // const newCategory = await addCategory({ name });
+    // return newCategory;
+    return null;
+  }, []);
 
   // 删除提示词
   const handleDeletePrompt = React.useCallback(async (prompt: Prompt) => {
@@ -414,11 +429,6 @@ const SidePanel: React.FC<SidePanelProps> = () => {
     setVariableHistory([]);
   }, []);
 
-  // 关闭编辑视图
-  const handleCloseEdit = React.useCallback(() => {
-    setCurrentView('list');
-    setEditingPrompt(null);
-  }, []);
 
   // 打开设置视图
   const handleOpenSettings = React.useCallback(() => {
@@ -549,97 +559,151 @@ const SidePanel: React.FC<SidePanelProps> = () => {
         </div>
       )}
 
-      {/* 主内容区域 */}
-      {(() => {
-        console.log('📍 Rendering main content - currentView:', currentView);
-        console.log('📍 editingPrompt:', editingPrompt);
-        console.log('📍 currentPromptForVariables:', currentPromptForVariables);
-        return null;
-      })()}
-      {currentView === 'settings' ? (
-        <SettingsView
-          isVisible={true}
-          settings={settings}
-          onBack={handleCloseSettings}
-          onClose={handleCloseSettings}
-          onUpdateSettings={updateSettings}
-          onExportData={exportData}
-          onImportData={handleImportFile}
-          onClearData={clearAllData}
-        />
-      ) : currentView === 'edit' ? (
-        <React.Suspense fallback={
-          <div className="flex-1 flex items-center justify-center">
-            <div className="text-center py-8 text-muted-foreground">
-              <div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-2"></div>
-              <p>加载编辑器...</p>
-            </div>
-          </div>
-        }>
-          <PromptEditView
-            isVisible={true}
-            prompt={editingPrompt}
-            categories={categories}
-            onBack={handleCloseEdit}
-            onClose={handleCloseEdit}
-            onSave={handleSavePrompt}
-            onUpdate={handleUpdatePrompt}
-          />
-        </React.Suspense>
-      ) : currentView === 'variables' && currentPromptForVariables ? (
-        <VariableFormView
-          isVisible={true}
-          promptTitle={currentPromptForVariables.title}
-          promptContent={currentPromptForVariables.content}
-          onBack={handleBackToList}
-          onClose={handleCloseVariables}
-          onCopy={handleVariableCopy}
-          onInject={handleVariableInject}
-          variableHistory={variableHistory}
-        />
-      ) : (
-        /* 提示词列表 */
-        <>
-        {isLoading ? (
-        <div className="flex-1 min-h-0 relative">
-          <div className="flex-1 flex items-center justify-center">
-            <div className="text-center py-8 text-muted-foreground">
-              <div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-2"></div>
-              <p>加载中...</p>
-            </div>
-          </div>
-        </div>
-      ) : error ? (
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center py-8 text-destructive">
-            <Icons.star className="w-12 h-12 mx-auto mb-2 opacity-50" />
-            <p>{error}</p>
-          </div>
-        </div>
-      ) : prompts.length === 0 ? (
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center py-10 text-muted-foreground">
-            <Icons.search className="w-10 h-10 mx-auto mb-2 opacity-50" />
-            <p className="mb-1">没有匹配的提示词</p>
-            <p className="text-xs opacity-80">
-              尝试调整搜索关键词、切换分类或清除标签/收藏筛选
-            </p>
-          </div>
-        </div>
-      ) : (
-        <NewPromptList
-          prompts={prompts}
-          selectedPrompt={selectedPrompt}
-          onPromptSelect={handlePromptSelect}
-          onCopyWithVariables={handleCopyWithVariables}
-          onInjectWithVariables={handleInjectWithVariables}
-          onToggleFavorite={toggleFavorite}
-          onEditPrompt={handleEditPrompt}
-          onDeletePrompt={handleDeletePrompt}
-        />
-      )}
-        </>
-      )}
+      {/* 主内容区域 - 使用 switch 语句进行视图切换 */}
+      <div className="flex-1 flex flex-col min-h-0">
+        {(() => {
+          console.log('📍 Rendering main content - currentView:', currentView);
+          console.log('📍 editingPrompt:', editingPrompt);
+          console.log('📍 categories:', categories?.length);
+          console.log('📍 handleSaveOrUpdatePrompt:', typeof handleSaveOrUpdatePrompt);
+          console.log('📍 handleCloseEdit:', typeof handleCloseEdit);
+          console.log('📍 handleAddNewCategory:', typeof handleAddNewCategory);
+
+          switch (currentView) {
+            case 'edit':
+              console.log('🎯 SidePanel - Rendering edit view');
+              console.log('📝 SidePanel - editingPrompt:', editingPrompt ? { id: editingPrompt.id, title: editingPrompt.title } : null);
+              console.log('📂 SidePanel - categories count:', categories?.length);
+              console.log('🔧 SidePanel - handlers available:', {
+                handleSaveOrUpdatePrompt: typeof handleSaveOrUpdatePrompt,
+                handleCloseEdit: typeof handleCloseEdit,
+                handleAddNewCategory: typeof handleAddNewCategory
+              });
+              
+              try {
+                console.log('🚀 SidePanel - About to render PromptEditView');
+                const editViewElement = (
+                  <React.Suspense fallback={
+                    <div className="flex-1 flex items-center justify-center">
+                      <div className="text-center py-8 text-muted-foreground">
+                        <div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-2"></div>
+                        <p>加载编辑器...</p>
+                      </div>
+                    </div>
+                  }>
+                    <PromptEditView
+                      prompt={editingPrompt}
+                      categories={categories}
+                      onSave={handleSaveOrUpdatePrompt}
+                      onCancel={handleCloseEdit}
+                      onAddNewCategory={handleAddNewCategory}
+                      showBackButton={true}
+                      showCloseButton={false}
+                    />
+                  </React.Suspense>
+                );
+                console.log('✅ SidePanel - PromptEditView element created successfully');
+                return editViewElement;
+              } catch (error) {
+                console.error('❌ SidePanel - Error rendering PromptEditView:', error);
+                console.error('❌ SidePanel - Error stack:', error.stack);
+                return (
+                  <div className="flex-1 flex items-center justify-center p-4">
+                    <div className="text-center">
+                      <div className="text-red-500 mb-2">❌ 编辑视图错误</div>
+                      <p className="text-sm text-gray-600 mb-4">{error.message}</p>
+                      <button onClick={() => setCurrentView('list')} className="px-4 py-2 bg-blue-500 text-white rounded">
+                        返回列表
+                      </button>
+                    </div>
+                  </div>
+                );
+              }
+            
+            case 'variables':
+              if (currentPromptForVariables) {
+                return (
+                  <VariableFormView
+                    promptTitle={currentPromptForVariables.title}
+                    promptContent={currentPromptForVariables.content}
+                    onBack={handleBackToList}
+                    onClose={handleCloseVariables}
+                    onCopy={handleVariableCopy}
+                    onInject={handleVariableInject}
+                    variableHistory={variableHistory}
+                    showBackButton={true}
+                    showCloseButton={true}
+                  />
+                );
+              }
+              handleBackToList();
+              return null;
+
+            case 'settings':
+              return (
+                <SettingsView
+                  settings={settings}
+                  onBack={handleCloseSettings}
+                  onClose={handleCloseSettings}
+                  onUpdateSettings={updateSettings}
+                  onExportData={exportData}
+                  onImportData={handleImportFile}
+                  onClearData={clearAllData}
+                  showBackButton={true}
+                  showCloseButton={false}
+                />
+              );
+
+            case 'list':
+            default:
+              if (isLoading) {
+                return (
+                  <div className="flex-1 flex items-center justify-center">
+                    <div className="text-center py-8 text-muted-foreground">
+                      <div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-2"></div>
+                      <p>加载中...</p>
+                    </div>
+                  </div>
+                );
+              }
+              if (hookError) {
+                return (
+                  <div className="flex-1 flex items-center justify-center">
+                    <div className="text-center py-8 text-destructive">
+                      <Icons.star className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                      <p>{hookError}</p>
+                    </div>
+                  </div>
+                );
+              }
+              if (prompts.length === 0) {
+                return (
+                  <div className="flex-1 flex items-center justify-center">
+                    <div className="text-center py-10 text-muted-foreground">
+                      <Icons.search className="w-10 h-10 mx-auto mb-2 opacity-50" />
+                      <p className="mb-1">没有匹配的提示词</p>
+                      <p className="text-xs opacity-80">
+                        尝试调整搜索关键词、切换分类或清除标签/收藏筛选
+                      </p>
+                    </div>
+                  </div>
+                );
+              }
+              return (
+                <NewPromptList
+                  prompts={prompts}
+                  selectedPrompt={selectedPrompt}
+                  onPromptSelect={handlePromptSelect}
+                  onCopyWithVariables={handleCopyWithVariables}
+                  onInjectWithVariables={handleInjectWithVariables}
+                  onToggleFavorite={toggleFavorite}
+                  onEditPrompt={handleEditPrompt}
+                  onDeletePrompt={handleDeletePrompt}
+                />
+              );
+          }
+        })()}
+      </div>
 
       {/* 底部操作栏 - 仅在列表视图显示 */}
       {currentView === 'list' && (
