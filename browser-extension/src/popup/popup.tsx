@@ -1,5 +1,5 @@
 /**
- * PromptMate 主弹窗入口文件
+ * PromptMate 主弹窗入口文件 - 简化版本
  */
 
 import React from 'react';
@@ -8,76 +8,63 @@ import ReactDOM from 'react-dom/client';
 const Popup: React.FC = () => {
   return (
     <div style={{ 
-      width: '400px', 
-      height: '600px', 
+      width: '300px', 
+      height: '200px', 
       padding: '20px', 
       fontFamily: 'Arial, sans-serif',
-      backgroundColor: '#ffffff'
+      backgroundColor: '#ffffff',
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'center',
+      alignItems: 'center',
+      textAlign: 'center'
     }}>
-      <h1 style={{ color: '#1f2937', marginBottom: '20px', fontSize: '24px' }}>PromptMate</h1>
-      <p style={{ color: '#6b7280', marginBottom: '20px', fontSize: '14px' }}>
-        浏览器扩展演示版本
+      <h1 style={{ color: '#1f2937', marginBottom: '16px', fontSize: '20px' }}>PromptMate</h1>
+      <p style={{ color: '#6b7280', marginBottom: '20px', fontSize: '14px', lineHeight: '1.4' }}>
+        点击扩展图标打开侧边栏<br/>
+        使用完整的提示词管理功能
       </p>
       
-      <div style={{ 
-        background: '#f3f4f6', 
-        padding: '15px', 
-        borderRadius: '8px',
-        textAlign: 'center',
-        marginBottom: '20px'
-      }}>
-        <p style={{ margin: 0, color: '#374151', fontSize: '14px' }}>
-          ✨ 即将为您带来强大的提示词管理功能
-        </p>
-      </div>
+      <button 
+        style={{
+          width: '100%',
+          padding: '10px',
+          backgroundColor: '#3b82f6',
+          color: 'white',
+          border: 'none',
+          borderRadius: '6px',
+          cursor: 'pointer',
+          fontSize: '14px',
+          marginBottom: '8px'
+        }}
+        onClick={async () => {
+          const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+          if (tab?.id) {
+            chrome.sidePanel.open({ tabId: tab.id });
+            window.close();
+          }
+        }}
+      >
+        打开侧边栏
+      </button>
 
-      <div style={{ marginTop: '20px' }}>
-        <button 
-          style={{
-            width: '100%',
-            padding: '10px',
-            backgroundColor: '#3b82f6',
-            color: 'white',
-            border: 'none',
-            borderRadius: '6px',
-            cursor: 'pointer',
-            fontSize: '14px'
-          }}
-          onClick={() => {
-            chrome.runtime.openOptionsPage();
-          }}
-        >
-          打开设置页面
-        </button>
-      </div>
-
-      <div style={{ marginTop: '15px' }}>
-        <button 
-          style={{
-            width: '100%',
-            padding: '10px',
-            backgroundColor: '#10b981',
-            color: 'white',
-            border: 'none',
-            borderRadius: '6px',
-            cursor: 'pointer',
-            fontSize: '14px'
-          }}
-          onClick={() => {
-            // 演示文本注入功能
-            chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-              if (tabs[0]?.id) {
-                chrome.tabs.sendMessage(tabs[0].id, {
-                  type: 'INJECT_TEXT',
-                  payload: { text: '这是来自PromptMate的演示文本！' }
-                });
-              }
-            });
-          }}
-        >
-          演示文本注入
-        </button>
-      </div>
+      <button 
+        style={{
+          width: '100%',
+          padding: '8px',
+          backgroundColor: '#6b7280',
+          color: 'white',
+          border: 'none',
+          borderRadius: '4px',
+          cursor: 'pointer',
+          fontSize: '12px'
+        }}
+        onClick={() => {
+          chrome.runtime.openOptionsPage();
+        }}
+      >
+        打开设置页面
+      </button>
     </div>
   );
 };

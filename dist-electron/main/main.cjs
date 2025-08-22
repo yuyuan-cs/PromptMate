@@ -1,9 +1,10 @@
-const { app, BrowserWindow, ipcMain, globalShortcut, Menu, dialog } = require('electron');
+const { app, BrowserWindow, ipcMain, globalShortcut, Menu, dialog, Tray } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const { autoUpdater } = require('electron-updater');
 const log = require('electron-log');
 const https = require('https');
+const { spawn } = require('child_process');
 
 // 根据环境设置
 if (!process.env.NODE_ENV) {
@@ -321,6 +322,107 @@ if (!fs.existsSync(configPath)) {
 
 // 主窗口实例
 let mainWindow = null;
+let tray = null;
+let watcherProcess = null;
+
+// 监控进程管理
+function isWatcherRunning() {
+  return !!(watcherProcess && !watcherProcess.killed);
+}
+
+function startWatcher() {
+  try {
+    if (isWatcherRunning()) {
+      log.info('Watcher already running');
+      return;
+    }
+    const scriptPath = path.join(__dirname, '../../scripts/sync-watcher/watch-sync.js');
+    const env = {
+      ...process.env,
+      PM_APP_DATA_FILE: promptsPath,
+      PM_MODE: 'prompts'
+      // PM_WATCH_FILE can be optionally provided by user via env or future settings
+    };
+    // Use Electron binary to spawn Node script for best portability
+    watcherProcess = spawn(process.execPath, [scriptPath], {
+      env,
+      stdio: ['ignore', 'pipe', 'pipe']
+    });
+    watcherProcess.stdout.on('data', (data) => log.info(String(data).trim()));
+    watcherProcess.stderr.on('data', (data) => log.warn(String(data).trim()));
+    watcherProcess.on('exit', (code, signal) => {
+      log.info(`Watcher exited code=${code} signal=${signal}`);
+      watcherProcess = null;
+      updateTrayMenu();
+    });
+    log.info('Watcher started');
+  } catch (e) {
+    log.error('Failed to start watcher:', e);
+  } finally {
+    updateTrayMenu();
+  }
+}
+
+function stopWatcher() {
+  try {
+    if (!isWatcherRunning()) return;
+    watcherProcess.kill();
+    log.info('Watcher stopped');
+  } catch (e) {
+    log.error('Failed to stop watcher:', e);
+  } finally {
+    updateTrayMenu();
+  }
+}
+
+function toggleWatcher() {
+  if (isWatcherRunning()) stopWatcher(); else startWatcher();
+}
+
+function createTray() {
+  try {
+    const iconPath = path.join(__dirname, '../../public/favicon.ico');
+    tray = new Tray(iconPath);
+    tray.setToolTip('PromptMate');
+    updateTrayMenu();
+  } catch (e) {
+    log.error('Failed to create tray:', e);
+  }
+}
+
+function updateTrayMenu() {
+  if (!tray) return;
+  const running = isWatcherRunning();
+  const settings = getSettings();
+  const context = Menu.buildFromTemplate([
+    {
+      label: mainWindow && mainWindow.isVisible() ? '隐藏窗口' : '显示窗口',
+      click: () => {
+        if (!mainWindow) return;
+        if (mainWindow.isVisible()) mainWindow.hide(); else mainWindow.show();
+      }
+    },
+    { type: 'separator' },
+    {
+      label: running ? '停止同步监听' : '启动同步监听',
+      click: () => toggleWatcher()
+    },
+    {
+      label: settings.watcherAutoStart ? '开机自启：开' : '开机自启：关',
+      type: 'checkbox',
+      checked: !!settings.watcherAutoStart,
+      click: (menuItem) => {
+        const s = getSettings();
+        s.watcherAutoStart = !!menuItem.checked;
+        saveSettings(s);
+        updateTrayMenu();
+      }
+    },
+    { type: 'separator' },
+    { label: '退出', role: 'quit' }
+  ]);
+  tray.setContextMenu(context);
+}
 
 // 默认设置
 const defaultSettings = {
@@ -328,7 +430,8 @@ const defaultSettings = {
   font: 'system-ui',
   fontSize: 14,
   alwaysOnTop: false,
-  globalShortcut: 'CommandOrControl+Alt+P'
+  globalShortcut: 'CommandOrControl+Alt+P',
+  watcherAutoStart: false
 };
 
 // 默认提示词数据
@@ -470,6 +573,13 @@ function createWindow() {
 // 初始化应用
 app.whenReady().then(() => {
   createWindow();
+  // 创建系统托盘
+  createTray();
+  // 根据设置启动同步监听
+  const s = getSettings();
+  if (s.watcherAutoStart) {
+    startWatcher();
+  }
 
   // 暂时禁用自动更新检查，避免错误
   // checkForUpdates();
@@ -523,6 +633,7 @@ app.whenReady().then(() => {
 app.on('will-quit', () => {
   // 注销全局快捷键
   globalShortcut.unregisterAll();
+  stopWatcher();
 });
 
 // 应用退出处理

@@ -281,4 +281,48 @@
     background: var(--sidebar-bg-hover);
     color: hsl(var(--foreground));
   }
+
+  /* ===== 虚拟列表卡片间距优化 ===== */
+  .prompt-card-wrapper {
+    margin: 0 !important; /* 强制移除外边距 */
+    padding: 0;
+    width: 100%; /* 确保占满虚拟列表的行宽度 */
+  }
+
+  .virtualized-list-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px; /* 统一的卡片间距 */
+  }
+
+  /* ===== 卡片展开动画优化 ===== */
+  .prompt-card-content {
+    overflow: hidden;
+    transition: max-height 0.3s ease-in-out, opacity 0.2s ease-in-out, transform 0.2s ease-in-out;
+    max-height: 0;
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+
+  .prompt-card-content.expanded {
+    max-height: 800px; /* 足够大的值容纳所有内容 */
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* 展开内容的内部动画 */
+  .prompt-card-content .p-3 {
+    transition: padding 0.3s ease-in-out;
+  }
+
+  .prompt-card-content:not(.expanded) .p-3 {
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+
+  /* ===== 虚拟列表性能优化 ===== */
+  .virtual-list-item {
+    will-change: transform; /* 优化GPU加速 */
+    contain: layout style paint; /* CSS containment优化 */
+  }
 }

@@ -403,7 +403,10 @@ export class StorageManager {
       maxHistory: 50,
       enableShortcuts: true,
       showUsageStats: true,
-      compactMode: false
+      compactMode: false,
+      autoExportOnChange: false,
+      allowList: [],
+      blockList: []
     };
   }
 }

@@ -68,6 +68,7 @@ export function Sidebar({ className }: { className?: string }) {
   const { settings, toggleTheme, updateSettings, availableFonts } = useSettings();
   const { toast } = useToast();
   const { currentView, setCurrentView } = useAppView();
+  const isDev = import.meta.env.DEV;
 
   // 新建提示词对话框状态
   const [showNewPromptDialog, setShowNewPromptDialog] = useState(false);
@@ -587,30 +588,32 @@ export function Sidebar({ className }: { className?: string }) {
                 </Tooltip>
               </TooltipProvider>
 
-              <TooltipProvider delayDuration={100}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant={currentView === 'workflows' ? "default" : "ghost"}
-                      className={cn(
-                        "rounded-xl group hover:scale-105 transition-transform",
-                        isCollapsed
-                          ? "h-9 w-9 p-0 mx-auto flex items-center justify-center"
-                          : "w-full justify-start py-1 px-3"
-                      )}
-                      onClick={() => setCurrentView('workflows')}
-                    >
-                      <Icons.workflow className="h-4 w-4" />
-                      {!isCollapsed && "工作流管理"}
-                    </Button>
-                  </TooltipTrigger>
-                  {isCollapsed && (
-                    <TooltipContent side="right">
-                      工作流管理
-                    </TooltipContent>
-                  )}
-                </Tooltip>
-              </TooltipProvider>
+              {isDev && (
+                <TooltipProvider delayDuration={100}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant={currentView === 'workflows' ? "default" : "ghost"}
+                        className={cn(
+                          "rounded-xl group hover:scale-105 transition-transform",
+                          isCollapsed
+                            ? "h-9 w-9 p-0 mx-auto flex items-center justify-center"
+                            : "w-full justify-start py-1 px-3"
+                        )}
+                        onClick={() => setCurrentView('workflows')}
+                      >
+                        <Icons.workflow className="h-4 w-4" />
+                        {!isCollapsed && "工作流管理"}
+                      </Button>
+                    </TooltipTrigger>
+                    {isCollapsed && (
+                      <TooltipContent side="right">
+                        工作流管理
+                      </TooltipContent>
+                    )}
+                  </Tooltip>
+                </TooltipProvider>
+              )}
             </div>
           </div>
           

@@ -147,14 +147,14 @@ export function Index({ sidebarOpen: propsSidebarOpen, setSidebarOpen: propSetSi
   }, [onToggleSidebarRef]);
 
   return (
-    <div className="flex h-full">
+    <div className="flex flex-1 min-h-0">
       {/* 左侧边栏 */}
       {sidebarOpen && <Sidebar />}
       
       {/* 中间内容区域 */}
       {selectedPrompt ? (
         // 使用 ResizablePanelGroup 实现可拖拽调节宽度
-        <ResizablePanelGroup direction="horizontal" className="flex-1 h-full">
+        <ResizablePanelGroup direction="horizontal" className="flex-1 min-h-0">
           {/* 左侧：提示词列表 */}
           <ResizablePanel defaultSize={60} minSize={30} maxSize={70}>
             <div className="h-full border-r">
@@ -176,7 +176,7 @@ export function Index({ sidebarOpen: propsSidebarOpen, setSidebarOpen: propSetSi
         </ResizablePanelGroup>
       ) : (
         // 没有选中提示词时，显示全宽内容
-        <div className="flex-1 h-full">
+        <div className="flex-1 min-h-0">
           <ScrollArea className="h-full">
             <ContentArea onToggleSidebar={toggleSidebar} />
           </ScrollArea>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -85,20 +85,51 @@ export const VariableForm: React.FC<VariableFormProps> = ({
     }
   }, [variableValues, content, showPreview, onPreviewChange]);
 
-  // 自适应文本域高度（处理程序化赋值或初始化场景）
+  // Textarea 自适应高度（基于 refs，避免 query DOM）
+  const textareasRef = useRef<Record<string, HTMLTextAreaElement | null>>({});
+  const mirrorsRef = useRef<Record<string, HTMLDivElement | null>>({});
+  const autoResize = useCallback((el: HTMLTextAreaElement | null) => {
+    if (!el) return;
+    // 优先使用镜像元素的高度（能正确处理长连续字符换行）
+    const name = el.id;
+    const mirror = mirrorsRef.current[name];
+    if (mirror) {
+      // 强制至少一行高度
+      const h = Math.max(mirror.scrollHeight, el.scrollHeight);
+      el.style.height = 'auto';
+      el.style.height = `${h}px`;
+      return;
+    }
+    // 退化处理：无镜像时使用 scrollHeight
+    el.style.height = 'auto';
+    el.style.height = `${el.scrollHeight}px`;
+  }, []);
+
+  const setTextareaRef = useCallback(
+    (name: string) => (el: HTMLTextAreaElement | null) => {
+      textareasRef.current[name] = el;
+      if (el) autoResize(el); // 初次挂载时调整
+    },
+    [autoResize]
+  );
+
+  const setMirrorRef = useCallback(
+    (name: string) => (el: HTMLDivElement | null) => {
+      mirrorsRef.current[name] = el;
+      // 镜像出现/更新时尝试同步一次高度
+      const ta = textareasRef.current[name];
+      if (ta) autoResize(ta);
+    },
+    [autoResize]
+  );
+
+  // 当字段或变量值变化（程序化赋值）时，统一调整高度
   useEffect(() => {
-    // 下一帧执行，确保DOM已更新
     const raf = requestAnimationFrame(() => {
-      formFields.forEach((field) => {
-        const el = document.getElementById(field.name) as HTMLTextAreaElement | null;
-        if (el && el.tagName.toLowerCase() === 'textarea') {
-          el.style.height = 'auto';
-          el.style.height = `${el.scrollHeight}px`;
-        }
-      });
+      Object.values(textareasRef.current).forEach((el) => autoResize(el));
     });
     return () => cancelAnimationFrame(raf);
-  }, [formFields, variableValues]);
+  }, [formFields, variableValues, autoResize]);
   
   // 处理变量值变化
   const handleVariableChange = useCallback((name: string, value: string) => {
@@ -143,7 +174,14 @@ export const VariableForm: React.FC<VariableFormProps> = ({
             当前提示词中没有发现变量占位符
           </p>
           <p className="text-xs text-muted-foreground mt-1">
-            支持的格式：{'{variable}'}、{{variable}}、[variable]、$variable
+            支持的格式：
+            <code className="mx-1">{`{variable}`}</code>
+            、
+            <code className="mx-1">{`{{variable}}`}</code>
+            、
+            <code className="mx-1">{`[variable]`}</code>
+            、
+            <code className="mx-1">{`$variable`}</code>
           </p>
         </CardContent>
       </Card>
@@ -213,31 +251,40 @@ export const VariableForm: React.FC<VariableFormProps> = ({
               </div>
               
               {/* 输入框（自适应高度，不超出容器宽度） */}
-              <Textarea
-                id={field.name}
-                value={variableValues[field.name] || ''}
-                onChange={(e) => {
-                  // 自适应高度
-                  e.currentTarget.style.height = 'auto';
-                  e.currentTarget.style.height = `${e.currentTarget.scrollHeight}px`;
-                  handleVariableChange(field.name, e.target.value);
-                }}
-                onInput={(e) => {
-                  const el = e.currentTarget as HTMLTextAreaElement;
-                  el.style.height = 'auto';
-                  el.style.height = `${el.scrollHeight}px`;
-                }}
-                placeholder={field.placeholder}
-                rows={1}
-                style={{ overflow: 'hidden', resize: 'none' }}
-                className={cn(
-                  "flex-1 w-full max-w-full transition-all duration-200",
-                  // 根据填写状态改变输入框样式
-                  variableValues[field.name]
-                    ? "border-green-500 bg-green-50 dark:bg-green-950/20"
-                    : "border-gray-300 hover:border-gray-400 focus:border-blue-500"
-                )}
-              />
+              <div className="relative flex-1 w-full">
+                {/* 隐藏的镜像元素用于测量高度（支持长连续字符换行） */}
+                <div
+                  aria-hidden
+                  ref={setMirrorRef(field.name)}
+                  className="invisible absolute z-[-1] top-0 left-0 w-full whitespace-pre-wrap break-all px-3 py-2 text-sm"
+                >
+                  {(variableValues[field.name] || '') + '\n'}
+                </div>
+                <Textarea
+                  id={field.name}
+                  ref={setTextareaRef(field.name)}
+                  value={variableValues[field.name] || ''}
+                  onChange={(e) => {
+                    handleVariableChange(field.name, e.target.value);
+                    const el = e.currentTarget;
+                    requestAnimationFrame(() => autoResize(el));
+                  }}
+                  onInput={(e) => {
+                    const el = e.currentTarget as HTMLTextAreaElement;
+                    requestAnimationFrame(() => autoResize(el));
+                  }}
+                  placeholder={field.placeholder}
+                  rows={1}
+                  style={{ overflow: 'hidden', resize: 'none', boxSizing: 'border-box' }}
+                  className={cn(
+                    "w-full min-h-0 transition-all duration-200 whitespace-pre-wrap break-all",
+                    // 根据填写状态改变输入框样式
+                    variableValues[field.name]
+                      ? "border-green-500 bg-green-50 dark:bg-green-950/20"
+                      : "border-gray-300 hover:border-gray-400 focus:border-blue-500"
+                  )}
+                />
+              </div>
               
               {/* 建议值选择器 */}
               {field.suggestions.length > 0 && (

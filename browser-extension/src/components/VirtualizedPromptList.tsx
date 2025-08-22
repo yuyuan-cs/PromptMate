@@ -6,18 +6,20 @@ import { Badge } from './ui/badge';
 import { Icons } from './ui/icons';
 import { cn } from '../lib/utils';
 import { Prompt } from '../shared/types';
-import { hasVariables } from '../shared/variableUtils';
+import { hasVariables, extractVariables } from '../shared/variableUtils';
 
 interface VirtualizedPromptListProps {
   prompts: Prompt[];
   selectedPrompt: Prompt | null;
+  expandedPromptId: string | null;
   onPromptSelect: (prompt: Prompt) => void;
+  onToggleExpand: (promptId: string) => void;
   onCopyWithVariables: (prompt: Prompt) => void;
   onInjectWithVariables: (prompt: Prompt) => void;
   onToggleFavorite: (promptId: string) => void;
   onEditPrompt: (prompt: Prompt) => void;
   onDeletePrompt: (prompt: Prompt) => void;
-  height: number;
+  height?: number;
 }
 
 interface PromptItemProps {
@@ -26,14 +28,14 @@ interface PromptItemProps {
   data: {
     prompts: Prompt[];
     selectedPrompt: Prompt | null;
+    expandedPromptId: string | null;
     onPromptSelect: (prompt: Prompt) => void;
+    onToggleExpand: (promptId: string) => void;
     onCopyWithVariables: (prompt: Prompt) => void;
     onInjectWithVariables: (prompt: Prompt) => void;
     onToggleFavorite: (promptId: string) => void;
     onEditPrompt: (prompt: Prompt) => void;
     onDeletePrompt: (prompt: Prompt) => void;
-    expandedStates: Record<number, boolean>;
-    toggleExpanded: (index: number) => void;
   };
 }
 
@@ -41,25 +43,25 @@ const PromptItem: React.FC<PromptItemProps> = ({ index, style, data }) => {
   const {
     prompts,
     selectedPrompt,
+    expandedPromptId,
     onPromptSelect,
+    onToggleExpand,
     onCopyWithVariables,
     onInjectWithVariables,
     onToggleFavorite,
     onEditPrompt,
     onDeletePrompt,
-    expandedStates,
-    toggleExpanded,
   } = data;
 
   const prompt = prompts[index];
   const [isHovered, setIsHovered] = React.useState(false);
-  const isExpanded = expandedStates[index] || false;
+  const isExpanded = expandedPromptId === prompt.id;
   
   if (!prompt) return null;
 
   // 点击主区域展开/收起预览
   const handleMainClick = () => {
-    toggleExpanded(index);
+    onToggleExpand(prompt.id);
     onPromptSelect(prompt);
   };
 
@@ -70,7 +72,7 @@ const PromptItem: React.FC<PromptItemProps> = ({ index, style, data }) => {
   };
 
   return (
-    <div style={style} className="px-3 pb-1">
+    <div style={{...style, position: 'relative'}} className="prompt-card-wrapper px-3 pb-0.5 virtual-list-item">
       <div
         className={cn(
           "group relative bg-background transition-all duration-200 ease-out cursor-pointer",
@@ -194,94 +196,94 @@ const PromptItem: React.FC<PromptItemProps> = ({ index, style, data }) => {
       </div>
 
       {/* 展开预览区域 - 在卡片下方 */}
-      {isExpanded && (
-        <div className="mt-2 mx-3 bg-muted/30 rounded-lg border border-border/40 overflow-hidden animate-in slide-in-from-top-2 duration-200">
-          <div className="p-3 space-y-3">
-            {/* 完整内容预览 */}
-            <div className="space-y-2">
-              <div className="text-xs font-medium text-muted-foreground/80 uppercase tracking-wide">
-                完整内容
-              </div>
-              <div className="text-sm text-foreground/90 leading-relaxed whitespace-pre-wrap bg-background/60 rounded p-2 border border-border/30">
-                {prompt.content}
-              </div>
+      <div className={cn('prompt-card-content mt-2 mx-3 bg-muted/30 rounded-lg border border-border/40 overflow-hidden', isExpanded && 'expanded')}>
+        <div className="p-3 space-y-3">
+          {/* 完整内容预览 */}
+          <div className="space-y-2">
+            <div className="text-xs font-medium text-muted-foreground/80 uppercase tracking-wide">
+              完整内容
             </div>
-
-            {/* 变量信息 */}
-            {hasVariables(prompt.content) && (
-              <div className="space-y-2">
-                <div className="text-xs font-medium text-muted-foreground/80 uppercase tracking-wide">
-                  变量信息
-                </div>
-                <div className="flex flex-wrap gap-1.5">
-                  {extractVariables(prompt.content).map((variable, index) => (
-                    <span
-                      key={index}
-                      className="inline-flex items-center px-2 py-1 text-xs bg-primary/10 text-primary/80 rounded-md border border-primary/20"
-                    >
-                      {generateVariableLabel(variable)}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* 统计信息 */}
-            <div className="flex items-center justify-between text-xs text-muted-foreground/70 pt-2 border-t border-border/30">
-              <span>使用次数: {prompt.usageCount || 0}</span>
-              <span>创建时间: {new Date(prompt.createdAt || Date.now()).toLocaleDateString()}</span>
+            <div className="text-sm text-foreground/90 leading-relaxed whitespace-pre-wrap bg-background/60 rounded p-2 border border-border/30">
+              {prompt.content}
             </div>
           </div>
+
+          {/* 变量信息 */}
+          {hasVariables(prompt.content) && (
+            <div className="space-y-2">
+              <div className="text-xs font-medium text-muted-foreground/80 uppercase tracking-wide">
+                变量信息
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {extractVariables(prompt.content).map((variable, index) => (
+                  <span
+                    key={index}
+                    className="inline-flex items-center px-2 py-1 text-xs bg-primary/10 text-primary/80 rounded-md border border-primary/20"
+                  >
+                    {variable.name}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* 统计信息 */}
+          <div className="flex items-center justify-between text-xs text-muted-foreground/70 pt-2 border-t border-border/30">
+            <span>使用次数: {prompt.usageCount || 0}</span>
+            <span>创建时间: {new Date(prompt.createdAt || Date.now()).toLocaleDateString()}</span>
+          </div>
         </div>
-      )}
+      </div>
     </div>
   );
 };
 
-export const VirtualizedPromptList: React.FC<VirtualizedPromptListProps> = ({
-  prompts,
-  selectedPrompt,
-  onPromptSelect,
-  onCopyWithVariables,
-  onInjectWithVariables,
-  onToggleFavorite,
-  onEditPrompt,
-  onDeletePrompt,
-  height,
-}) => {
-  // 管理所有卡片的展开状态
-  const [expandedStates, setExpandedStates] = React.useState<Record<number, boolean>>({});
+export const VirtualizedPromptList = React.forwardRef<List, VirtualizedPromptListProps>((
+  {
+    prompts,
+    selectedPrompt,
+    expandedPromptId,
+    onPromptSelect,
+    onToggleExpand,
+    onCopyWithVariables,
+    onInjectWithVariables,
+    onToggleFavorite,
+    onEditPrompt,
+    onDeletePrompt,
+    height,
+  },
+  ref
+) => {
+  const containerRef = React.useRef<HTMLDivElement>(null);
   
-  // 切换展开状态
-  const toggleExpanded = (index: number) => {
-    setExpandedStates(prev => ({
-      ...prev,
-      [index]: !prev[index]
-    }));
-  };
+  // 使用固定高度或动态计算，避免ResizeObserver循环
+  const containerHeight = React.useMemo(() => {
+    return height || 400;
+  }, [height]);
+  
 
   const itemData = React.useMemo(() => ({
     prompts,
     selectedPrompt,
+    expandedPromptId,
     onPromptSelect,
+    onToggleExpand,
     onCopyWithVariables,
     onInjectWithVariables,
     onToggleFavorite,
     onEditPrompt,
     onDeletePrompt,
-    expandedStates,
-    toggleExpanded,
   }), [
     prompts,
     selectedPrompt,
+    expandedPromptId,
     onPromptSelect,
+    onToggleExpand,
     onCopyWithVariables,
     onInjectWithVariables,
     onToggleFavorite,
     onEditPrompt,
     onDeletePrompt,
-    expandedStates,
-    toggleExpanded,
   ]);
 
   if (prompts.length === 0) {
@@ -295,69 +297,60 @@ export const VirtualizedPromptList: React.FC<VirtualizedPromptListProps> = ({
     );
   }
 
-  // 自适应高度计算 - 根据展开状态动态调整
+  // 稳定的高度计算 - 减少抖动
   const getItemSize = React.useCallback((index: number) => {
     const prompt = prompts[index];
-    if (!prompt) return 82;
+    if (!prompt) return 120;
     
-    // 基础高度：固定部分 (紧凑设计)
-    let height = 24; // padding: 12px * 2
-    height += 20; // 标题行：20px
-    height += 24; // 按钮行：24px
-    height += 4;  // 按钮上间距：4px
+    // 使用固定高度减少计算复杂度
+    const baseHeight = 120; // 基础高度
     
-    // 可选内容高度 (紧凑间距)
-    if (prompt.description && prompt.description.trim()) {
-      height += 16; // 描述行：16px
-      height += 3;  // 描述下间距：3px
-    }
-    
-    if (prompt.tags.length > 0) {
-      height += 14; // 标签行：14px
-      height += 3;  // 标签下间距：3px
-    }
-    
-    // 展开预览区域高度 (动态计算)
-    if (expandedStates[index]) {
-      // 预览区域基础高度
-      height += 8;  // 上边距：mt-2
-      height += 24; // 内边距：p-3
-      height += 16; // 标题：text-xs
-      height += 8;  // 标题下间距
+    // 展开状态下的额外高度
+    if (expandedPromptId === prompt.id) {
+      // 使用固定值减少计算变动
+      let expandedHeight = 200; // 基础展开高度
       
-      // 内容区域高度 (根据内容长度估算)
-      const contentLines = Math.ceil(prompt.content.length / 60); // 假设每行60字符
-      height += Math.max(contentLines * 18, 36); // 最小36px，每行18px
-      height += 8; // 内容下间距
-      
-      // 变量信息高度
-      if (hasVariables(prompt.content)) {
-        height += 16; // 变量标题
-        height += 8;  // 标题下间距
-        height += 24; // 变量标签行
-        height += 8;  // 变量下间距
+      // 根据内容长度简单调整
+      if (prompt.content.length > 200) {
+        expandedHeight += Math.min(Math.floor(prompt.content.length / 100) * 20, 100);
       }
       
-      // 统计信息高度
-      height += 20; // 统计行
-      height += 12; // 底部间距
+      // 变量额外高度
+      if (hasVariables(prompt.content)) {
+        const variableCount = extractVariables(prompt.content).length;
+        expandedHeight += Math.min(variableCount * 15, 60);
+      }
+      
+      return baseHeight + expandedHeight;
     }
     
-    // 最小高度，确保按钮可点击
-    return Math.max(height, 82);
-  }, [prompts, expandedStates]);
+    // 根据内容微调基础高度
+    if (prompt.description && prompt.description.length > 50) {
+      return baseHeight + 20;
+    }
+    
+    return baseHeight;
+  }, [prompts, expandedPromptId]);
 
   return (
-    <List
-      height={height}
-      itemCount={prompts.length}
-      itemSize={getItemSize}
-      itemData={itemData}
-      width="100%"
-      estimatedItemSize={100}
-    >
-      {PromptItem}
-    </List>
+    <div ref={containerRef} className="h-full w-full virtualized-list-container">
+      <List
+        ref={ref}
+        height={containerHeight}
+        itemCount={prompts.length}
+        itemSize={getItemSize}
+        itemData={itemData}
+        width="100%"
+        estimatedItemSize={120}
+        overscanCount={2}
+        useIsScrolling={false}
+        layout="vertical"
+      >
+        {PromptItem}
+      </List>
+    </div>
   );
-};
+});
+
+VirtualizedPromptList.displayName = 'VirtualizedPromptList';
 

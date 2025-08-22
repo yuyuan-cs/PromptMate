@@ -1,7 +1,7 @@
 import * as React from "react"
 import * as AlertDialogPrimitive from "@radix-ui/react-alert-dialog"
 
-import { cn } from "@/lib/utils"
+import { cn } from "../../lib/utils"
 import { buttonVariants } from "@/components/ui/button"
 
 const AlertDialog = AlertDialogPrimitive.Root
@@ -11,7 +11,7 @@ const AlertDialogTrigger = AlertDialogPrimitive.Trigger
 const AlertDialogPortal = AlertDialogPrimitive.Portal
 
 /**
- * 遮罩层
+ * 遮罩�?
  */
 const AlertDialogOverlay = React.forwardRef<
   React.ElementRef<typeof AlertDialogPrimitive.Overlay>,
@@ -29,7 +29,7 @@ const AlertDialogOverlay = React.forwardRef<
 AlertDialogOverlay.displayName = AlertDialogPrimitive.Overlay.displayName
 
 /**
- * 对话框内容
+ * 对话框内�?
  */
 const AlertDialogContent = React.forwardRef<
   React.ElementRef<typeof AlertDialogPrimitive.Content>,
@@ -50,7 +50,7 @@ const AlertDialogContent = React.forwardRef<
 AlertDialogContent.displayName = AlertDialogPrimitive.Content.displayName
 
 /**
- * 对话框头部
+ * 对话框头�?
  */
 const AlertDialogHeader = ({
   className,
@@ -67,7 +67,7 @@ const AlertDialogHeader = ({
 AlertDialogHeader.displayName = "AlertDialogHeader"
 
 /**
- * 对话框底部
+ * 对话框底�?
  */ 
 const AlertDialogFooter = ({
   className,
@@ -84,7 +84,7 @@ const AlertDialogFooter = ({
 AlertDialogFooter.displayName = "AlertDialogFooter"
 
 /**
- * 对话框标题
+ * 对话框标�?
  */
 const AlertDialogTitle = React.forwardRef<
   React.ElementRef<typeof AlertDialogPrimitive.Title>,
@@ -99,7 +99,7 @@ const AlertDialogTitle = React.forwardRef<
 AlertDialogTitle.displayName = AlertDialogPrimitive.Title.displayName
 
 /**
- * 对话框描述
+ * 对话框描�?
  */
 const AlertDialogDescription = React.forwardRef<
   React.ElementRef<typeof AlertDialogPrimitive.Description>,
@@ -115,7 +115,7 @@ AlertDialogDescription.displayName =
   AlertDialogPrimitive.Description.displayName
 
 /**
- * 对话框按钮
+ * 对话框按�?
  */
 const AlertDialogAction = React.forwardRef<
   React.ElementRef<typeof AlertDialogPrimitive.Action>,
@@ -130,7 +130,7 @@ const AlertDialogAction = React.forwardRef<
 AlertDialogAction.displayName = AlertDialogPrimitive.Action.displayName
 
 /**
- * 对话框取消按钮
+ * 对话框取消按�?
  */
 const AlertDialogCancel = React.forwardRef<
   React.ElementRef<typeof AlertDialogPrimitive.Cancel>,
