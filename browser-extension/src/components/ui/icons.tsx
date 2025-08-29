@@ -1,4 +1,4 @@
-import { Search, Star, Copy, Send, Settings, Plus, Edit, Trash, MoreVertical, X, Check, ChevronDown, Pencil } from 'lucide-react';
+import { Search, Star, Copy, Send, Settings, Plus, Edit, Trash, MoreVertical, X, Check, ChevronDown, Pencil, Loader2, RefreshCw, AlertCircle, Upload } from 'lucide-react';
 
 export const Icons = {
   search: Search,
@@ -16,4 +16,8 @@ export const Icons = {
   moreVertical: MoreVertical,
   x: X,
   check: Check,
+  loader: Loader2,
+  refresh: RefreshCw,
+  alertCircle: AlertCircle,
+  upload: Upload,
 };

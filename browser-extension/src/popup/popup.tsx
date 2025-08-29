@@ -48,23 +48,6 @@ const Popup: React.FC = () => {
         打开侧边栏
       </button>
 
-      <button 
-        style={{
-          width: '100%',
-          padding: '8px',
-          backgroundColor: '#6b7280',
-          color: 'white',
-          border: 'none',
-          borderRadius: '4px',
-          cursor: 'pointer',
-          fontSize: '12px'
-        }}
-        onClick={() => {
-          chrome.runtime.openOptionsPage();
-        }}
-      >
-        打开设置页面
-      </button>
     </div>
   );
 };

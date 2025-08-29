@@ -78,6 +78,10 @@ module.exports = (env, argv) => {
           {
             from: 'public/icons',
             to: 'icons'
+          },
+          {
+            from: 'public/_locales',
+            to: '_locales'
           }
         ]
       })

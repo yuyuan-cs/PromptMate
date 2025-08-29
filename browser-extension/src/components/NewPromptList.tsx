@@ -2,6 +2,7 @@ import * as React from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { PromptCard } from './PromptCard';
 import { Prompt } from '../shared/types';
+import { useTranslation } from '../i18n';
 
 interface NewPromptListProps {
   prompts: Prompt[];
@@ -12,7 +13,7 @@ interface NewPromptListProps {
   onToggleFavorite: (promptId: string) => void;
   onEditPrompt: (prompt: Prompt) => void;
   onDeletePrompt: (prompt: Prompt) => void;
-  height?: number;
+  // height?: number;
 }
 
 export const NewPromptList: React.FC<NewPromptListProps> = ({
@@ -24,8 +25,9 @@ export const NewPromptList: React.FC<NewPromptListProps> = ({
   onToggleFavorite,
   onEditPrompt,
   onDeletePrompt,
-  height = 400,
+  // height = 400,
 }) => {
+  const { t } = useTranslation();
   // 展开状态管理
   const [expandedCardId, setExpandedCardId] = React.useState<string | null>(null);
   
@@ -129,8 +131,8 @@ export const NewPromptList: React.FC<NewPromptListProps> = ({
     return (
       <div className="flex-1 flex items-center justify-center p-8">
         <div className="text-center space-y-2">
-          <div className="text-muted-foreground">暂无提示词</div>
-          <div className="text-xs text-muted-foreground">点击"新建"创建您的第一个提示词</div>
+          <div className="text-muted-foreground">{t('prompts_noPrompts')}</div>
+          <div className="text-xs text-muted-foreground">{t('prompts_createNew')}</div>
         </div>
       </div>
     );
@@ -139,8 +141,8 @@ export const NewPromptList: React.FC<NewPromptListProps> = ({
   return (
     <div
       ref={parentRef}
-      className="h-full w-full overflow-auto"
-      style={{ height }}
+      className="h-full w-full overflow-y-auto"
+      // style={{ height }}
     >
       <div
         style={{

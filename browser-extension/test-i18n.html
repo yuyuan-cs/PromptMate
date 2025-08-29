@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Browser Extension i18n Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .test-result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 3px;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        button {
+            margin: 5px;
+            padding: 8px 16px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>Browser Extension i18n Test</h1>
+    
+    <div class="test-section">
+        <h2>Language Switching Test</h2>
+        <button onclick="testLanguageSwitch('zh-CN')">Test Chinese</button>
+        <button onclick="testLanguageSwitch('en-US')">Test English</button>
+        <div id="language-test-results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Translation Function Test</h2>
+        <button onclick="testTranslations()">Test All Translations</button>
+        <div id="translation-test-results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Storage Persistence Test</h2>
+        <button onclick="testStoragePersistence()">Test Storage</button>
+        <div id="storage-test-results"></div>
+    </div>
+
+    <script type="module">
+        // Import the i18n functions (this would work in the extension context)
+        // For testing purposes, we'll simulate the functionality
+        
+        // Simulated i18n functions for testing
+        let currentLanguage = 'zh-CN';
+        const messages = {
+            'zh-CN': {
+                'common_confirm': '确认',
+                'common_cancel': '取消',
+                'prompts_title': '提示词管理',
+                'prompts_searchPlaceholder': '搜索提示词...',
+                'settings_title': '设置'
+            },
+            'en-US': {
+                'common_confirm': 'Confirm',
+                'common_cancel': 'Cancel',
+                'prompts_title': 'Prompt Management',
+                'prompts_searchPlaceholder': 'Search prompts...',
+                'settings_title': 'Settings'
+            }
+        };
+
+        function t(key, substitutions) {
+            const currentMessages = messages[currentLanguage] || messages['zh-CN'];
+            let message = currentMessages[key] || key;
+            
+            if (substitutions) {
+                Object.entries(substitutions).forEach(([placeholder, value]) => {
+                    message = message.replace(`{${placeholder}}`, value);
+                });
+            }
+            
+            return message;
+        }
+
+        function setLanguage(languageCode) {
+            currentLanguage = languageCode;
+            // Simulate storage save
+            localStorage.setItem('preferredLanguage', languageCode);
+        }
+
+        function getCurrentLanguage() {
+            return currentLanguage;
+        }
+
+        // Test functions
+        window.testLanguageSwitch = function(lang) {
+            const resultsDiv = document.getElementById('language-test-results');
+            
+            try {
+                setLanguage(lang);
+                const currentLang = getCurrentLanguage();
+                
+                if (currentLang === lang) {
+                    resultsDiv.innerHTML += `<div class="test-result success">✓ Language switched to ${lang} successfully</div>`;
+                    
+                    // Test some translations
+                    const confirmText = t('common_confirm');
+                    const titleText = t('prompts_title');
+                    
+                    resultsDiv.innerHTML += `<div class="test-result success">✓ Translations: "${confirmText}", "${titleText}"</div>`;
+                } else {
+                    resultsDiv.innerHTML += `<div class="test-result error">✗ Language switch failed</div>`;
+                }
+            } catch (error) {
+                resultsDiv.innerHTML += `<div class="test-result error">✗ Error: ${error.message}</div>`;
+            }
+        };
+
+        window.testTranslations = function() {
+            const resultsDiv = document.getElementById('translation-test-results');
+            resultsDiv.innerHTML = '';
+            
+            const testKeys = [
+                'common_confirm',
+                'common_cancel', 
+                'prompts_title',
+                'prompts_searchPlaceholder',
+                'settings_title'
+            ];
+
+            ['zh-CN', 'en-US'].forEach(lang => {
+                setLanguage(lang);
+                resultsDiv.innerHTML += `<h3>Testing ${lang}:</h3>`;
+                
+                testKeys.forEach(key => {
+                    const translation = t(key);
+                    const expected = messages[lang][key];
+                    
+                    if (translation === expected) {
+                        resultsDiv.innerHTML += `<div class="test-result success">✓ ${key}: "${translation}"</div>`;
+                    } else {
+                        resultsDiv.innerHTML += `<div class="test-result error">✗ ${key}: Expected "${expected}", got "${translation}"</div>`;
+                    }
+                });
+            });
+        };
+
+        window.testStoragePersistence = function() {
+            const resultsDiv = document.getElementById('storage-test-results');
+            resultsDiv.innerHTML = '';
+            
+            try {
+                // Test storage save
+                setLanguage('en-US');
+                const saved = localStorage.getItem('preferredLanguage');
+                
+                if (saved === 'en-US') {
+                    resultsDiv.innerHTML += `<div class="test-result success">✓ Language preference saved to storage</div>`;
+                } else {
+                    resultsDiv.innerHTML += `<div class="test-result error">✗ Storage save failed</div>`;
+                }
+
+                // Test storage load
+                setLanguage('zh-CN');
+                const loaded = localStorage.getItem('preferredLanguage');
+                
+                if (loaded === 'en-US') {
+                    resultsDiv.innerHTML += `<div class="test-result success">✓ Language preference persisted in storage</div>`;
+                } else {
+                    resultsDiv.innerHTML += `<div class="test-result error">✗ Storage persistence failed</div>`;
+                }
+            } catch (error) {
+                resultsDiv.innerHTML += `<div class="test-result error">✗ Storage test error: ${error.message}</div>`;
+            }
+        };
+
+        // Initialize with default language
+        setLanguage('zh-CN');
+        
+        // Show initial status
+        document.body.innerHTML += `<div class="test-section"><h2>Initial Status</h2><p>Current Language: ${getCurrentLanguage()}</p><p>Test Translation: ${t('common_confirm')}</p></div>`;
+    </script>
+</body>
+</html>

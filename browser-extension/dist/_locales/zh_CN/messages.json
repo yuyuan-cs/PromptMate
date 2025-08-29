@@ -1,0 +1,235 @@
+{
+  "extensionName": {
+    "message": "PromptMate",
+    "description": "扩展名称"
+  },
+  "extensionDescription": {
+    "message": "将您的提示词库无缝集成到浏览器工作流中",
+    "description": "扩展描述"
+  },
+  "common_confirm": {
+    "message": "确认"
+  },
+  "common_cancel": {
+    "message": "取消"
+  },
+  "common_save": {
+    "message": "保存"
+  },
+  "common_delete": {
+    "message": "删除"
+  },
+  "common_edit": {
+    "message": "编辑"
+  },
+  "common_create": {
+    "message": "创建"
+  },
+  "common_search": {
+    "message": "搜索"
+  },
+  "common_loading": {
+    "message": "加载中..."
+  },
+  "common_settings": {
+    "message": "设置"
+  },
+  "common_language": {
+    "message": "语言"
+  },
+  "common_close": {
+    "message": "关闭"
+  },
+  "common_copy": {
+    "message": "复制"
+  },
+  "prompts_title": {
+    "message": "提示词管理"
+  },
+  "prompts_createNew": {
+    "message": "新建提示词"
+  },
+  "prompts_searchPlaceholder": {
+    "message": "搜索提示词..."
+  },
+  "prompts_noPrompts": {
+    "message": "暂无提示词"
+  },
+  "prompts_noPromptsDesc": {
+    "message": "点击上方按钮创建您的第一个提示词"
+  },
+  "prompts_editPrompt": {
+    "message": "编辑提示词"
+  },
+  "prompts_deletePrompt": {
+    "message": "删除提示词"
+  },
+  "prompts_copyPrompt": {
+    "message": "复制提示词"
+  },
+  "prompts_promptTitle": {
+    "message": "标题"
+  },
+  "prompts_promptContent": {
+    "message": "内容"
+  },
+  "prompts_promptCategory": {
+    "message": "分类"
+  },
+  "prompts_promptTags": {
+    "message": "标签"
+  },
+  "prompts_savePrompt": {
+    "message": "保存提示词"
+  },
+  "prompts_promptSaved": {
+    "message": "提示词已保存"
+  },
+  "prompts_promptDeleted": {
+    "message": "提示词已删除"
+  },
+  "ai_optimize": {
+    "message": "AI优化"
+  },
+  "ai_generate": {
+    "message": "AI生成"
+  },
+  "ai_configureAI": {
+    "message": "配置AI"
+  },
+  "ai_optimizing": {
+    "message": "优化中..."
+  },
+  "ai_generating": {
+    "message": "生成中..."
+  },
+  "ai_optimizePrompt": {
+    "message": "优化提示词"
+  },
+  "ai_generatePrompt": {
+    "message": "生成提示词"
+  },
+  "ai_acceptOptimization": {
+    "message": "接受优化"
+  },
+  "ai_rejectOptimization": {
+    "message": "拒绝优化"
+  },
+  "settings_title": {
+    "message": "设置"
+  },
+  "settings_general": {
+    "message": "常规"
+  },
+  "settings_appearance": {
+    "message": "外观"
+  },
+  "settings_security": {
+    "message": "安全"
+  },
+  "settings_shortcuts": {
+    "message": "快捷键"
+  },
+  "settings_sync": {
+    "message": "数据同步"
+  },
+  "settings_data": {
+    "message": "数据管理"
+  },
+  "settings_statistics": {
+    "message": "使用统计"
+  },
+  "settings_advanced": {
+    "message": "高级"
+  },
+  "settings_ai": {
+    "message": "AI设置"
+  },
+  "settings_theme": {
+    "message": "主题"
+  },
+  "settings_fontSize": {
+    "message": "字体大小"
+  },
+  "settings_compactMode": {
+    "message": "紧凑模式"
+  },
+  "settings_autoSave": {
+    "message": "自动保存"
+  },
+  "settings_export": {
+    "message": "导出数据"
+  },
+  "settings_import": {
+    "message": "导入数据"
+  },
+  "categories_all": {
+    "message": "全部"
+  },
+  "categories_favorites": {
+    "message": "收藏"
+  },
+  "categories_recent": {
+    "message": "最近使用"
+  },
+  "categories_general": {
+    "message": "通用"
+  },
+  "categories_work": {
+    "message": "工作"
+  },
+  "categories_study": {
+    "message": "学习"
+  },
+  "categories_creative": {
+    "message": "创意"
+  },
+  "categories_technical": {
+    "message": "技术"
+  },
+  "categories_business": {
+    "message": "商务"
+  },
+  "sync_title": {
+    "message": "数据同步"
+  },
+  "sync_nativeMessaging": {
+    "message": "Native Messaging"
+  },
+  "sync_fileSync": {
+    "message": "文件同步"
+  },
+  "sync_manualSync": {
+    "message": "手动同步"
+  },
+  "sync_enable": {
+    "message": "启用同步"
+  },
+  "sync_status": {
+    "message": "同步状态"
+  },
+  "sync_lastSync": {
+    "message": "上次同步"
+  },
+  "security_sitePermissions": {
+    "message": "站点权限"
+  },
+  "security_whitelist": {
+    "message": "白名单"
+  },
+  "security_blacklist": {
+    "message": "黑名单"
+  },
+  "security_privacyMode": {
+    "message": "隐私模式"
+  },
+  "security_clearHistory": {
+    "message": "清除使用记录"
+  },
+  "openPromptMate": {
+    "message": "打开PromptMate主界面"
+  },
+  "injectLastPrompt": {
+    "message": "将最近使用的提示词直接注入到当前页面"
+  }
+}

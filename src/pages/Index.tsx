@@ -117,7 +117,7 @@ function ContentArea({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
   return (
     <div className="flex flex-1 overflow-hidden">
       {/* 左侧：提示词列表 - 始终显示 */}
-      <div className={`h-full transition-all duration-300 ${selectedPrompt ? "flex-1" : "w-full"}`}>
+      <div className={`h-full preview-panel-transition ${selectedPrompt ? "flex-1" : "w-full"}`}>
         {renderCurrentView()}
       </div>
 
@@ -169,7 +169,7 @@ export function Index({ sidebarOpen: propsSidebarOpen, setSidebarOpen: propSetSi
           
           {/* 右侧：编辑面板 */}
           <ResizablePanel defaultSize={40} minSize={30} maxSize={70}>
-            <div className="h-full bg-background shadow-lg">
+            <div className="h-full bg-background shadow-lg animate-slide-in-panel">
               <PromptEditorModular />
             </div>
           </ResizablePanel>

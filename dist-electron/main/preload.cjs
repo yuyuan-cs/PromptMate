@@ -28,7 +28,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
   
   // 数据导入导出
   exportData: (options) => ipcRenderer.invoke('export-data', options),
-  importData: (options) => ipcRenderer.invoke('import-data', options)
+  importData: (options) => ipcRenderer.invoke('import-data', options),
+  
+  // 应用更新和信息
+  checkForUpdates: () => ipcRenderer.invoke('check-for-updates'),
+  getAppInfo: () => ipcRenderer.invoke('get-app-info')
 }); 
 
 console.log('electronAPI exposed to renderer process');

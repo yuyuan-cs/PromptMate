@@ -1,0 +1,235 @@
+{
+  "extensionName": {
+    "message": "PromptMate",
+    "description": "Extension name"
+  },
+  "extensionDescription": {
+    "message": "Seamlessly integrate your prompt library into browser workflows",
+    "description": "Extension description"
+  },
+  "common_confirm": {
+    "message": "Confirm"
+  },
+  "common_cancel": {
+    "message": "Cancel"
+  },
+  "common_save": {
+    "message": "Save"
+  },
+  "common_delete": {
+    "message": "Delete"
+  },
+  "common_edit": {
+    "message": "Edit"
+  },
+  "common_create": {
+    "message": "Create"
+  },
+  "common_search": {
+    "message": "Search"
+  },
+  "common_loading": {
+    "message": "Loading..."
+  },
+  "common_settings": {
+    "message": "Settings"
+  },
+  "common_language": {
+    "message": "Language"
+  },
+  "common_close": {
+    "message": "Close"
+  },
+  "common_copy": {
+    "message": "Copy"
+  },
+  "prompts_title": {
+    "message": "Prompt Management"
+  },
+  "prompts_createNew": {
+    "message": "Create New Prompt"
+  },
+  "prompts_searchPlaceholder": {
+    "message": "Search prompts..."
+  },
+  "prompts_noPrompts": {
+    "message": "No prompts"
+  },
+  "prompts_noPromptsDesc": {
+    "message": "Click the button above to create your first prompt"
+  },
+  "prompts_editPrompt": {
+    "message": "Edit Prompt"
+  },
+  "prompts_deletePrompt": {
+    "message": "Delete Prompt"
+  },
+  "prompts_copyPrompt": {
+    "message": "Copy Prompt"
+  },
+  "prompts_promptTitle": {
+    "message": "Title"
+  },
+  "prompts_promptContent": {
+    "message": "Content"
+  },
+  "prompts_promptCategory": {
+    "message": "Category"
+  },
+  "prompts_promptTags": {
+    "message": "Tags"
+  },
+  "prompts_savePrompt": {
+    "message": "Save Prompt"
+  },
+  "prompts_promptSaved": {
+    "message": "Prompt saved"
+  },
+  "prompts_promptDeleted": {
+    "message": "Prompt deleted"
+  },
+  "ai_optimize": {
+    "message": "AI Optimize"
+  },
+  "ai_generate": {
+    "message": "AI Generate"
+  },
+  "ai_configureAI": {
+    "message": "Configure AI"
+  },
+  "ai_optimizing": {
+    "message": "Optimizing..."
+  },
+  "ai_generating": {
+    "message": "Generating..."
+  },
+  "ai_optimizePrompt": {
+    "message": "Optimize Prompt"
+  },
+  "ai_generatePrompt": {
+    "message": "Generate Prompt"
+  },
+  "ai_acceptOptimization": {
+    "message": "Accept Optimization"
+  },
+  "ai_rejectOptimization": {
+    "message": "Reject Optimization"
+  },
+  "settings_title": {
+    "message": "Settings"
+  },
+  "settings_general": {
+    "message": "General"
+  },
+  "settings_appearance": {
+    "message": "Appearance"
+  },
+  "settings_security": {
+    "message": "Security"
+  },
+  "settings_shortcuts": {
+    "message": "Shortcuts"
+  },
+  "settings_sync": {
+    "message": "Data Sync"
+  },
+  "settings_data": {
+    "message": "Data Management"
+  },
+  "settings_statistics": {
+    "message": "Statistics"
+  },
+  "settings_advanced": {
+    "message": "Advanced"
+  },
+  "settings_ai": {
+    "message": "AI Settings"
+  },
+  "settings_theme": {
+    "message": "Theme"
+  },
+  "settings_fontSize": {
+    "message": "Font Size"
+  },
+  "settings_compactMode": {
+    "message": "Compact Mode"
+  },
+  "settings_autoSave": {
+    "message": "Auto Save"
+  },
+  "settings_export": {
+    "message": "Export Data"
+  },
+  "settings_import": {
+    "message": "Import Data"
+  },
+  "categories_all": {
+    "message": "All"
+  },
+  "categories_favorites": {
+    "message": "Favorites"
+  },
+  "categories_recent": {
+    "message": "Recent"
+  },
+  "categories_general": {
+    "message": "General"
+  },
+  "categories_work": {
+    "message": "Work"
+  },
+  "categories_study": {
+    "message": "Study"
+  },
+  "categories_creative": {
+    "message": "Creative"
+  },
+  "categories_technical": {
+    "message": "Technical"
+  },
+  "categories_business": {
+    "message": "Business"
+  },
+  "sync_title": {
+    "message": "Data Sync"
+  },
+  "sync_nativeMessaging": {
+    "message": "Native Messaging"
+  },
+  "sync_fileSync": {
+    "message": "File Sync"
+  },
+  "sync_manualSync": {
+    "message": "Manual Sync"
+  },
+  "sync_enable": {
+    "message": "Enable Sync"
+  },
+  "sync_status": {
+    "message": "Sync Status"
+  },
+  "sync_lastSync": {
+    "message": "Last Sync"
+  },
+  "security_sitePermissions": {
+    "message": "Site Permissions"
+  },
+  "security_whitelist": {
+    "message": "Whitelist"
+  },
+  "security_blacklist": {
+    "message": "Blacklist"
+  },
+  "security_privacyMode": {
+    "message": "Privacy Mode"
+  },
+  "security_clearHistory": {
+    "message": "Clear Usage History"
+  },
+  "openPromptMate": {
+    "message": "Open PromptMate Main Interface"
+  },
+  "injectLastPrompt": {
+    "message": "Inject the most recently used prompt directly into the current page"
+  }
+}

@@ -76,6 +76,13 @@ export class StorageManager {
     }
   }
 
+  // 添加分类
+  async addCategory(category: Category): Promise<void> {
+    const categories = await this.getCategories();
+    categories.push(category);
+    await this.saveCategories(categories);
+  }
+
   // 获取设置
   async getSettings(): Promise<Settings> {
     try {

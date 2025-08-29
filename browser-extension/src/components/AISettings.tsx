@@ -5,15 +5,18 @@ import { Label } from './ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Separator } from './ui/separator';
-import { Loader2, CheckCircle, XCircle, Eye, EyeOff, Sparkles, Edit3, TestTube } from 'lucide-react';
+import { CheckCircle, XCircle, Eye, EyeOff, Sparkles, Edit3, TestTube } from 'lucide-react';
 import { Badge } from './ui/badge';
 import { aiService, type AIConfig, getModelsForProvider, type AIModel } from '../services/aiService';
+import { ButtonLoading } from './ui/loading-states';
+import { useTranslation } from '../i18n';
 
 interface AISettingsProps {
   onConfigChange?: (config: AIConfig) => void;
 }
 
 export const AISettings: React.FC<AISettingsProps> = ({ onConfigChange }) => {
+  const { t } = useTranslation();
   const [config, setConfig] = useState<AIConfig>({
     apiKey: '',
     baseUrl: '',
@@ -237,7 +240,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ onConfigChange }) => {
   // 测试连接
   const testConnection = async () => {
     if (!config.apiKey.trim()) {
-      showToast("请先输入API Key", 'error');
+      showToast(t('ai_settings_enterApiKey'), 'error');
       return;
     }
 
@@ -250,14 +253,14 @@ export const AISettings: React.FC<AISettingsProps> = ({ onConfigChange }) => {
 
       if (isConnected) {
         setTestResult('success');
-        showToast("AI服务配置正确，可以正常使用", 'success');
+        showToast(t('ai_settings_configSuccess'), 'success');
       } else {
         setTestResult('error');
-        showToast("无法连接到AI服务，请检查配置信息", 'error');
+        showToast(t('ai_settings_configFailed'), 'error');
       }
     } catch (error) {
       setTestResult('error');
-      showToast(error instanceof Error ? error.message : "请检查配置信息", 'error');
+      showToast(error instanceof Error ? error.message : t('ai_settings_checkConfig'), 'error');
     } finally {
       setIsTesting(false);
     }
@@ -273,10 +276,10 @@ export const AISettings: React.FC<AISettingsProps> = ({ onConfigChange }) => {
       localStorage.setItem(`ai-config-${currentProvider}`, JSON.stringify(config));
       setProviderConfigs(prev => ({ ...prev, [currentProvider]: config }));
       
-      showToast(`${presetConfigs[currentProvider]?.baseUrl?.includes('openai') ? 'OpenAI' : currentProvider} 服务配置已成功保存`);
+      showToast(t('ai_settings_saveSuccess'));
       onConfigChange?.(config);
     } catch (error) {
-      showToast("保存配置时出现错误", 'error');
+      showToast(t('ai_settings_saveError'), 'error');
     }
   };
 
@@ -296,29 +299,29 @@ export const AISettings: React.FC<AISettingsProps> = ({ onConfigChange }) => {
       <CardHeader className="pb-4">
         <CardTitle className="flex items-center gap-2 text-base">
           <TestTube className="h-5 w-5" />
-          AI优化服务配置
+          {t('ai_settings_title')}
         </CardTitle>
         <CardDescription className="text-sm">
-          配置AI服务以启用提示词优化和生成功能。支持国内外主流AI服务商、本地部署和第三方API聚合服务。
+          {t('ai_settings_description')}
           <br />
           <span className="text-blue-600 text-xs mt-1 block">
-            💡 推荐：国内用户可优先选择DeepSeek、Kimi等国内服务，或使用硅基流动等聚合服务。
+            {t('ai_settings_tip')}
           </span>
           <span className="text-amber-600 text-xs mt-1 block">
-            ⚠️ 注意：部分国外服务可能需要网络代理才能访问。
+            {t('ai_settings_warning')}
           </span>
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4 px-4 pb-4">
         {/* 服务提供商选择 */}
         <div className="space-y-2">
-          <Label htmlFor="provider">服务提供商</Label>
+          <Label htmlFor="provider">{t('ai_settings_provider')}</Label>
           <Select
             value={currentProvider}
             onValueChange={handleProviderChange}
           >
             <SelectTrigger>
-              <SelectValue placeholder="选择AI服务提供商" />
+              <SelectValue placeholder={t('ai_settings_selectProvider')} />
             </SelectTrigger>
             <SelectContent className="max-h-[300px] w-[350px] max-w-[90vw]">
               {/* 主流云服务商 */}
@@ -356,14 +359,14 @@ export const AISettings: React.FC<AISettingsProps> = ({ onConfigChange }) => {
 
         {/* API Key */}
         <div className="space-y-2">
-          <Label htmlFor="apiKey">API Key</Label>
+          <Label htmlFor="apiKey">{t('ai_settings_apiKey')}</Label>
           <div className="relative">
             <Input
               id="apiKey"
               type={showApiKey ? "text" : "password"}
               value={config.apiKey}
               onChange={(e) => handleConfigChange('apiKey', e.target.value)}
-              placeholder="输入您的API Key"
+              placeholder={t('ai_settings_apiKeyPlaceholder')}
               className="pr-10"
             />
             <Button
@@ -384,12 +387,12 @@ export const AISettings: React.FC<AISettingsProps> = ({ onConfigChange }) => {
 
         {/* API地址 */}
         <div className="space-y-2">
-          <Label htmlFor="baseUrl">API地址</Label>
+          <Label htmlFor="baseUrl">{t('ai_settings_apiUrl')}</Label>
           <Input
             id="baseUrl"
             value={config.baseUrl}
             onChange={(e) => handleConfigChange('baseUrl', e.target.value)}
-            placeholder="API服务地址"
+            placeholder={t('ai_settings_apiUrlPlaceholder')}
           />
         </div>
 
@@ -397,7 +400,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ onConfigChange }) => {
         <div className="space-y-2">
           <Label htmlFor="model" className="flex items-center gap-2">
             <Sparkles className="h-4 w-4" />
-            模型选择
+            {t('ai_settings_modelSelection')}
           </Label>
           
           {/* 模型选择下拉框 */}
@@ -406,7 +409,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ onConfigChange }) => {
             onValueChange={handleModelChange}
           >
             <SelectTrigger>
-              <SelectValue placeholder="选择模型或自定义输入" />
+              <SelectValue placeholder={t('ai_settings_selectModel')} />
             </SelectTrigger>
             <SelectContent className="max-h-[300px] w-[400px] max-w-[90vw]">
               {availableModels.map((model) => (
@@ -434,7 +437,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ onConfigChange }) => {
               <SelectItem value="custom">
                 <div className="flex items-center gap-2">
                   <Edit3 className="h-4 w-4" />
-                  <span>自定义模型...</span>
+                  <span>{t('ai_settings_customModel')}</span>
                 </div>
               </SelectItem>
             </SelectContent>
@@ -446,11 +449,11 @@ export const AISettings: React.FC<AISettingsProps> = ({ onConfigChange }) => {
               <Input
                 value={config.model}
                 onChange={(e) => handleCustomModelChange(e.target.value)}
-                placeholder="输入自定义模型名称，例如：gpt-4o-2024-08-06"
+                placeholder={t('ai_settings_customModelPlaceholder')}
                 className="font-mono text-sm"
               />
               <p className="text-xs text-muted-foreground mt-1">
-                💡 提示：请确保输入的模型名称与API服务商支持的模型完全一致
+                {t('ai_settings_customModelTip')}
               </p>
             </div>
           )}
@@ -467,11 +470,11 @@ export const AISettings: React.FC<AISettingsProps> = ({ onConfigChange }) => {
                       <span className="font-medium text-sm">{selectedModel.name}</span>
                       {selectedModel.contextLength && (
                         <Badge variant="outline" className="text-xs">
-                          上下文: {selectedModel.contextLength >= 1000000 
+                          {t('ai_settings_context')}: {selectedModel.contextLength >= 1000000 
                             ? `${Math.round(selectedModel.contextLength / 1000000)}M` 
                             : selectedModel.contextLength >= 1000 
                             ? `${Math.round(selectedModel.contextLength / 1000)}K`
-                            : selectedModel.contextLength} tokens
+                            : selectedModel.contextLength} {t('ai_settings_tokens')}
                         </Badge>
                       )}
                     </div>
@@ -489,7 +492,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ onConfigChange }) => {
         <div className="bg-blue-50 dark:bg-blue-950/20 rounded-lg p-3 text-sm">
           <div className="flex items-center gap-2 mb-2">
             <span className="text-blue-600 dark:text-blue-400">💡</span>
-            <span className="font-medium text-blue-800 dark:text-blue-300">获取 API Key</span>
+            <span className="font-medium text-blue-800 dark:text-blue-300">{t('ai_settings_getApiKey')}</span>
           </div>
           {(() => {
             const helpLinks: Record<string, { name: string; url: string; description: string }> = {
@@ -606,17 +609,12 @@ export const AISettings: React.FC<AISettingsProps> = ({ onConfigChange }) => {
               disabled={isTesting || !config.apiKey.trim()}
               variant="outline"
             >
-              {isTesting ? (
-                <>
-                  <TestTube className="h-4 w-4 mr-2 animate-spin" />
-                  测试中...
-                </>
-              ) : (
+              <ButtonLoading isLoading={isTesting} loadingText={t('ai_settings_testing')}>
                 <>
                   <TestTube className="h-4 w-4 mr-2" />
-                  测试连接
+                  {t('ai_settings_testConnection')}
                 </>
-              )}
+              </ButtonLoading>
             </Button>
             
             {testResult && (
@@ -627,7 +625,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ onConfigChange }) => {
                   <XCircle className="h-4 w-4 text-red-500" />
                 )}
                 <span className={`text-sm ${testResult === 'success' ? 'text-green-600' : 'text-red-600'}`}>
-                  {testResult === 'success' ? '连接成功' : '连接失败'}
+                  {testResult === 'success' ? t('ai_settings_connectionSuccess') : t('ai_settings_connectionFailed')}
                 </span>
               </div>
             )}
@@ -635,25 +633,25 @@ export const AISettings: React.FC<AISettingsProps> = ({ onConfigChange }) => {
 
           <div className="flex gap-2">
             <Button variant="outline" onClick={resetConfig}>
-              重置
+              {t('ai_settings_reset')}
             </Button>
             <Button onClick={handleSave}>
-              保存配置
+              {t('ai_settings_saveConfig')}
             </Button>
           </div>
         </div>
 
         {/* 使用说明 */}
         <div className="bg-muted/50 rounded-lg p-4 text-sm text-muted-foreground">
-          <h4 className="font-medium mb-2">使用说明：</h4>
+          <h4 className="font-medium mb-2">{t('ai_settings_usageInstructions')}</h4>
           <ul className="space-y-1 list-disc list-inside">
-            <li>配置完成后，在新建或编辑提示词时会显示AI优化按钮</li>
-            <li>AI会根据提示词工程最佳实践优化您的内容</li>
-            <li>支持生成全新提示词或优化现有内容</li>
-            <li>国内服务：DeepSeek、Kimi、豆包等无需代理，速度快</li>
-            <li>聚合服务：硅基流动、One API等支持多种模型</li>
-            <li>本地部署：Ollama、LM Studio隐私安全，无网络费用</li>
-            <li>请确保API Key有足够的使用额度</li>
+            <li>{t('ai_settings_instruction1')}</li>
+            <li>{t('ai_settings_instruction2')}</li>
+            <li>{t('ai_settings_instruction3')}</li>
+            <li>{t('ai_settings_instruction4')}</li>
+            <li>{t('ai_settings_instruction5')}</li>
+            <li>{t('ai_settings_instruction6')}</li>
+            <li>{t('ai_settings_instruction7')}</li>
           </ul>
         </div>
       </CardContent>

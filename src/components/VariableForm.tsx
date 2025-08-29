@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import ReactMarkdown from 'react-markdown';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -371,18 +372,25 @@ export const VariableForm: React.FC<VariableFormProps> = ({
             <CardTitle className="text-sm">实时预览</CardTitle>
           </CardHeader>
           <CardContent className="pt-0">
-            <div className="bg-muted/30 rounded-md p-4 min-h-[100px] whitespace-pre-wrap">
+            <div className="bg-muted/30 rounded-md p-4 min-h-[100px]">
               {previewContent ? (
-                <div className="space-y-2">
-                  {/* 变量高亮显示 */}
-                  <div className="text-xs text-muted-foreground mb-2">
-                    已填写的变量高亮显示：
+                <div className="space-y-3">
+                  {/* Markdown 渲染预览 */}
+                  <div className="markdown-body">
+                    <ReactMarkdown>{previewContent}</ReactMarkdown>
                   </div>
-                  <VariableDisplay
-                    content={previewContent}
-                    showVariableCount={false}
-                    className="text-sm"
-                  />
+                  
+                  {/* 变量高亮显示 */}
+                  <div className="pt-2 border-t border-border/30">
+                    <div className="text-xs text-muted-foreground mb-2">
+                      变量替换情况：
+                    </div>
+                    <VariableDisplay
+                      content={previewContent}
+                      showVariableCount={false}
+                      className="text-sm"
+                    />
+                  </div>
                 </div>
               ) : (
                 <span className="text-muted-foreground text-sm">

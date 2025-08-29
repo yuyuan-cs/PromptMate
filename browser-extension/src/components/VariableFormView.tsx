@@ -60,7 +60,7 @@ export const VariableFormView: React.FC<VariableFormViewProps> = ({
   const [values, setValues] = React.useState<VariableValues>({});
   const [errors, setErrors] = React.useState<string[]>([]);
   const [previewText, setPreviewText] = React.useState('');
-  const [showMarkdown, setShowMarkdown] = React.useState(false);
+  const [showMarkdown, setShowMarkdown] = React.useState(true);
   const [isLoading, setIsLoading] = React.useState(false);
 
   // 生成表单数据

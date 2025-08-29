@@ -1,0 +1,9 @@
+{
+  "name": "com.promptmate.sync",
+  "description": "PromptMate Data Sync Native Host",
+  "path": "promptmate-sync-host.exe",
+  "type": "stdio",
+  "allowed_origins": [
+    "chrome-extension://YOUR_EXTENSION_ID_HERE/"
+  ]
+}

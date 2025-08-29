@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from './ui/button';
-import { Sparkles, Loader2, Settings } from 'lucide-react';
+import { Sparkles, Settings } from 'lucide-react';
 import { aiService, AIOptimizeResponse, StreamCallback } from '../services/aiService';
 import { AIOptimizeDialog } from './AIOptimizeDialog';
+import { LoadingSpinner } from './ui/loading-spinner';
 
 interface AIOptimizeButtonProps {
   content: string;
@@ -190,11 +191,11 @@ export const AIOptimizeButton: React.FC<AIOptimizeButtonProps> = ({
       >
         {isOptimizing ? (
           showDialog ? (
-            <Loader2 className="h-4 w-4 animate-spin mr-2" />
+            <LoadingSpinner size="sm" className="mr-2" />
           ) : (
             <div className="relative mr-2">
               <Sparkles className="h-4 w-4" />
-              <div className="absolute -top-1 -right-1 w-2 h-2 bg-orange-400 rounded-full animate-ping" />
+              <div className="absolute inset-0 animate-pulse bg-primary/20 rounded-full" />
             </div>
           )
         ) : (
