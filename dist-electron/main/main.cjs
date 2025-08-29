@@ -69,68 +69,76 @@ function compareVersions(version1, version2) {
   }
 }
 
-// 获取GitHub最新发布版本
-async function getLatestGitHubRelease() {
-  return new Promise((resolve, reject) => {
-    const url = `${GITHUB_API_BASE}/repos/${GITHUB_REPO_OWNER}/${GITHUB_REPO_NAME}/releases/latest`;
-    
-    // 设置请求超时
-    const request = https.get(url, {
-      headers: {
-        'User-Agent': 'PromptMate-Update-Checker',
-        'Accept': 'application/vnd.github.v3+json'
-      },
-      timeout: 10000 // 10秒超时
-    }, (res) => {
-      let data = '';
+// 获取GitHub最新发布版本（带重试机制）
+async function getLatestGitHubRelease(retryCount = 3) {
+  for (let attempt = 1; attempt <= retryCount; attempt++) {
+    try {
+      log.info(`尝试获取GitHub发布信息 (第${attempt}次)`);
       
-      res.on('data', (chunk) => {
-        data += chunk;
-      });
-      
-      res.on('end', () => {
-        try {
-          if (res.statusCode === 200) {
-            const release = JSON.parse(data);
-            
-            // 验证版本号格式
-            const version = release.tag_name.replace('v', '');
-            if (!/^\d+\.\d+\.\d+$/.test(version)) {
-              reject(new Error('无效的版本号格式'));
-              return;
-            }
-            
-            resolve({
-              version: version,
-              name: release.name || release.tag_name,
-              body: release.body || '',
-              published_at: release.published_at,
-              html_url: release.html_url,
-              assets: release.assets || []
-            });
-          } else if (res.statusCode === 404) {
-            reject(new Error('未找到发布版本'));
-          } else if (res.statusCode === 403) {
-            reject(new Error('GitHub API访问受限，可能达到请求限制'));
-          } else {
-            reject(new Error(`GitHub API返回状态码: ${res.statusCode}`));
+      const result = await new Promise((resolve, reject) => {
+        const options = {
+          hostname: 'api.github.com',
+          path: '/repos/yy0691/PromptMate/releases/latest',
+          method: 'GET',
+          headers: {
+            'User-Agent': 'PromptMate-UpdateChecker'
           }
-        } catch (error) {
-          reject(new Error(`解析GitHub响应失败: ${error.message}`));
-        }
+        };
+
+        const request = https.request(options, (response) => {
+          let data = '';
+          
+          response.on('data', (chunk) => {
+            data += chunk;
+          });
+          
+          response.on('end', () => {
+            try {
+              if (response.statusCode === 200) {
+                const release = JSON.parse(data);
+                resolve({
+                  version: release.tag_name,
+                  name: release.name,
+                  body: release.body,
+                  publishedAt: release.published_at,
+                  downloadUrl: release.assets[0]?.browser_download_url
+                });
+              } else {
+                reject(new Error(`GitHub API返回错误状态: ${response.statusCode}`));
+              }
+            } catch (error) {
+              reject(new Error(`解析GitHub API响应失败: ${error.message}`));
+            }
+          });
+        });
+        
+        // 设置超时处理（增加到20秒）
+        request.setTimeout(20000, () => {
+          request.destroy();
+          reject(new Error('GitHub API请求超时'));
+        });
+        
+        request.on('error', (error) => {
+          reject(new Error(`GitHub API请求失败: ${error.message}`));
+        });
+        
+        request.end();
       });
-    });
-    
-    // 设置超时处理
-    request.setTimeout(10000, () => {
-      request.destroy();
-      reject(new Error('GitHub API请求超时'));
-    });
-    
-    request.on('error', (error) => {
-      reject(new Error(`GitHub API请求失败: ${error.message}`));
-    });
-  });
+      
+      log.info('成功获取GitHub发布信息');
+      return result;
+      
+    } catch (error) {
+      log.warn(`第${attempt}次尝试失败: ${error.message}`);
+      
+      if (attempt === retryCount) {
+        throw new Error(`经过${retryCount}次重试后仍然失败: ${error.message}`);
+      }
+      
+      // 等待后重试
+      await new Promise(resolve => setTimeout(resolve, 2000 * attempt));
+    }
+  }
 }
 
 // 检查更新函数
@@ -237,11 +245,44 @@ async function checkForUpdatesEnhanced() {
       log.info(`GitHub最新版本: ${latestRelease.version}`);
     } catch (error) {
       log.error('获取GitHub发布信息失败:', error);
+      
+      // 根据错误类型提供更详细的错误信息
+      let errorMessage = error.message;
+      let troubleshooting = [];
+      
+      if (error.message.includes('超时')) {
+        errorMessage = '网络连接超时，请检查网络状态';
+        troubleshooting = [
+          '检查网络连接是否正常',
+          '确认防火墙未阻止应用访问网络',
+          '如使用代理，请检查代理设置',
+          '稍后重试更新检查'
+        ];
+      } else if (error.message.includes('请求失败')) {
+        errorMessage = '无法连接到GitHub服务器';
+        troubleshooting = [
+          '检查DNS设置是否正确',
+          '确认可以访问github.com',
+          '检查网络防火墙设置',
+          '手动访问GitHub检查更新'
+        ];
+      } else if (error.message.includes('解析')) {
+        errorMessage = 'GitHub API响应格式异常';
+        troubleshooting = [
+          'GitHub服务可能暂时不可用',
+          '稍后重试更新检查',
+          '手动访问GitHub检查更新'
+        ];
+      }
+      
       return {
         success: false,
         hasUpdate: false,
-        error: `获取GitHub发布信息失败: ${error.message}`,
-        currentVersion: currentVersion
+        error: errorMessage,
+        errorType: 'NETWORK_ERROR',
+        currentVersion: currentVersion,
+        troubleshooting: troubleshooting,
+        manualCheckUrl: 'https://github.com/yy0691/PromptMate/releases/latest'
       };
     }
     
@@ -830,11 +871,19 @@ ipcMain.handle('check-for-updates', async () => {
     return result;
   } catch (error) {
     console.error('检查更新出错:', error);
+    log.error('Update check failed:', error);
     return {
       success: false,
       hasUpdate: false,
-      error: error.message,
-      currentVersion: app.getVersion()
+      error: `更新检查失败: ${error.message}`,
+      errorType: 'NETWORK_ERROR',
+      currentVersion: app.getVersion(),
+      troubleshooting: [
+        '请检查网络连接',
+        '确认防火墙未阻止应用访问网络',
+        '如使用代理，请检查代理设置',
+        '稍后重试或手动访问 GitHub 检查更新'
+      ]
     };
   }
 });

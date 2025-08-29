@@ -1,4 +1,7 @@
 import React, { useMemo } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import rehypeRaw from 'rehype-raw';
 import { extractVariables, VariableInfo } from '@/lib/variableUtils';
 import { cn } from '@/lib/utils';
 
@@ -180,24 +183,67 @@ export const VariableDisplay: React.FC<VariableDisplayProps> = ({
   onVariableClick,
 }) => {
   const variables = useMemo(() => extractVariables(content), [content]);
-  
+
+  const processedContent = useMemo(() => {
+    if (variables.length === 0) {
+      return content;
+    }
+    let result = '';
+    let lastIndex = 0;
+    const sortedVariables = [...variables].sort((a, b) => a.startIndex - b.startIndex);
+    sortedVariables.forEach(variable => {
+      result += content.substring(lastIndex, variable.startIndex);
+      result += `<var data-name="${variable.name}" data-original-text="${encodeURIComponent(variable.originalText)}"></var>`;
+      lastIndex = variable.endIndex;
+    });
+    result += content.substring(lastIndex);
+    return result;
+  }, [content, variables]);
+
   return (
     <div className={cn('relative', className)}>
-      {/* 变量高亮内容 */}
-      <VariableHighlighter
-        content={content}
-        onVariableClick={onVariableClick}
-        className="whitespace-pre-wrap break-words"
-      />
+      <div className="prose dark:prose-invert max-w-none whitespace-pre-wrap break-words">
+        <ReactMarkdown
+          remarkPlugins={[remarkGfm]}
+          rehypePlugins={[rehypeRaw]}
+          components={{
+            var: ({ node }) => {
+              const name = node.properties?.['data-name'] as string;
+              const originalText = decodeURIComponent(node.properties?.['data-original-text'] as string || '');
+              const variable = variables.find(v => v.name === name);
+
+              if (!variable) return <span>{originalText}</span>;
+
+              return (
+                <span
+                  className={cn(
+                    'variable-highlight inline-block px-0.5 py-0.25 mx-0.5 rounded text-sm font-mono',
+                    'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
+                    'border border-blue-200 dark:border-blue-800',
+                    'cursor-pointer hover:bg-blue-200 dark:hover:bg-blue-800/50',
+                    'transition-colors duration-200'
+                  )}
+                  onClick={() => onVariableClick?.(variable)}
+                  title={`变量: ${name}`}
+                  data-variable={name}
+                >
+                  {originalText}
+                </span>
+              );
+            },
+          }}
+        >
+          {processedContent}
+        </ReactMarkdown>
+      </div>
       
-      {/* 变量统计 */}
       {showVariableCount && variables.length > 0 && (
         <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
           <span>发现 {variables.length} 个变量占位符</span>
           <div className="flex gap-1">
-            {variables.slice(0, 3).map((variable, index) => (
+            {variables.slice(0, 3).map((variable) => (
               <span
-                key={index}
+                key={variable.name}
                 className="bg-muted px-1.5 py-0.5 rounded text-xs"
               >
                 {variable.name}
@@ -213,4 +259,4 @@ export const VariableDisplay: React.FC<VariableDisplayProps> = ({
       )}
     </div>
   );
-}; 
+};

@@ -38,11 +38,14 @@ import { CreatePromptDialog } from "./CreatePromptDialog";
 import { AISettings } from "./AISettings";
 import { useToast } from "@/hooks/use-toast";
 import { useAppView } from "@/hooks/useAppView";
+import { useTranslation } from 'react-i18next';
+import { LanguageSelector } from "@/components/ui/LanguageSelector";
 
 // 侧边栏显示模式类型
 type SidebarMode = "expanded" | "collapsed";
 
 export function Sidebar({ className }: { className?: string }) {
+  const { t } = useTranslation();
   const {
     activeCategory,
     setActiveCategory,
@@ -830,7 +833,7 @@ export function Sidebar({ className }: { className?: string }) {
               </Button>
             </TooltipTrigger>
             <TooltipContent side="right">
-              {settings.theme === 'dark' ? '切换到浅色模式' : '切换到深色模式'}
+              {settings.theme === 'dark' ? t('common.switchToLight') : t('common.switchToDark')}
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
@@ -868,7 +871,7 @@ export function Sidebar({ className }: { className?: string }) {
               </Button>
             </TooltipTrigger>
             <TooltipContent side="right">
-              设置
+              {t('common.settings')}
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
@@ -879,9 +882,9 @@ export function Sidebar({ className }: { className?: string }) {
       <Dialog open={showSettings} onOpenChange={setShowSettings}>
         <DialogContent className="sm:max-w-[650px] md:max-w-[750px]">
           <DialogHeader>
-            <DialogTitle>应用设置</DialogTitle>
+            <DialogTitle>{t('common.appSettings')}</DialogTitle>
             <DialogDescription>
-              自定义应用外观和行为
+              {t('common.customizeAppearance')}
             </DialogDescription>
           </DialogHeader>
           
@@ -893,7 +896,7 @@ export function Sidebar({ className }: { className?: string }) {
               className="w-full"
             >
               <Icons.palette className="mr-2 h-4 w-4" />
-              外观设置
+              {t('common.appearance')}
             </Button>
             <Button 
               variant={settingsPanel === "data" ? "default" : "outline"} 
@@ -901,7 +904,7 @@ export function Sidebar({ className }: { className?: string }) {
               className="w-full"
             >
               <Icons.fileJson className="mr-2 h-4 w-4" />
-              数据管理
+              {t('common.dataManagement')}
             </Button>
             <Button 
               variant={settingsPanel === "ai" ? "default" : "outline"} 
@@ -909,7 +912,7 @@ export function Sidebar({ className }: { className?: string }) {
               className="w-full"
             >
               <Icons.star className="mr-2 h-4 w-4" />
-              AI设置
+              {t('common.aiSettings')}
             </Button>
             <Button 
               variant={settingsPanel === "about" ? "default" : "outline"} 
@@ -917,7 +920,7 @@ export function Sidebar({ className }: { className?: string }) {
               className="w-full"
             >
               <Icons.info className="mr-2 h-4 w-4" />
-              关于
+              {t('common.about')}
             </Button>
           </div>
           
@@ -926,9 +929,15 @@ export function Sidebar({ className }: { className?: string }) {
             <ScrollArea className="h-[60vh] pr-4">
               <div className="py-2 space-y-6">
                 
+                {/* 语言设置 */}
+                <div className="space-y-2">
+                  <Label>{t('common.language')}</Label>
+                  <LanguageSelector />
+                </div>
+
                 {/* 字体设置 */}
                 <div className="space-y-2">
-                  <Label htmlFor="font">字体</Label>
+                  <Label htmlFor="font">{t('settings.fontSize')}</Label>
                   <FontSelector
                     value={settings.font}
                     onChange={(font) => updateSettings({ font })}
@@ -937,7 +946,7 @@ export function Sidebar({ className }: { className?: string }) {
                 
                 {/* 主题设置 */}
                 <div className="space-y-2">
-                  <Label>主题</Label>
+                  <Label>{t('settings.theme')}</Label>
                   
                   {/* 系统主题部分 */}
                   <div>

@@ -410,7 +410,7 @@ export const PromptList = memo(function PromptList({
   }, [promptToDelete, deletePrompt, toast]);
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full card-container-transition">
       {/* 当前分类/模式指示器 */}
       <div className="bg-muted/30 px-4 py-2 text-sm flex items-center w-full sticky top-0 z-20 border-b border-border/40">
         <span className="font-medium mr-2">当前查看:</span>
@@ -528,7 +528,7 @@ export const PromptList = memo(function PromptList({
               </div>
             </div>
           ) : (
-            <div className={`grid gap-4 ${
+            <div className={`grid gap-4 grid-layout-transition ${
               isEditPanelOpen 
                 ? 'grid-cols-1 sm:grid-cols-1 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3' 
                 : 'grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5'
@@ -537,13 +537,12 @@ export const PromptList = memo(function PromptList({
                 <Card 
                   key={prompt.id}
                   className={cn(
-                    "prompt-card cursor-pointer transition-all duration-300 ease-in-out rounded-md p-0.5",
+                    "prompt-card cursor-pointer rounded-md p-0.5",
                     "w-full max-w-none", // 确保卡片占满网格单元格
                     "focus-visible:ring-1 focus-visible:ring-offset-0 focus-visible:shadow-lg",
-                    "hover:scale-[1.02] hover:-translate-y-1",
                     selectedPrompt?.id === prompt.id 
-                      ? "ring-2 ring-primary/30 shadow-xl border-primary/30 bg-primary/5 scale-[1.02] -translate-y-1"
-                      : "border border-transparent hover:border-primary/20 hover:shadow-xl hover:shadow-primary/10"
+                      ? "selected ring-1 ring-primary/30 bg-primary/5"
+                      : "border border-transparent hover:border-primary/20"
                   )}
                   onClick={() => handleSelectPrompt(prompt)}
                   tabIndex={0}

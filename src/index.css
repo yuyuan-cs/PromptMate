@@ -123,10 +123,10 @@
 
 /* 基础样式 */
 @layer base {
-  /* 所有元素的边框颜色 */
+ /* 所有元素的边框颜色 */
   * {
     @apply border-border;
-  }
+  } 
   /* 背景和文字颜色 */
   body {
     @apply bg-background text-foreground;
@@ -141,7 +141,7 @@
   }
   /* 卡片样式 */
   .card {
-    @apply transition-all duration-200 hover:shadow-md border border-border/40 rounded-md;
+    @apply transition-all duration-200 hover:shadow-md border border-border/20 rounded-md;
   }
   /* 输入框样式 */
   input {
@@ -170,12 +170,12 @@
   .window-control-button {
     @apply transition-all duration-200 ease-in-out;
     @apply hover:bg-muted/60 active:bg-muted/80;
-    @apply focus:outline-none focus:ring-2 focus:ring-ring/50 focus:ring-offset-1;
+    @apply focus:outline-none focus:ring-1 focus:ring-ring/50 focus:ring-offset-1;
   }
   
   /* 关闭按钮特殊样式 */
   .window-control-close {
-    @apply hover:bg-destructive/10 hover:text-destructive;
+    @apply hover:bg-destructive/50 hover:text-destructive;
     @apply active:bg-destructive/20;
   }
   
@@ -219,13 +219,20 @@
 
   /* 提示卡片样式 */
   .prompt-card {
-    @apply transition-all duration-300 hover:shadow-lg w-full;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    @apply w-full;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   /* 提示卡片悬停样式 */
   .prompt-card:hover {
     transform: translateY(-2px) scale(1.01);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  }
+
+  /* 提示卡片选中样式 */
+  .prompt-card.selected {
+    transform: translateY(-2px) scale(1.01);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.08);
   }
 
   /* 提示卡片进入动画 */
@@ -375,6 +382,23 @@
 
 .animate-slide-out-panel {
   animation: slide-out-panel 0.3s cubic-bezier(0.55, 0.06, 0.68, 0.19) forwards;
+}
+
+/* 侧边预览面板过渡动画 */
+.preview-panel-transition {
+  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* 网格布局过渡动画 */
+.grid-layout-transition {
+  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* 卡片容器收缩动画 */
+.card-container-transition {
+  transition: width 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94), 
+              max-width 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+              flex 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 /* Custom scrollbar styles matching ScrollArea component */

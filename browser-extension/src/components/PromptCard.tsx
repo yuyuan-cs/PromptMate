@@ -1,9 +1,12 @@
 import * as React from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { Button } from './ui/button';
 import { Icons } from './ui/icons';
 import { cn } from '../lib/utils';
 import { Prompt } from '../shared/types';
 import { hasVariables, extractVariables } from '../shared/variableUtils';
+import { useTranslation } from '../i18n';
 
 interface PromptCardProps {
   prompt: Prompt;
@@ -34,6 +37,7 @@ export const PromptCard = React.forwardRef<HTMLDivElement, PromptCardProps>(
     },
     ref
   ) => {
+    const { t } = useTranslation();
     const [isHovered, setIsHovered] = React.useState(false);
 
     // 点击主区域展开/收起预览
@@ -58,9 +62,9 @@ export const PromptCard = React.forwardRef<HTMLDivElement, PromptCardProps>(
           className={cn(
             "group relative bg-background transition-all duration-200 ease-out cursor-pointer",
             // 默认状态 - 极简边框
-            "border border-border/30 rounded-lg",
+            "border border-border/60 rounded-lg",
             // 悬浮状态 - 微妙提升
-            "hover:border-border/60 hover:shadow-sm hover:bg-background/80",
+            "hover:border-border/85 hover:shadow-sm hover:bg-background/80",
             // 选中状态 - 清晰标识
             isSelected && "ring-1 ring-primary/40 border-primary/50 bg-primary/5",
             // 展开状态 - 明确反馈
@@ -129,7 +133,7 @@ export const PromptCard = React.forwardRef<HTMLDivElement, PromptCardProps>(
                 size="sm"
                 className="h-6 w-6 p-0 bg-muted/40 hover:bg-muted/60 border-0 text-foreground/80 hover:text-foreground transition-all duration-150 rounded group relative"
                 onClick={(e) => handleQuickAction(e, () => onCopyWithVariables(prompt))}
-                title={`复制${hasVariables(prompt.content) ? ' (含变量)' : ''}`}
+                title={`${t('action_copy')}${hasVariables(prompt.content) ? ` (${t('ui_withVariables')})` : ''}`}
               >
                 <Icons.copy className="w-3 h-3" />
                 {hasVariables(prompt.content) && (
@@ -141,7 +145,7 @@ export const PromptCard = React.forwardRef<HTMLDivElement, PromptCardProps>(
                 size="sm"
                 className="h-6 w-6 p-0 bg-primary/10 hover:bg-primary/20 border-0 text-primary hover:text-primary transition-all duration-150 rounded group relative"
                 onClick={(e) => handleQuickAction(e, () => onInjectWithVariables(prompt))}
-                title={`注入${hasVariables(prompt.content) ? ' (含变量)' : ''}`}
+                title={`${t('action_inject')}${hasVariables(prompt.content) ? ` (${t('ui_withVariables')})` : ''}`}
               >
                 <Icons.send className="w-3 h-3" />
                 {hasVariables(prompt.content) && (
@@ -159,7 +163,7 @@ export const PromptCard = React.forwardRef<HTMLDivElement, PromptCardProps>(
                 size="sm"
                 className="h-5 w-5 p-0 text-muted-foreground/70 hover:text-foreground hover:bg-muted/60 border-0"
                 onClick={(e) => handleQuickAction(e, () => onEdit(prompt))}
-                title="编辑"
+                title={t('common_edit')}
               >
                 <Icons.edit className="w-3 h-3" />
               </Button>
@@ -168,7 +172,7 @@ export const PromptCard = React.forwardRef<HTMLDivElement, PromptCardProps>(
                 size="sm"
                 className="h-5 w-5 p-0 text-muted-foreground/60 hover:text-destructive hover:bg-destructive/10 border-0"
                 onClick={(e) => handleQuickAction(e, () => onDelete(prompt))}
-                title="删除"
+                title={t('common_delete')}
               >
                 <Icons.trash className="w-3 h-3" />
               </Button>
@@ -187,10 +191,12 @@ export const PromptCard = React.forwardRef<HTMLDivElement, PromptCardProps>(
             {/* 完整内容预览 */}
             <div className="space-y-2">
               <div className="text-xs font-medium text-muted-foreground/80 uppercase tracking-wide">
-                完整内容
+                {t('prompts_promptContent')}
               </div>
-              <div className="text-sm text-foreground/90 leading-relaxed whitespace-pre-wrap bg-background/60 rounded p-2 border border-border/30">
-                {prompt.content}
+              <div className="text-sm text-foreground/90 leading-relaxed bg-background/60 rounded p-2 border border-border/30 markdown-body">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {prompt.content}
+                </ReactMarkdown>
               </div>
             </div>
 
@@ -198,7 +204,7 @@ export const PromptCard = React.forwardRef<HTMLDivElement, PromptCardProps>(
             {hasVariables(prompt.content) && (
               <div className="space-y-2">
                 <div className="text-xs font-medium text-muted-foreground/80 uppercase tracking-wide">
-                  变量信息
+                  {t('ui_variableInfo')}
                 </div>
                 <div className="flex flex-wrap gap-1.5">
                   {extractVariables(prompt.content).map((variable, index) => (
@@ -215,8 +221,8 @@ export const PromptCard = React.forwardRef<HTMLDivElement, PromptCardProps>(
 
             {/* 统计信息 */}
             <div className="flex items-center justify-between text-xs text-muted-foreground/70 pt-2 border-t border-border/30">
-              <span>使用次数: {prompt.usageCount || 0}</span>
-              <span>创建时间: {new Date(prompt.createdAt || Date.now()).toLocaleDateString()}</span>
+              <span>{t('ui_usageCount')}: {prompt.usageCount || 0}</span>
+              <span>{t('ui_createTime')}: {new Date(prompt.createdAt || Date.now()).toLocaleDateString()}</span>
             </div>
           </div>
         </div>

@@ -8,9 +8,7 @@ console.log('PromptMate 背景脚本已启动');
 type Prompt = { id: string; title: string; content: string; category: string; isFavorite?: boolean };
 type UsageRecord = { promptId: string; timestamp: string; action: 'copy' | 'inject' | 'view' };
 type Category = { id: string; name: string };
-type Settings = {
-  autoExportOnChange?: boolean;
-};
+import { ExtensionSettings } from '../shared/types';
 
 // helpers
 const readLocal = <T = any>(keys: string[]): Promise<Record<string, T>> =>
@@ -29,7 +27,12 @@ function uniqueBy<T>(arr: T[], key: (t: T) => string): T[] {
   return out;
 }
 
-async function buildContextMenus() {
+async function buildContextMenus(settings: ExtensionSettings) {
+  const enhancedSettings = settings.enhancedSettings || {};
+  if (!enhancedSettings.enableContextMenu) {
+    await removeAllContextMenus();
+    return;
+  }
   await removeAllContextMenus();
 
   // parent
@@ -115,7 +118,7 @@ async function downloadExportFile(json: string) {
 let autoExportTimer: number | undefined;
 async function maybeAutoExport() {
   const data = await readLocal<any>(['settings']);
-  const settings: Settings = data.settings || {};
+  const settings: ExtensionSettings = data.settings || {};
   if (!settings.autoExportOnChange) return;
   // 防抖，避免一次批量写入触发多次下载
   if (autoExportTimer) clearTimeout(autoExportTimer);
@@ -142,21 +145,100 @@ async function maybeAutoExport() {
 }
 
 // 初始化与重建菜单
-chrome.runtime.onInstalled.addListener(async () => {
-  console.log('PromptMate 扩展已安装');
-  await buildContextMenus();
+// Omnibox search
+function initializeOmnibox(settings: ExtensionSettings) {
+  const enabled = settings.enhancedSettings?.enableOmnibox ?? false;
+  if (!enabled) {
+    // In Manifest V3, there's no direct way to disable omnibox keyword registration dynamically.
+    // We just don't register any listeners if it's disabled.
+    return;
+  }
+
+  chrome.omnibox.onInputStarted.addListener(() => {
+    console.log('Omnibox input started');
+  });
+
+  chrome.omnibox.onInputChanged.addListener(async (text, suggest) => {
+    const data = await readLocal<any>(['prompts']);
+    const prompts: Prompt[] = data.prompts || [];
+    const suggestions = prompts
+      .filter(p => p.title.toLowerCase().includes(text.toLowerCase()))
+      .map(p => ({ content: p.id, description: p.title }));
+    suggest(suggestions);
+  });
+
+  chrome.omnibox.onInputEntered.addListener(async (text, disposition) => {
+    // `text` is the `content` of the selected suggestion, which we set as the prompt ID.
+    const promptId = text;
+    const data = await readLocal<any>(['prompts']);
+    const prompts: Prompt[] = data.prompts || [];
+    const p = prompts.find(pp => pp.id === promptId);
+    if (!p) return;
+
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (tab?.id) {
+      chrome.tabs.sendMessage(tab.id, { type: 'INJECT_TEXT', payload: { text: p.content } });
+    }
+  });
+}
+
+function initializePageSummary(settings: ExtensionSettings) {
+  const enabled = settings.enhancedSettings?.enablePageSummary ?? false;
+  if (enabled) {
+    console.log('Page summary feature enabled.');
+    // TODO: Add logic to handle page summary requests from content scripts
+  }
+}
+
+function initializeAutoActivation(settings: ExtensionSettings) {
+  const enabled = settings.enhancedSettings?.enableAutoActivate ?? false;
+  if (enabled) {
+    console.log('Auto-activation feature enabled.');
+    // TODO: Add logic for auto-activating on specific sites
+  }
+}
+
+// Main initialization logic
+async function initialize() {
+  console.log('Initializing PromptMate background script...');
+  const data = await readLocal<any>(['settings']);
+  const settings: ExtensionSettings = data.settings || {};
+
+  await buildContextMenus(settings);
+  initializeOmnibox(settings);
+  initializePageSummary(settings);
+  initializeAutoActivation(settings);
+}
+
+// Listeners
+chrome.runtime.onInstalled.addListener(() => {
+  console.log('PromptMate extension installed.');
+  initialize();
 });
 
-chrome.runtime.onStartup?.addListener(async () => {
-  await buildContextMenus();
+chrome.runtime.onStartup?.addListener(() => {
+  console.log('Browser startup.');
+  initialize();
 });
 
 chrome.storage.onChanged.addListener(async (changes, area) => {
   if (area !== 'local') return;
-  if (changes.prompts || changes.usageRecords || changes.categories) {
-    await buildContextMenus();
+
+  // If settings change, re-initialize features
+  if (changes.settings) {
+    console.log('Settings changed, re-initializing...');
+    await initialize();
   }
-  // prompts、categories、settings 任一变化时尝试自动导出
+
+  // If prompts, usage, or categories change, just rebuild context menus (if enabled)
+  if (changes.prompts || changes.usageRecords || changes.categories) {
+    console.log('Data changed, rebuilding context menus...');
+    const data = await readLocal<any>(['settings']);
+    const settings: ExtensionSettings = data.settings || {};
+    await buildContextMenus(settings);
+  }
+
+  // Auto-export logic
   if (changes.prompts || changes.categories || changes.settings) {
     await maybeAutoExport();
   }

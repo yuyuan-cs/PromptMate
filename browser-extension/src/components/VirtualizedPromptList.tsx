@@ -1,12 +1,11 @@
-import * as React from 'react';
+import React from 'react';
 import { VariableSizeList as List } from 'react-window';
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
-import { Badge } from './ui/badge';
-import { Icons } from './ui/icons';
 import { cn } from '../lib/utils';
 import { Prompt } from '../shared/types';
 import { hasVariables, extractVariables } from '../shared/variableUtils';
+import { useTranslation } from '../i18n';
+import { Icons } from './ui/icons';
 
 interface VirtualizedPromptListProps {
   prompts: Prompt[];
@@ -53,6 +52,9 @@ const PromptItem: React.FC<PromptItemProps> = ({ index, style, data }) => {
     onDeletePrompt,
   } = data;
 
+  const { t } = useTranslation();
+  const [expandedPrompts, setExpandedPrompts] = React.useState<Set<string>>(new Set());
+  const [hoveredPrompt, setHoveredPrompt] = React.useState<string | null>(null);
   const prompt = prompts[index];
   const [isHovered, setIsHovered] = React.useState(false);
   const isExpanded = expandedPromptId === prompt.id;
@@ -148,7 +150,7 @@ const PromptItem: React.FC<PromptItemProps> = ({ index, style, data }) => {
               size="sm"
               className="h-6 w-6 p-0 bg-muted/40 hover:bg-muted/60 border-0 text-foreground/80 hover:text-foreground transition-all duration-150 rounded group relative"
               onClick={(e) => handleQuickAction(e, () => onCopyWithVariables(prompt))}
-              title={`复制${hasVariables(prompt.content) ? ' (含变量)' : ''}`}
+              title={hasVariables(prompt.content) ? t('ui_copyWithVariables') : t('ui_copy')}
             >
               <Icons.copy className="w-3 h-3" />
               {hasVariables(prompt.content) && (
@@ -160,9 +162,9 @@ const PromptItem: React.FC<PromptItemProps> = ({ index, style, data }) => {
               size="sm"
               className="h-6 w-6 p-0 bg-primary/10 hover:bg-primary/20 border-0 text-primary hover:text-primary transition-all duration-150 rounded group relative"
               onClick={(e) => handleQuickAction(e, () => onInjectWithVariables(prompt))}
-              title={`注入${hasVariables(prompt.content) ? ' (含变量)' : ''}`}
+              title={hasVariables(prompt.content) ? t('ui_injectWithVariables') : t('ui_inject')}
             >
-              <Icons.send className="w-3 h-3" />
+              <Icons.star className="w-3 h-3" />
               {hasVariables(prompt.content) && (
                 <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-primary rounded-full"></span>
               )}
@@ -178,7 +180,7 @@ const PromptItem: React.FC<PromptItemProps> = ({ index, style, data }) => {
               size="sm"
               className="h-5 w-5 p-0 text-muted-foreground/70 hover:text-foreground hover:bg-muted/60 border-0"
               onClick={(e) => handleQuickAction(e, () => onEditPrompt(prompt))}
-              title="编辑"
+              title={t('ui_edit')}
             >
               <Icons.edit className="w-3 h-3" />
             </Button>
@@ -187,7 +189,7 @@ const PromptItem: React.FC<PromptItemProps> = ({ index, style, data }) => {
               size="sm"
               className="h-5 w-5 p-0 text-muted-foreground/60 hover:text-destructive hover:bg-destructive/10 border-0"
               onClick={(e) => handleQuickAction(e, () => onDeletePrompt(prompt))}
-              title="删除"
+              title={t('ui_delete')}
             >
               <Icons.trash className="w-3 h-3" />
             </Button>
@@ -201,7 +203,7 @@ const PromptItem: React.FC<PromptItemProps> = ({ index, style, data }) => {
           {/* 完整内容预览 */}
           <div className="space-y-2">
             <div className="text-xs font-medium text-muted-foreground/80 uppercase tracking-wide">
-              完整内容
+              {t('ui_fullContent')}
             </div>
             <div className="text-sm text-foreground/90 leading-relaxed whitespace-pre-wrap bg-background/60 rounded p-2 border border-border/30">
               {prompt.content}
@@ -238,23 +240,22 @@ const PromptItem: React.FC<PromptItemProps> = ({ index, style, data }) => {
   );
 };
 
-export const VirtualizedPromptList = React.forwardRef<List, VirtualizedPromptListProps>((
-  {
-    prompts,
-    selectedPrompt,
-    expandedPromptId,
-    onPromptSelect,
-    onToggleExpand,
-    onCopyWithVariables,
-    onInjectWithVariables,
-    onToggleFavorite,
-    onEditPrompt,
-    onDeletePrompt,
-    height,
-  },
-  ref
-) => {
+export const VirtualizedPromptList: React.FC<VirtualizedPromptListProps> = ({
+  prompts,
+  selectedPrompt,
+  expandedPromptId,
+  onPromptSelect,
+  onToggleExpand,
+  onCopyWithVariables,
+  onInjectWithVariables,
+  onToggleFavorite,
+  onEditPrompt,
+  onDeletePrompt,
+  height,
+}) => {
+  const { t } = useTranslation();
   const containerRef = React.useRef<HTMLDivElement>(null);
+  const listRef = React.useRef<any>(null);
   
   // 使用固定高度或动态计算，避免ResizeObserver循环
   const containerHeight = React.useMemo(() => {
@@ -290,8 +291,8 @@ export const VirtualizedPromptList = React.forwardRef<List, VirtualizedPromptLis
     return (
       <div className="flex-1 flex items-center justify-center p-8">
         <div className="text-center space-y-2">
-          <div className="text-muted-foreground">暂无提示词</div>
-          <div className="text-xs text-muted-foreground">点击"新建"创建您的第一个提示词</div>
+          <div className="text-muted-foreground">{t('ui_noPrompts')}</div>
+          <div className="text-xs text-muted-foreground">{t('ui_createFirstPrompt')}</div>
         </div>
       </div>
     );
@@ -335,7 +336,7 @@ export const VirtualizedPromptList = React.forwardRef<List, VirtualizedPromptLis
   return (
     <div ref={containerRef} className="h-full w-full virtualized-list-container">
       <List
-        ref={ref}
+        ref={listRef}
         height={containerHeight}
         itemCount={prompts.length}
         itemSize={getItemSize}
@@ -345,12 +346,10 @@ export const VirtualizedPromptList = React.forwardRef<List, VirtualizedPromptLis
         overscanCount={2}
         useIsScrolling={false}
         layout="vertical"
-      >
-        {PromptItem}
-      </List>
+        children={PromptItem}
+      />
     </div>
   );
-});
+};
 
 VirtualizedPromptList.displayName = 'VirtualizedPromptList';
-

@@ -209,6 +209,23 @@ export function useExtensionPrompts() {
     }
   }, [storage, loadData]);
 
+  // 添加分类
+  const addCategory = useCallback(async (category: Omit<Category, 'id'>) => {
+    try {
+      const newCategory: Category = {
+        ...category,
+        id: `category-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+      };
+
+      await storage.addCategory(newCategory);
+      setCategories(prev => [...prev, newCategory]);
+      return newCategory;
+    } catch (err) {
+      console.error('添加分类失败:', err);
+      throw new Error('添加分类失败');
+    }
+  }, [storage]);
+
   // 清空所有数据
   const clearAllData = useCallback(async () => {
     try {
@@ -264,6 +281,7 @@ export function useExtensionPrompts() {
     addPrompt,
     updatePrompt,
     deletePrompt,
+    addCategory,
     toggleFavorite,
     recordUsage,
     updateSettings,

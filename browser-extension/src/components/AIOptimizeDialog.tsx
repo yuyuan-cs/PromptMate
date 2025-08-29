@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { Button } from './ui/button';
 import { ScrollArea } from './ui/scroll-area';
-import { Loader2, Copy, Check, X, Sparkles } from 'lucide-react';
+import { Copy, Check, X, Sparkles } from 'lucide-react';
 import { AIOptimizeResponse } from '../services/aiService';
+import { LoadingState } from './ui/loading-states';
+import { useTranslation } from '../i18n';
 
 interface AIOptimizeDialogProps {
   open: boolean;
@@ -25,6 +27,7 @@ export const AIOptimizeDialog: React.FC<AIOptimizeDialogProps> = ({
   streamingContent = '',
   isStreaming = false,
 }) => {
+  const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
 
   // 复制到剪贴板
@@ -34,7 +37,7 @@ export const AIOptimizeDialog: React.FC<AIOptimizeDialogProps> = ({
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {
-      console.error('复制失败:', error);
+      console.error(t('ai_copyFailed'), error);
     }
   };
 
@@ -49,7 +52,7 @@ export const AIOptimizeDialog: React.FC<AIOptimizeDialogProps> = ({
         <div className="flex items-center justify-between p-4 border-b">
           <div className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-purple-500" />
-            <h2 className="text-lg font-semibold">AI 优化结果</h2>
+            <h2 className="text-lg font-semibold">{t('ai_optimizeResult')}</h2>
           </div>
           <Button
             variant="ghost"
@@ -65,21 +68,17 @@ export const AIOptimizeDialog: React.FC<AIOptimizeDialogProps> = ({
         <div className="flex-1 p-4 space-y-4 overflow-hidden">
           {/* Loading State */}
           {(isLoading || isStreaming) && (
-            <div className="flex items-center justify-center py-8">
-              <div className="text-center">
-                <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2 text-purple-500" />
-                <p className="text-sm text-gray-600">
-                  {isStreaming ? 'AI 正在优化中...' : '正在处理...'}
-                </p>
-              </div>
-            </div>
+            <LoadingState 
+              text={isStreaming ? t('ai_optimizing') : t('ai_processing')} 
+              size="md"
+            />
           )}
 
           {/* Streaming Content */}
           {isStreaming && streamingContent && (
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-medium text-gray-700">实时优化结果</h3>
+                <h3 className="text-sm font-medium text-gray-700">{t('ai_realtimeResult')}</h3>
                 <Button
                   variant="outline"
                   size="sm"
@@ -91,7 +90,7 @@ export const AIOptimizeDialog: React.FC<AIOptimizeDialogProps> = ({
                   ) : (
                     <Copy className="h-3 w-3 mr-1" />
                   )}
-                  {copied ? '已复制' : '复制'}
+                  {copied ? t('ai_copied') : t('ai_copy')}
                 </Button>
               </div>
               <ScrollArea className="h-64 w-full border rounded-md p-3">
@@ -109,7 +108,7 @@ export const AIOptimizeDialog: React.FC<AIOptimizeDialogProps> = ({
               {/* Optimized Content */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-medium text-gray-700">优化后的提示词</h3>
+                  <h3 className="text-sm font-medium text-gray-700">{t('ai_optimizedPrompt')}</h3>
                   <Button
                     variant="outline"
                     size="sm"
@@ -121,7 +120,7 @@ export const AIOptimizeDialog: React.FC<AIOptimizeDialogProps> = ({
                     ) : (
                       <Copy className="h-3 w-3 mr-1" />
                     )}
-                    {copied ? '已复制' : '复制'}
+                    {copied ? t('ai_copied') : t('ai_copy')}
                   </Button>
                 </div>
                 <ScrollArea className="h-48 w-full border rounded-md p-3">
@@ -134,7 +133,7 @@ export const AIOptimizeDialog: React.FC<AIOptimizeDialogProps> = ({
               {/* Explanation */}
               {result.explanation && (
                 <div className="space-y-3">
-                  <h3 className="text-sm font-medium text-gray-700">优化说明</h3>
+                  <h3 className="text-sm font-medium text-gray-700">{t('ai_explanation')}</h3>
                   <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
                     <div className="text-sm text-blue-900">
                       {result.explanation}
@@ -146,7 +145,7 @@ export const AIOptimizeDialog: React.FC<AIOptimizeDialogProps> = ({
               {/* Suggestions */}
               {result.suggestions && result.suggestions.length > 0 && (
                 <div className="space-y-3">
-                  <h3 className="text-sm font-medium text-gray-700">建议</h3>
+                  <h3 className="text-sm font-medium text-gray-700">{t('ai_suggestions')}</h3>
                   <div className="space-y-2">
                     {result.suggestions.map((suggestion, index) => (
                       <div key={index} className="flex items-start gap-2">
@@ -169,14 +168,14 @@ export const AIOptimizeDialog: React.FC<AIOptimizeDialogProps> = ({
               onClick={onReject}
               disabled={isLoading}
             >
-              取消
+              {t('ai_cancel')}
             </Button>
             <Button
               onClick={() => onAccept(result.optimizedContent)}
               disabled={isLoading || !result.optimizedContent}
               className="bg-purple-500 hover:bg-purple-600"
             >
-              应用优化
+              {t('ai_applyOptimization')}
             </Button>
           </div>
         )}

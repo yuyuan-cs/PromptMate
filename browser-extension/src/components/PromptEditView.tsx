@@ -3,9 +3,9 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
-import { AutoResizeTextarea } from './ui/auto-resize-textarea';
-import { AIOptimizeButton } from './AIOptimizeButton';
+import { Combobox } from './ui/combobox';
 import { Prompt, Category } from '../shared/types';
+import { useTranslation } from '../i18n';
 
 // Props for the component
 export interface PromptEditViewProps {
@@ -28,6 +28,9 @@ export const PromptEditView: React.FC<PromptEditViewProps> = ({
   showBackButton = true,
   showCloseButton = true,
 }) => {
+  const { t } = useTranslation();
+  console.log('🎯 PromptEditView rendered with:', { prompt: prompt?.title || 'new' });
+  
   console.log('🚀 PromptEditView START - Props received:', {
     prompt: prompt ? { id: prompt.id, title: prompt.title } : null,
     categoriesCount: categories?.length,
@@ -106,7 +109,6 @@ export const PromptEditView: React.FC<PromptEditViewProps> = ({
   // UI/Error state
   console.log('🔧 PromptEditView - Initializing UI state');
   const [isSaving, setIsSaving] = React.useState(false);
-  const [isOptimizing, setIsOptimizing] = React.useState(false);
   const [errors, setErrors] = React.useState<{ title?: string; content?: string }>({});
   
   console.log('📊 PromptEditView - Current state:', {
@@ -116,8 +118,7 @@ export const PromptEditView: React.FC<PromptEditViewProps> = ({
     category,
     isFavorite,
     tagsCount: tags.length,
-    isSaving,
-    isOptimizing
+    isSaving
   });
 
   const handleSave = async () => {
@@ -125,8 +126,8 @@ export const PromptEditView: React.FC<PromptEditViewProps> = ({
     try {
       // Simple validation
       const newErrors: { title?: string; content?: string } = {};
-      if (!title.trim()) newErrors.title = '此项为必填项';
-      if (!content.trim()) newErrors.content = '此项为必填项';
+      if (!title.trim()) newErrors.title = t('validation_required');
+      if (!content.trim()) newErrors.content = t('validation_required');
 
       if (Object.keys(newErrors).length > 0) {
         console.log('❌ PromptEditView - Validation errors:', newErrors);
@@ -151,7 +152,7 @@ export const PromptEditView: React.FC<PromptEditViewProps> = ({
       console.log('✅ PromptEditView - Save completed successfully');
     } catch (error) {
       console.error('❌ PromptEditView - Save failed:', error);
-      setErrors({ title: '保存失败，请重试' });
+      setErrors({ title: t('prompts_saveFailed') });
     } finally {
       console.log('🔄 PromptEditView - Resetting saving state');
       setIsSaving(false);
@@ -173,16 +174,24 @@ export const PromptEditView: React.FC<PromptEditViewProps> = ({
     setTags(tags.filter(tag => tag !== tagToRemove));
   };
 
-  const handleAiOptimize = (optimizedContent: string) => {
-    setContent(optimizedContent);
-    if (!title.trim() && optimizedContent.trim()) {
-      // Auto-generate title from first line of optimized content
-      const firstLine = optimizedContent.split('\n')[0].trim();
-      if (firstLine.length > 0 && firstLine.length <= 50) {
-        setTitle(firstLine);
+  // 处理创建新分类
+  const handleCreateCategory = async (name: string) => {
+    try {
+      const newCategory = await onAddNewCategory(name);
+      if (newCategory) {
+        setCategory(newCategory.id);
       }
+    } catch (error) {
+      console.error('创建分类失败:', error);
     }
   };
+
+  // 准备分类选项
+  const categoryOptions = React.useMemo(() => [
+    { value: '', label: t('prompts_noCategory') },
+    ...categories.map(cat => ({ value: cat.id, label: cat.name }))
+  ], [categories, t]);
+
 
   // Draft protection
   const hasUnsavedChanges = React.useMemo(() => {
@@ -201,7 +210,7 @@ export const PromptEditView: React.FC<PromptEditViewProps> = ({
 
   const handleCancel = () => {
     if (hasUnsavedChanges) {
-      if (window.confirm('您有未保存的更改，确定要离开吗？')) {
+      if (window.confirm(t('prompts_unsavedChanges'))) {
         onCancel();
       }
     } else {
@@ -228,58 +237,56 @@ export const PromptEditView: React.FC<PromptEditViewProps> = ({
         {/* Simple Header */}
         <div className="p-4 border-b">
           <h2 className="text-lg font-semibold">
-            {isEditMode ? '编辑提示词' : '新建提示词'}
+            {isEditMode ? t('prompts_editPrompt') : t('prompts_newPrompt')}
           </h2>
         </div>
 
         {/* Simple Form */}
         <div className="flex-1 p-4 space-y-4 overflow-y-auto">
           <div>
-            <label className="block text-sm font-medium mb-1">标题 *</label>
+            <label className="block text-sm font-medium mb-1">{t('prompts_title')} *</label>
             <Input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="输入标题"
+              placeholder={t('prompts_titlePlaceholder')}
               className="w-full"
             />
             {errors.title && <p className="text-red-500 text-xs mt-1">{errors.title}</p>}
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">内容 *</label>
-            <AutoResizeTextarea
+            <label className="block text-sm font-medium mb-1">{t('prompts_content')} *</label>
+            <Textarea
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              placeholder="输入内容"
-              className="w-full font-mono text-sm"
-              minRows={5}
+              placeholder={t('prompts_contentPlaceholder')}
+              className="w-full font-mono text-sm min-h-[120px]"
             />
             {errors.content && <p className="text-red-500 text-xs mt-1">{errors.content}</p>}
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">描述</label>
-            <AutoResizeTextarea
+            <label className="block text-sm font-medium mb-1">{t('prompts_description')}</label>
+            <Textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="输入描述（可选）"
-              className="w-full"
-              minRows={2}
+              placeholder={t('prompts_descriptionPlaceholder')}
+              className="w-full min-h-[60px]"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">分类</label>
-            <select
-              value={category || ''}
-              onChange={(e) => setCategory(e.target.value)}
-              className="w-full p-2 border rounded"
-            >
-              <option value="">无分类</option>
-              {categories.map((cat) => (
-                <option key={cat.id} value={cat.id}>{cat.name}</option>
-              ))}
-            </select>
+            <label className="block text-sm font-medium mb-1">{t('prompts_category')}</label>
+            <Combobox
+              options={categoryOptions}
+              value={category}
+              onValueChange={setCategory}
+              onCreateNew={handleCreateCategory}
+              placeholder={t('prompts_selectCategory')}
+              searchPlaceholder="搜索分类..."
+              createLabel="创建分类"
+              className="w-full"
+            />
           </div>
 
           <div>
@@ -290,12 +297,12 @@ export const PromptEditView: React.FC<PromptEditViewProps> = ({
                 onChange={(e) => setIsFavorite(e.target.checked)}
                 className="mr-2"
               />
-              添加到收藏
+              {t('prompts_addToFavorites')}
             </label>
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">标签</label>
+            <label className="block text-sm font-medium mb-1">{t('prompts_tags')}</label>
             <div className="flex flex-wrap gap-2 mb-2">
               {tags.map((tag) => (
                 <span key={tag} className="bg-gray-100 px-2 py-1 rounded text-sm flex items-center gap-1">
@@ -313,7 +320,7 @@ export const PromptEditView: React.FC<PromptEditViewProps> = ({
               value={tagInput}
               onChange={(e) => setTagInput(e.target.value)}
               onKeyDown={handleTagKeyDown}
-              placeholder="输入标签后按回车添加"
+              placeholder={t('prompts_tagsPlaceholder')}
               className="w-full"
             />
           </div>
@@ -322,26 +329,19 @@ export const PromptEditView: React.FC<PromptEditViewProps> = ({
         {/* Simple Footer */}
         <div className="p-4 border-t">
           <div className="flex gap-2">
-            <AIOptimizeButton
-              content={content}
-              title={title}
-              onOptimize={handleAiOptimize}
-              disabled={isOptimizing}
-              variant="inline"
-            />
             <Button
               onClick={handleCancel}
               variant="outline"
               className="flex-1"
             >
-              取消
+              {t('prompts_cancel')}
             </Button>
             <Button
               onClick={handleSave}
               disabled={isSaving}
               className="flex-1"
             >
-              {isSaving ? '保存中...' : (isEditMode ? '保存更改' : '创建')}
+              {isSaving ? t('prompts_saving') : (isEditMode ? t('prompts_save') : t('prompts_create'))}
             </Button>
           </div>
         </div>
@@ -352,9 +352,9 @@ export const PromptEditView: React.FC<PromptEditViewProps> = ({
     return (
       <div className="flex-1 flex items-center justify-center p-4">
         <div className="text-center">
-          <div className="text-red-500 mb-2">❌ 渲染错误</div>
+          <div className="text-red-500 mb-2">❌ {t('prompts_renderError')}</div>
           <p className="text-sm text-gray-600 mb-4">{error.message}</p>
-          <Button onClick={handleCancel}>返回</Button>
+          <Button onClick={handleCancel}>{t('prompts_back')}</Button>
         </div>
       </div>
     );

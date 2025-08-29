@@ -19,17 +19,17 @@ import { VariableFormView } from '../components/VariableFormView';
 import { NewPromptList } from '../components/NewPromptList';
 import { extractVariables, hasVariables } from '../shared/variableUtils';
 import { debounce, performSearch, sortPrompts } from '../utils/searchUtils';
+import { useTranslation, t } from '../i18n';
+import { useTheme } from '../hooks/useTheme';
 import '../assets/styles.css';
 
 interface SidePanelProps {}
 
 const SidePanel: React.FC<SidePanelProps> = () => {
   console.log('🔄 SidePanel component rendering...');
-  // 在这里添加一个 alert 确认组件加载
-  //React.useEffect(() => {
-    //console.log('SidePanel 组件已挂载');
-    //alert('SidePanel 组件已加载'); // 这应该在页面加载时弹出
-  //}, []);
+  const { t } = useTranslation();
+  const { theme, setTheme } = useTheme();
+  
   // Error boundary state
   const [hasError, setHasError] = React.useState(false);
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
@@ -39,12 +39,12 @@ const SidePanel: React.FC<SidePanelProps> = () => {
     const handleError = (error: ErrorEvent) => {
       console.error('SidePanel error:', error);
       setHasError(true);
-      setErrorMessage('组件运行时错误: ' + error.message);
+      setErrorMessage(t('error_componentRuntime') + ': ' + error.message);
     };
 
     const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
       console.error('SidePanel unhandled promise rejection:', event.reason);
-      setErrorMessage('异步操作失败: ' + (event.reason?.message || event.reason));
+      setErrorMessage(t('error_asyncOperation') + ': ' + (event.reason?.message || event.reason));
     };
 
     window.addEventListener('error', handleError);
@@ -61,7 +61,7 @@ const SidePanel: React.FC<SidePanelProps> = () => {
     return (
       <div className="flex-1 flex items-center justify-center p-4">
         <div className="text-center">
-          <div className="text-destructive mb-2">❌ 组件加载失败</div>
+          <div className="text-destructive mb-2">❌ {t('sidepanel_componentLoadFailed')}</div>
           <p className="text-sm text-muted-foreground mb-4">{errorMessage}</p>
           <Button 
             onClick={() => {
@@ -72,7 +72,7 @@ const SidePanel: React.FC<SidePanelProps> = () => {
             variant="outline"
             size="sm"
           >
-            重新加载
+            {t('sidepanel_reload')}
           </Button>
         </div>
       </div>
@@ -95,6 +95,7 @@ const SidePanel: React.FC<SidePanelProps> = () => {
     addPrompt,
     updatePrompt,
     deletePrompt,
+    addCategory,
     updateSettings,
     exportData,
     importData,
@@ -121,6 +122,13 @@ const SidePanel: React.FC<SidePanelProps> = () => {
   const debouncedSetSearch = React.useMemo(() => debounce((val: string) => setSearchTerm(val), 250), [setSearchTerm]);
   React.useEffect(() => { setSearchInput(searchTerm); }, [searchTerm]);
 
+  // 标签滚动相关状态
+  const categoryScrollRef = React.useRef<HTMLDivElement>(null);
+  const [showLeftArrow, setShowLeftArrow] = React.useState(false);
+  const [showRightArrow, setShowRightArrow] = React.useState(false);
+  const [showNewCategoryDialog, setShowNewCategoryDialog] = React.useState(false);
+  const [newCategoryName, setNewCategoryName] = React.useState('');
+
   // Computed values
   const favoritePrompts = React.useMemo(() => {
     return prompts.filter(p => p.isFavorite).length;
@@ -145,7 +153,7 @@ const SidePanel: React.FC<SidePanelProps> = () => {
     try {
       const prompt = prompts.find(p => p.id === promptId);
       if (!prompt) {
-        showToast('提示词不存在', 'error');
+        showToast(t('toast_promptNotFound'), 'error');
         return;
       }
       
@@ -154,12 +162,12 @@ const SidePanel: React.FC<SidePanelProps> = () => {
         isFavorite: !prompt.isFavorite 
       });
       showToast(
-        prompt.isFavorite ? '已取消收藏' : '已添加到收藏', 
+        prompt.isFavorite ? t('toast_favoriteRemoved') : t('toast_favoriteAdded'), 
         'success'
       );
     } catch (error) {
       console.error('切换收藏状态失败:', error);
-      showToast('操作失败', 'error');
+      showToast(t('toast_operationFailed'), 'error');
     }
   }, [prompts, updatePrompt]);
 
@@ -168,10 +176,10 @@ const SidePanel: React.FC<SidePanelProps> = () => {
     try {
       await navigator.clipboard.writeText(text);
       await recordUsage(promptId, 'copy');
-      showToast('已复制到剪贴板', 'success');
+      showToast(t('toast_copied'), 'success');
     } catch (err) {
       console.error('复制失败:', err);
-      showToast('复制失败', 'error');
+      showToast(t('toast_copyFailed'), 'error');
     }
   }, [recordUsage]);
 
@@ -202,19 +210,19 @@ const SidePanel: React.FC<SidePanelProps> = () => {
           async (response) => {
             if (chrome.runtime.lastError) {
               console.error('注入失败:', chrome.runtime.lastError.message);
-              showToast('注入失败：请刷新页面后重试', 'error');
+              showToast(t('toast_injectFailedRefresh'), 'error');
             } else if (response?.success) {
               console.log('文本注入成功');
               await recordUsage(promptId, 'inject');
-              showToast('文本已注入到页面', 'success');
+              showToast(t('toast_injected'), 'success');
             } else {
               console.error('注入失败:', response?.error);
-              showToast(response?.error || '注入失败：未找到输入框', 'error');
+              showToast(response?.error || t('toast_injectFailedNoInput'), 'error');
             }
           }
         );
       } else {
-        showToast('注入失败：无法获取当前页面', 'error');
+        showToast(t('toast_injectFailedNoPage'), 'error');
       }
     });
   }, [recordUsage]);
@@ -292,7 +300,7 @@ const SidePanel: React.FC<SidePanelProps> = () => {
   const handlePromptSelect = React.useCallback(async (prompt: Prompt) => {
     if (!isValidPrompt(prompt)) {
       console.error('Invalid prompt object:', prompt);
-      showToast('提示词数据无效', 'error');
+      showToast(t('sidepanel_invalidPromptData'), 'error');
       return;
     }
     
@@ -339,52 +347,117 @@ const SidePanel: React.FC<SidePanelProps> = () => {
   const handleSaveOrUpdatePrompt = React.useCallback(async (promptData: Omit<Prompt, 'id' | 'createdAt' | 'updatedAt'> & { id?: string }) => {
     try {
       if (!promptData.title?.trim() || !promptData.content?.trim()) {
-        showToast('标题和内容为必填项', 'error');
+        showToast(t('validation_titleContentRequired'), 'error');
         throw new Error('Validation failed');
       }
 
       if (promptData.id) {
         // Update existing prompt
         await updatePrompt(promptData.id, promptData);
-        showToast('提示词更新成功', 'success');
+        showToast(t('toast_promptUpdated'), 'success');
       } else {
         // Create new prompt
         await addPrompt(promptData);
-        showToast('提示词创建成功', 'success');
+        showToast(t('toast_promptCreated'), 'success');
       }
       handleCloseEdit(); // Go back to list view on success
     } catch (error) {
       console.error('保存提示词失败:', error);
-      showToast('保存失败', 'error');
+      showToast(t('toast_saveFailed'), 'error');
       throw error; // Re-throw to let the component handle its saving state
     }
   }, [addPrompt, updatePrompt, handleCloseEdit]);
 
-  // 添加新分类 (占位符)
-  const handleAddNewCategory = React.useCallback(async (name: string) => {
-    console.log(`Attempting to add new category: ${name}`);
-    showToast(`功能暂未实现: 添加分类 "${name}"`, 'error');
-    // In a real implementation, you would call a method from the hook
-    // const newCategory = await addCategory({ name });
-    // return newCategory;
-    return null;
+  // 标签滚动控制函数
+  const updateScrollArrows = React.useCallback(() => {
+    const container = categoryScrollRef.current;
+    if (!container) return;
+    
+    const { scrollLeft, scrollWidth, clientWidth } = container;
+    setShowLeftArrow(scrollLeft > 0);
+    setShowRightArrow(scrollLeft < scrollWidth - clientWidth - 1);
   }, []);
+
+  const scrollCategories = React.useCallback((direction: 'left' | 'right') => {
+    const container = categoryScrollRef.current;
+    if (!container) return;
+    
+    const scrollAmount = 120;
+    const newScrollLeft = direction === 'left' 
+      ? container.scrollLeft - scrollAmount 
+      : container.scrollLeft + scrollAmount;
+    
+    container.scrollTo({ left: newScrollLeft, behavior: 'smooth' });
+  }, []);
+
+  const handleCategoryWheel = React.useCallback((e: React.WheelEvent) => {
+    e.preventDefault();
+    const container = categoryScrollRef.current;
+    if (!container) return;
+    
+    container.scrollLeft += e.deltaY;
+    updateScrollArrows();
+  }, [updateScrollArrows]);
+
+  // 监听滚动更新箭头状态
+  React.useEffect(() => {
+    const container = categoryScrollRef.current;
+    if (!container) return;
+    
+    const handleScroll = () => updateScrollArrows();
+    container.addEventListener('scroll', handleScroll);
+    
+    // 初始检查
+    updateScrollArrows();
+    
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, [updateScrollArrows]);
+
+  // 添加新分类
+  const handleAddNewCategory = React.useCallback(async (name: string) => {
+    if (!name.trim()) return null;
+    
+    try {
+      const newCategory = await addCategory({ 
+        name: name.trim(),
+        icon: '📁',
+        color: '#6366f1'
+      });
+      
+      showToast(t('toast_categoryCreated', { name: name.trim() }), 'success');
+      setNewCategoryName('');
+      setShowNewCategoryDialog(false);
+      
+      return newCategory;
+    } catch (error) {
+      console.error('添加分类失败:', error);
+      showToast(t('toast_categoryCreateFailed'), 'error');
+      return null;
+    }
+  }, [addCategory]);
+
+  // 创建新分类对话框处理
+  const handleCreateCategory = React.useCallback(() => {
+    if (newCategoryName.trim()) {
+      handleAddNewCategory(newCategoryName.trim());
+    }
+  }, [newCategoryName, handleAddNewCategory]);
 
   // 删除提示词
   const handleDeletePrompt = React.useCallback(async (prompt: Prompt) => {
-    if (confirm(`确定要删除提示词"${prompt.title}"吗？此操作无法撤销。`)) {
+    if (confirm(t('confirm_deletePrompt', { title: prompt.title }))) {
       try {
         await deletePrompt(prompt.id);
-        showToast('提示词已删除', 'success');
+        showToast(t('success_promptDeleted'), 'success');
         if (selectedPrompt?.id === prompt.id) {
           setSelectedPrompt(null);
         }
       } catch (error) {
         console.error('删除提示词失败:', error);
-        showToast('删除提示词失败', 'error');
+        showToast(t('error_deletePromptFailed'), 'error');
       }
     }
-  }, [deletePrompt, selectedPrompt]);
+  }, [deletePrompt, selectedPrompt, t]);
 
   // 处理变量视图的复制
   const handleVariableCopy = React.useCallback(async (finalText: string, variableValues: VariableValues) => {
@@ -449,12 +522,12 @@ const SidePanel: React.FC<SidePanelProps> = () => {
       await importData(text);
     } catch (error) {
       console.error('导入文件失败:', error);
-      showToast('导入文件失败', 'error');
+      showToast(t('sidepanel_importFailed'), 'error');
     }
   }, [importData]);
 
   return (
-    <div className="flex flex-col h-screen bg-background overflow-hidden">
+    <div className="flex flex-col h-screen bg-background">
       {/* 头部 - 紧凑设计 - 仅在列表视图显示 */}
       {currentView === 'list' && (
         <div className="flex-shrink-0 p-3 border-b border-border/30">
@@ -474,7 +547,7 @@ const SidePanel: React.FC<SidePanelProps> = () => {
         <div className="relative mb-2">
           <Icons.search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground/60" />
           <Input
-            placeholder="搜索提示词..."
+            placeholder={t('sidepanel_searchPlaceholder')}
             value={searchInput}
             onChange={(e) => { const v = e.target.value; setSearchInput(v); debouncedSetSearch(v); }}
             className="pl-8 h-8 text-sm bg-background/80 border-border/40 focus:border-primary/50 transition-all duration-200"
@@ -485,51 +558,93 @@ const SidePanel: React.FC<SidePanelProps> = () => {
               size="sm"
               className="h-7 px-2 text-xs"
               onClick={() => setShowFavorites(!showFavorites)}
-              title={showFavorites ? '显示全部' : '仅收藏'}
+              title={showFavorites ? t('sidepanel_showAll') : t('sidepanel_favoritesOnly')}
             >
               <span className={cn('mr-1', showFavorites ? 'text-yellow-400' : 'text-muted-foreground')}>⭐</span>
-              仅收藏
+              {t('sidepanel_favoritesOnly')}
             </Button>
           </div>
         </div>
 
-        {/* 分类筛选 - 紧凑标签设计 */}
-        <div className="flex gap-1 overflow-x-auto pb-1 scrollbar-none">
-          <Button
-            variant={activeCategory === 'all' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setActiveCategory('all')}
-            className="h-6 px-3 text-xs whitespace-nowrap shrink-0 rounded-full font-medium"
-          >
-            全部
-          </Button>
-          <Button
-            variant={activeCategory === 'favorites' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setActiveCategory('favorites')}
-            className="h-6 px-3 text-xs whitespace-nowrap shrink-0 rounded-full font-medium"
-          >
-            ⭐ {favoritePrompts}
-          </Button>
-          <Button
-            variant={activeCategory === 'recent' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setActiveCategory('recent')}
-            className="h-6 px-3 text-xs whitespace-nowrap shrink-0 rounded-full font-medium"
-          >
-            最近
-          </Button>
-          {categories.map((category) => (
+        {/* 分类筛选 - 带箭头控制的滚动设计 */}
+        <div className="relative flex items-center">
+          {/* 左箭头 */}
+          {showLeftArrow && (
             <Button
-              key={category.id}
-              variant={activeCategory === category.id ? 'default' : 'outline'}
+              variant="ghost"
               size="sm"
-              onClick={() => setActiveCategory(category.id)}
+              onClick={() => scrollCategories('left')}
+              className="absolute left-0 z-10 h-6 w-6 p-0 bg-background/80 backdrop-blur-sm border border-border/50 rounded-full shadow-sm"
+            >
+              <Icons.chevronDown className="h-3 w-3 rotate-90" />
+            </Button>
+          )}
+          
+          {/* 滚动容器 */}
+          <div 
+            ref={categoryScrollRef}
+            onWheel={handleCategoryWheel}
+            className="flex gap-1 overflow-x-hidden pb-1 mx-6 scrollbar-none"
+            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+          >
+            <Button
+              variant={activeCategory === 'all' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setActiveCategory('all')}
               className="h-6 px-3 text-xs whitespace-nowrap shrink-0 rounded-full font-medium"
             >
-              {category.name}
+              {t('sidepanel_all')}
             </Button>
-          ))}
+            <Button
+              variant={activeCategory === 'favorites' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setActiveCategory('favorites')}
+              className="h-6 px-3 text-xs whitespace-nowrap shrink-0 rounded-full font-medium"
+            >
+              ⭐ {favoritePrompts}
+            </Button>
+            <Button
+              variant={activeCategory === 'recent' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setActiveCategory('recent')}
+              className="h-6 px-3 text-xs whitespace-nowrap shrink-0 rounded-full font-medium"
+            >
+              {t('sidepanel_recent')}
+            </Button>
+            {categories.map((category) => (
+              <Button
+                key={category.id}
+                variant={activeCategory === category.id ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setActiveCategory(category.id)}
+                className="h-6 px-3 text-xs whitespace-nowrap shrink-0 rounded-full font-medium"
+              >
+                {category.name}
+              </Button>
+            ))}
+            {/* 新建分类按钮 */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowNewCategoryDialog(true)}
+              className="h-6 px-3 text-xs whitespace-nowrap shrink-0 rounded-full font-medium border-dashed text-muted-foreground hover:text-foreground"
+            >
+              <Icons.plus className="h-3 w-3 mr-1" />
+              {t('sidepanel_newCategory')}
+            </Button>
+          </div>
+          
+          {/* 右箭头 */}
+          {showRightArrow && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => scrollCategories('right')}
+              className="absolute right-0 z-10 h-6 w-6 p-0 bg-background/80 backdrop-blur-sm border border-border/50 rounded-full shadow-sm"
+            >
+              <Icons.chevronDown className="h-3 w-3 -rotate-90" />
+            </Button>
+          )}
         </div>
 
         {/* 标签筛选 - 可横向滚动的芯片 */}
@@ -587,7 +702,7 @@ const SidePanel: React.FC<SidePanelProps> = () => {
                     <div className="flex-1 flex items-center justify-center">
                       <div className="text-center py-8 text-muted-foreground">
                         <div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-2"></div>
-                        <p>加载编辑器...</p>
+                        <p>{t('sidepanel_loadingEditor')}</p>
                       </div>
                     </div>
                   }>
@@ -610,48 +725,38 @@ const SidePanel: React.FC<SidePanelProps> = () => {
                 return (
                   <div className="flex-1 flex items-center justify-center p-4">
                     <div className="text-center">
-                      <div className="text-red-500 mb-2">❌ 编辑视图错误</div>
+                      <div className="text-red-500 mb-2">❌ {t('sidepanel_editViewError')}</div>
                       <p className="text-sm text-gray-600 mb-4">{error.message}</p>
                       <button onClick={() => setCurrentView('list')} className="px-4 py-2 bg-blue-500 text-white rounded">
-                        返回列表
+                        {t('sidepanel_backToList')}
                       </button>
                     </div>
                   </div>
                 );
               }
-            
+
             case 'variables':
-              if (currentPromptForVariables) {
-                return (
-                  <VariableFormView
-                    promptTitle={currentPromptForVariables.title}
-                    promptContent={currentPromptForVariables.content}
-                    onBack={handleBackToList}
-                    onClose={handleCloseVariables}
-                    onCopy={handleVariableCopy}
-                    onInject={handleVariableInject}
-                    variableHistory={variableHistory}
-                    showBackButton={true}
-                    showCloseButton={true}
-                  />
-                );
-              }
-              handleBackToList();
-              return null;
+              return (
+                <VariableFormView
+                  promptTitle={currentPromptForVariables.title}
+                  promptContent={currentPromptForVariables.content}
+                  onBack={handleBackToList}
+                  onClose={handleCloseVariables}
+                  onCopy={handleVariableCopy}
+                  onInject={handleVariableInject}
+                  variableHistory={variableHistory}
+                  showBackButton={true}
+                  showCloseButton={true}
+                />
+              );
 
             case 'settings':
               return (
-                <SettingsView
-                  settings={settings}
-                  onBack={handleCloseSettings}
-                  onClose={handleCloseSettings}
-                  onUpdateSettings={updateSettings}
-                  onExportData={exportData}
-                  onImportData={handleImportFile}
-                  onClearData={clearAllData}
-                  showBackButton={true}
-                  showCloseButton={false}
-                />
+                <ScrollArea className="flex-1">
+                  <SettingsView
+                    onBack={handleCloseSettings}
+                  />
+                </ScrollArea>
               );
 
             case 'list':
@@ -661,7 +766,7 @@ const SidePanel: React.FC<SidePanelProps> = () => {
                   <div className="flex-1 flex items-center justify-center">
                     <div className="text-center py-8 text-muted-foreground">
                       <div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-2"></div>
-                      <p>加载中...</p>
+                      <p>{t('sidepanel_loading')}</p>
                     </div>
                   </div>
                 );
@@ -681,9 +786,9 @@ const SidePanel: React.FC<SidePanelProps> = () => {
                   <div className="flex-1 flex items-center justify-center">
                     <div className="text-center py-10 text-muted-foreground">
                       <Icons.search className="w-10 h-10 mx-auto mb-2 opacity-50" />
-                      <p className="mb-1">没有匹配的提示词</p>
+                      <p className="mb-1">{t('sidepanel_noMatches')}</p>
                       <p className="text-xs opacity-80">
-                        尝试调整搜索关键词、切换分类或清除标签/收藏筛选
+                        {t('sidepanel_noMatchesHint')}
                       </p>
                     </div>
                   </div>
@@ -714,10 +819,9 @@ const SidePanel: React.FC<SidePanelProps> = () => {
             size="sm" 
             className="flex-1"
             onClick={handleCreatePrompt}
-          
           >
             <Icons.plus className="w-4 h-4 mr-1" />
-            新建
+            {t('sidepanel_new')}
           </Button>
           <Button 
             variant="outline" 
@@ -726,13 +830,54 @@ const SidePanel: React.FC<SidePanelProps> = () => {
             onClick={handleOpenSettings}
           >
             <Icons.settings className="w-4 h-4 mr-1" />
-            设置
+            {t('sidepanel_settings')}
           </Button>
         </div>
         </div>
       )}
 
-
+      {/* 新建分类对话框 */}
+      {showNewCategoryDialog && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-background border border-border rounded-lg p-4 w-80 max-w-[90vw]">
+            <h3 className="text-sm font-medium mb-3">{t('sidepanel_newCategoryTitle')}</h3>
+            <Input
+              placeholder={t('sidepanel_categoryNamePlaceholder')}
+              value={newCategoryName}
+              onChange={(e) => setNewCategoryName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  handleCreateCategory();
+                } else if (e.key === 'Escape') {
+                  setShowNewCategoryDialog(false);
+                  setNewCategoryName('');
+                }
+              }}
+              className="mb-3"
+              autoFocus
+            />
+            <div className="flex gap-2 justify-end">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setShowNewCategoryDialog(false);
+                  setNewCategoryName('');
+                }}
+              >
+                {t('sidepanel_cancel')}
+              </Button>
+              <Button
+                size="sm"
+                onClick={handleCreateCategory}
+                disabled={!newCategoryName.trim()}
+              >
+                {t('sidepanel_create')}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

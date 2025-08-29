@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>测试分类功能</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; border-radius: 5px; }
+        .success { color: green; }
+        .error { color: red; }
+        button { padding: 8px 16px; margin: 5px; cursor: pointer; }
+        input { padding: 8px; margin: 5px; }
+    </style>
+</head>
+<body>
+    <h1>PromptMate 分类功能测试</h1>
+    
+    <div class="test-section">
+        <h2>测试新建分类功能</h2>
+        <p>请在浏览器扩展中测试以下功能：</p>
+        <ul>
+            <li>✅ 标签滚动功能 - 左右箭头控制，滚轮支持</li>
+            <li>✅ 分类列表末尾的"新建"按钮</li>
+            <li>✅ 新建分类对话框</li>
+            <li>✅ PromptEditView中的Combobox分类选择</li>
+            <li>✅ 即时创建新分类功能</li>
+        </ul>
+    </div>
+
+    <div class="test-section">
+        <h2>功能验证清单</h2>
+        <ol>
+            <li><strong>标签滚动测试</strong>：
+                <ul>
+                    <li>检查分类标签区域是否显示左右箭头</li>
+                    <li>点击箭头是否能滚动标签</li>
+                    <li>鼠标滚轮是否能横向滚动标签</li>
+                </ul>
+            </li>
+            <li><strong>新建分类测试</strong>：
+                <ul>
+                    <li>点击标签列表末尾的"新建"按钮</li>
+                    <li>输入分类名称并确认</li>
+                    <li>检查新分类是否出现在标签列表中</li>
+                </ul>
+            </li>
+            <li><strong>编辑界面分类创建测试</strong>：
+                <ul>
+                    <li>在编辑提示词界面，点击分类下拉框</li>
+                    <li>输入新的分类名称</li>
+                    <li>选择"创建分类"选项</li>
+                    <li>检查新分类是否被创建并选中</li>
+                </ul>
+            </li>
+        </ol>
+    </div>
+
+    <div class="test-section">
+        <h2>已修复的问题</h2>
+        <ul>
+            <li>✅ 添加了StorageManager.addCategory()方法</li>
+            <li>✅ 在useExtensionPrompts中实现了addCategory功能</li>
+            <li>✅ 修复了sidepanel中addCategory方法的引用</li>
+            <li>✅ 实现了真正的分类持久化存储</li>
+            <li>✅ 新建分类后会立即显示在标签列表中</li>
+        </ul>
+    </div>
+
+    <div class="test-section">
+        <h2>技术实现总结</h2>
+        <p><strong>数据流程：</strong></p>
+        <p>用户输入 → handleAddNewCategory → addCategory(hook) → StorageManager.addCategory → 更新categories状态 → UI重新渲染</p>
+        
+        <p><strong>关键修改：</strong></p>
+        <ul>
+            <li>StorageManager: 添加addCategory方法</li>
+            <li>useExtensionPrompts: 实现addCategory hook</li>
+            <li>sidepanel: 使用真实的addCategory方法</li>
+            <li>PromptEditView: 集成Combobox组件</li>
+        </ul>
+    </div>
+
+    <script>
+        console.log('PromptMate 分类功能测试页面已加载');
+        console.log('请在浏览器扩展中测试新建分类功能');
+    </script>
+</body>
+</html>

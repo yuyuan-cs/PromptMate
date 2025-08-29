@@ -51,9 +51,17 @@ export interface Settings {
   blockList?: string[];
 }
 
+// 增强功能设置
+export interface EnhancedSettings {
+  enableContextMenu?: boolean;
+  enableOmnibox?: boolean;
+  enablePageSummary?: boolean;
+  enableAutoActivate?: boolean;
+}
+
 // 扩展设置类型（用于浏览器扩展）
 export interface ExtensionSettings extends Settings {
-  // 扩展特有的设置
+  enhancedSettings?: EnhancedSettings;
 }
 
 // 使用记录
