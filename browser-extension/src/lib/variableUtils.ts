@@ -137,7 +137,7 @@ export function applyVariableValues(text: string, values: VariableValues): strin
 /**
  * 生成变量填写表单的数据结构
  */
-export function generateVariableFormData(text: string): {
+export function generateVariableFormData(text: string, t?: (key: string) => string): {
   variables: VariableInfo[];
   formFields: Array<{
     name: string;
@@ -157,7 +157,7 @@ export function generateVariableFormData(text: string): {
   const formFields = uniqueVariables.map(variable => ({
     name: variable.name,
     label: generateVariableLabel(variable.name),
-    placeholder: `请输入${generateVariableLabel(variable.name)}`,
+    placeholder: t ? `${t('variable.please_enter')}${variable.name}` : `请输入${variable.name}`,
     suggestions: variable.suggestions || [],
     required: true,
   }));

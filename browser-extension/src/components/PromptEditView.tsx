@@ -6,6 +6,7 @@ import { Textarea } from './ui/textarea';
 import { Combobox } from './ui/combobox';
 import { Prompt, Category } from '../shared/types';
 import { useTranslation } from '../i18n';
+import { AIOptimizeIconButton } from './AIOptimizeIconButton';
 
 // Props for the component
 export interface PromptEditViewProps {
@@ -242,7 +243,7 @@ export const PromptEditView: React.FC<PromptEditViewProps> = ({
         </div>
 
         {/* Simple Form */}
-        <div className="flex-1 p-4 space-y-4 overflow-y-auto">
+        <div className="flex-1 p-4 space-y-4 overflow-y-auto custom-scrollbar">
           <div>
             <label className="block text-sm font-medium mb-1">{t('prompts_title')} *</label>
             <Input
@@ -256,12 +257,25 @@ export const PromptEditView: React.FC<PromptEditViewProps> = ({
 
           <div>
             <label className="block text-sm font-medium mb-1">{t('prompts_content')} *</label>
-            <Textarea
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              placeholder={t('prompts_contentPlaceholder')}
-              className="w-full font-mono text-sm min-h-[120px]"
-            />
+            <div className="relative">
+              <Textarea
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                placeholder={t('prompts_contentPlaceholder')}
+                className="w-full font-mono text-sm min-h-[120px] pr-12"
+              />
+              <div className="absolute bottom-2 right-2">
+                <AIOptimizeIconButton
+                  content={content}
+                  title={title}
+                  onOptimize={(optimizedContent) => setContent(optimizedContent)}
+                  onOpenSettings={() => {
+                    // 这里可以添加打开AI设置的逻辑
+                    console.log('Open AI settings');
+                  }}
+                />
+              </div>
+            </div>
             {errors.content && <p className="text-red-500 text-xs mt-1">{errors.content}</p>}
           </div>
 

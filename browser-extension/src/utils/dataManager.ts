@@ -109,7 +109,7 @@ export class DataManager {
       if (error instanceof SyntaxError) {
         throw new Error(t('dataManager_jsonParseError'));
       }
-      throw new Error(t('dataManager_importFailed', { message: error.message }));
+      throw new Error(t('dataManager_importFailed', { error: error.message }));
     }
   }
 

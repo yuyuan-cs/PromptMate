@@ -5,6 +5,7 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Textarea } from './ui/textarea';
 import { Label } from './ui/label';
+import { useTranslation } from '../i18n';
 import { 
   Dialog, 
   DialogContent, 
@@ -44,6 +45,7 @@ export const VariableFormDialog: React.FC<VariableFormDialogProps> = ({
   onInject,
   variableHistory = []
 }) => {
+  const { t } = useTranslation();
   const [values, setValues] = React.useState<VariableValues>({});
   const [errors, setErrors] = React.useState<string[]>([]);
   const [previewText, setPreviewText] = React.useState('');
@@ -52,7 +54,7 @@ export const VariableFormDialog: React.FC<VariableFormDialogProps> = ({
 
   // 生成表单数据
   const { variables, formFields } = React.useMemo(() => 
-    generateVariableFormData(promptContent), [promptContent]
+    generateVariableFormData(promptContent, t), [promptContent, t]
   );
 
   // 初始化变量值

@@ -65,7 +65,7 @@ export function applyVariableValues(text: string, values: VariableValues): strin
 }
 
 // 生成变量填写表单的数据结构
-export function generateVariableFormData(text: string): {
+export function generateVariableFormData(text: string, t?: (key: string) => string): {
   variables: VariableInfo[];
   formFields: Variable[];
 } {
@@ -79,7 +79,7 @@ export function generateVariableFormData(text: string): {
   const formFields = uniqueVariables.map(variable => ({
     name: variable.name,
     label: generateVariableLabel(variable.name),
-    placeholder: `请输入${generateVariableLabel(variable.name)}`,
+    placeholder: t ? `${t('variable.please_enter')}${variable.name}` : `请输入${variable.name}`,
     required: true,
     suggestions: getCommonSuggestions(variable.name)
   }));
@@ -158,7 +158,7 @@ function generateVariableLabel(variableName: string): string {
     'platform': '平台',
     'technology': '技术',
     'framework': '框架',
-    'language': '编程语言',
+    'programming_language': '编程语言',
     'database': '数据库',
     
     // 其他常用

@@ -242,10 +242,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onBack }) => {
         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
           <div className="px-3 pt-3 flex-shrink-0">
             <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="general" className="text-xs">{t('settings.general')}</TabsTrigger>
-              <TabsTrigger value="ai" className="text-xs">{t('settings.aiConfiguration')}</TabsTrigger>
-              <TabsTrigger value="appearance" className="text-xs">{t('settings.appearance')}</TabsTrigger>
-              <TabsTrigger value="data" className="text-xs">{t('settings.dataManagement')}</TabsTrigger>
+              <TabsTrigger value="general" className="text-xs truncate">{t('settings.general')}</TabsTrigger>
+              <TabsTrigger value="ai" className="text-xs truncate">{t('settings.aiConfiguration')}</TabsTrigger>
+              <TabsTrigger value="appearance" className="text-xs truncate">{t('settings.appearance')}</TabsTrigger>
+              <TabsTrigger value="data" className="text-xs truncate">{t('settings.dataManagement')}</TabsTrigger>
             </TabsList>
           </div>
           
@@ -299,7 +299,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onBack }) => {
                     <Separator />
                     <div className="space-y-2">
                       <Label className="text-xs font-medium">{t('settings.allowedSites')}</Label>
-                      <div className="space-y-1 max-h-20 overflow-y-auto">
+                      <div className="space-y-1 max-h-20 overflow-y-auto custom-scrollbar">
                         {allowedSites.map((site, index) => (
                           <div key={index} className="flex items-center justify-between bg-muted/30 rounded px-2 py-1">
                             <span className="text-xs font-mono">{site}</span>
@@ -341,8 +341,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onBack }) => {
                 {/* 增强功能设置 */}
                 <Card className="border-border/50">
                   <CardHeader className="pb-3">
-                    <CardTitle className="text-sm">{t('enhanced_settings_title')}</CardTitle>
-                    <CardDescription className="text-xs">{t('enhanced_settings_description')}</CardDescription>
+                    <CardTitle className="text-sm">{t('settings.enhanced.title')}</CardTitle>
+                    <CardDescription className="text-xs">{t('settings.enhanced.description')}</CardDescription>
                   </CardHeader>
                   <CardContent className="pt-0">
                     <Button 
@@ -351,7 +351,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onBack }) => {
                       className="w-full h-7 text-xs"
                       onClick={() => setCurrentView('enhanced')}
                     >
-                      {t('common_settings')}
+                      {t('settings.common.title')}
                       <Icons.chevronDown className="h-3 w-3 ml-1 -rotate-90" />
                     </Button>
                   </CardContent>
@@ -528,9 +528,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onBack }) => {
                 {/* 数据同步 */}
                 <Card className="border-border/50">
                   <CardHeader className="pb-3">
-                    <CardTitle className="text-sm">{t('settings_sync_title')}</CardTitle>
+                    <CardTitle className="text-sm">{t('settings.sync.title')}</CardTitle>
                     <CardDescription className="text-xs">
-                      {t('settings_sync_description')}
+                      {t('settings.sync.description')}
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="pt-0">

@@ -176,6 +176,7 @@ interface VariableDisplayProps {
   onVariableClick?: (variable: VariableInfo) => void;
 }
 
+// 替换掉你文件中现有的整个 VariableDisplay 组件
 export const VariableDisplay: React.FC<VariableDisplayProps> = ({
   content,
   className = '',
@@ -184,6 +185,7 @@ export const VariableDisplay: React.FC<VariableDisplayProps> = ({
 }) => {
   const variables = useMemo(() => extractVariables(content), [content]);
 
+  // 这是您之前动态生成内容的逻辑，我们暂时不动它
   const processedContent = useMemo(() => {
     if (variables.length === 0) {
       return content;
@@ -200,6 +202,10 @@ export const VariableDisplay: React.FC<VariableDisplayProps> = ({
     return result;
   }, [content, variables]);
 
+  // --- 关键修复：在这里定义 finalTestContent 变量 ---
+  const finalTestContent = `请根据以下会议记录生成一份简洁明了的会议总结：<var data-name="会议记录">[会议记录]</var>，总结应包括...`;
+  // --- 修复结束 ---
+
   return (
     <div className={cn('relative', className)}>
       <div className="prose dark:prose-invert max-w-none whitespace-pre-wrap break-words">
@@ -210,13 +216,7 @@ export const VariableDisplay: React.FC<VariableDisplayProps> = ({
             var: ({ node }) => {
               const name = node.properties?.dataName as string;
               const originalText = node.children[0]?.type === 'text' ? node.children[0].value : '';
-              // --- 新增调试代码 ---
-  	console.log('--- Debugging <var> Node ---');
- 	 console.log('Received Node Object:', node);
-  	console.log('Node Properties:', node.properties);
-  	// --- 结束调试代码 ---
-
-            const variable = variables.find(v => v.name === name);
+              const variable = variables.find(v => v.name === name);
 
               if (!variable) return <span>{originalText}</span>;
 
@@ -239,7 +239,8 @@ export const VariableDisplay: React.FC<VariableDisplayProps> = ({
             },
           }}
         >
-          {processedContent}
+          {/* 这里使用上面定义的 finalTestContent 进行测试 */}
+          {finalTestContent}
         </ReactMarkdown>
       </div>
       

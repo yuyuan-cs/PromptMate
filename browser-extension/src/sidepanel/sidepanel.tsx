@@ -4,6 +4,7 @@
 
 import * as React from 'react';
 import * as ReactDOM from 'react-dom/client';
+import '../styles/globals.css';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Input } from '../components/ui/input';
@@ -113,6 +114,7 @@ const SidePanel: React.FC<SidePanelProps> = () => {
   
   // Additional state for UI controls
   const [showFavorites, setShowFavorites] = React.useState<boolean>(false);
+  const [sortBy, setSortBy] = React.useState<'relevance' | 'created' | 'updated' | 'usage'>('relevance');
   // 'activeCategory' and 'setActiveCategory' are now from the hook.
   // 'error' state is replaced by 'hookError' from the hook.
   // The 'error' state is now managed by the 'hookError' variable from the useExtensionPrompts hook.
@@ -135,6 +137,11 @@ const SidePanel: React.FC<SidePanelProps> = () => {
   }, [prompts]);
 
   const totalPrompts = prompts.length;
+
+  // 应用排序的提示词列表
+  const sortedPrompts = React.useMemo(() => {
+    return sortPrompts(prompts, searchTerm, sortBy);
+  }, [prompts, searchTerm, sortBy]);
   // const isLoading = loading; // This is now directly from the hook as 'isLoading'
 
   // Record usage function
@@ -527,7 +534,7 @@ const SidePanel: React.FC<SidePanelProps> = () => {
   }, [importData]);
 
   return (
-    <div className="flex flex-col h-screen bg-background">
+    <div className="extension-sidepanel flex flex-col h-screen bg-background">
       {/* 头部 - 紧凑设计 - 仅在列表视图显示 */}
       {currentView === 'list' && (
         <div className="flex-shrink-0 p-3 border-b border-border/30">
@@ -543,27 +550,45 @@ const SidePanel: React.FC<SidePanelProps> = () => {
           </div>
         </div> */}
         
-        {/* 搜索与筛选行 */}
-        <div className="relative mb-2">
-          <Icons.search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground/60" />
-          <Input
-            placeholder={t('sidepanel_searchPlaceholder')}
-            value={searchInput}
-            onChange={(e) => { const v = e.target.value; setSearchInput(v); debouncedSetSearch(v); }}
-            className="pl-8 h-8 text-sm bg-background/80 border-border/40 focus:border-primary/50 transition-all duration-200"
-          />
-          <div className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center gap-1">
-            <Button
-              variant={showFavorites ? 'default' : 'ghost'}
-              size="sm"
-              className="h-7 px-2 text-xs"
-              onClick={() => setShowFavorites(!showFavorites)}
-              title={showFavorites ? t('sidepanel_showAll') : t('sidepanel_favoritesOnly')}
-            >
-              <span className={cn('mr-1', showFavorites ? 'text-yellow-400' : 'text-muted-foreground')}>⭐</span>
-              {t('sidepanel_favoritesOnly')}
-            </Button>
+        {/* 搜索与筛选行 - 整合到一行 */}
+        <div className="flex items-center gap-2 mb-2">
+          {/* 搜索框 */}
+          <div className="relative flex-1">
+            <Icons.search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground/60" />
+            <Input
+              placeholder={t('sidepanel_searchPlaceholder')}
+              value={searchInput}
+              onChange={(e) => { const v = e.target.value; setSearchInput(v); debouncedSetSearch(v); }}
+              className="pl-8 h-8 text-sm bg-background/80 border-border/40 focus:border-primary/50 transition-all duration-200"
+            />
           </div>
+          
+          {/* 排序选择器 - 美化样式 */}
+          <div className="relative">
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as any)}
+              className="appearance-none bg-background/90 border border-border/50 rounded-md px-3 py-1.5 pr-8 text-xs text-foreground hover:border-border/80 focus:border-primary/60 focus:ring-2 focus:ring-primary/20 focus:outline-none transition-all duration-200 cursor-pointer min-w-[80px]"
+            >
+              <option value="relevance">{t('sort_relevance')}</option>
+              <option value="usage">{t('sort_usage')}</option>
+              <option value="updated">{t('sort_updated')}</option>
+              <option value="created">{t('sort_created')}</option>
+            </select>
+            <Icons.chevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 w-3 h-3 text-muted-foreground/60 pointer-events-none" />
+          </div>
+          
+          {/* 收藏筛选 */}
+          <Button
+            variant={showFavorites ? 'default' : 'ghost'}
+            size="sm"
+            className="h-8 px-3 text-xs shrink-0 transition-all duration-200"
+            onClick={() => setShowFavorites(!showFavorites)}
+            title={showFavorites ? t('sidepanel_showAll') : t('sidepanel_favoritesOnly')}
+          >
+            <span className={cn('mr-1.5', showFavorites ? 'text-yellow-400' : 'text-muted-foreground')}>⭐</span>
+            <span className="font-medium">{favoritePrompts}</span>
+          </Button>
         </div>
 
         {/* 分类筛选 - 带箭头控制的滚动设计 */}
@@ -675,7 +700,7 @@ const SidePanel: React.FC<SidePanelProps> = () => {
       )}
 
       {/* 主内容区域 - 使用 switch 语句进行视图切换 */}
-      <div className="flex-1 flex flex-col min-h-0">
+      <div className="extension-main-content flex-1 flex flex-col min-h-0 custom-scrollbar">
         {(() => {
           console.log('📍 Rendering main content - currentView:', currentView);
           console.log('📍 editingPrompt:', editingPrompt);
@@ -752,7 +777,7 @@ const SidePanel: React.FC<SidePanelProps> = () => {
 
             case 'settings':
               return (
-                <ScrollArea className="flex-1">
+                <ScrollArea className="flex-1 apple-scrollbar">
                   <SettingsView
                     onBack={handleCloseSettings}
                   />
@@ -796,7 +821,7 @@ const SidePanel: React.FC<SidePanelProps> = () => {
               }
               return (
                 <NewPromptList
-                  prompts={prompts}
+                  prompts={sortedPrompts}
                   selectedPrompt={selectedPrompt}
                   onPromptSelect={handlePromptSelect}
                   onCopyWithVariables={handleCopyWithVariables}
@@ -884,7 +909,7 @@ const SidePanel: React.FC<SidePanelProps> = () => {
 };
 
 // 初始化函数
-function initializeSidePanel() {
+async function initializeSidePanel() {
   console.log('初始化PromptMate侧边栏...');
   
   const rootElement = document.getElementById('root');
@@ -894,8 +919,18 @@ function initializeSidePanel() {
   }
 
   try {
-    const root = ReactDOM.createRoot(rootElement);
-    root.render(React.createElement(SidePanel));
+
+    const renderApp = () => {
+      // Render the React app directly (no i18n initialization needed)
+      const root = ReactDOM.createRoot(rootElement);
+      root.render(
+        <React.StrictMode>
+          <SidePanel />
+        </React.StrictMode>
+      );
+    };
+
+    renderApp();
     console.log('侧边栏初始化成功');
   } catch (error) {
     console.error('侧边栏初始化失败:', error);
