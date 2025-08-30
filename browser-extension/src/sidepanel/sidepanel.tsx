@@ -592,7 +592,7 @@ const SidePanel: React.FC<SidePanelProps> = () => {
         </div>
 
         {/* 分类筛选 - 带箭头控制的滚动设计 */}
-        <div className="relative flex items-center">
+        <div className="relative flex items-center justify-center">
           {/* 左箭头 */}
           {showLeftArrow && (
             <Button
