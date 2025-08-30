@@ -7,6 +7,7 @@ import { AutoResizeTextarea } from '@components/ui/auto-resize-textarea';
 import { Label } from './ui/label';
 import { Badge } from './ui/badge';
 import { ScrollArea } from './ui/scroll-area';
+import { useTranslation } from '../i18n';
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -57,6 +58,7 @@ export const VariableFormView: React.FC<VariableFormViewProps> = ({
   showBackButton = true,
   showCloseButton = true
 }) => {
+  const { t } = useTranslation();
   const [values, setValues] = React.useState<VariableValues>({});
   const [errors, setErrors] = React.useState<string[]>([]);
   const [previewText, setPreviewText] = React.useState('');
@@ -65,7 +67,7 @@ export const VariableFormView: React.FC<VariableFormViewProps> = ({
 
   // 生成表单数据
   const { variables, formFields } = React.useMemo(() => 
-    generateVariableFormData(promptContent), [promptContent]
+    generateVariableFormData(promptContent, t), [promptContent, t]
   );
 
   // 初始化变量值
@@ -212,7 +214,7 @@ export const VariableFormView: React.FC<VariableFormViewProps> = ({
             {promptTitle}
           </h2>
           <Badge variant="secondary" className="text-xs shrink-0">
-            {formFields.length}个变量
+            {formFields.length} {t('variable.total')}
           </Badge>
         </div>
         
@@ -227,15 +229,15 @@ export const VariableFormView: React.FC<VariableFormViewProps> = ({
             <DropdownMenuContent align="end" className="w-40">
               <DropdownMenuItem onClick={fillExampleValues}>
                 <Wand2 className="w-3 h-3 mr-2" />
-                示例值
+                {t('variable.fill_example')}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={clearAllValues}>
                 <RotateCcw className="w-3 h-3 mr-2" />
-                清空
+                {t('variable.clear_all')}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setShowMarkdown(!showMarkdown)}>
                 {showMarkdown ? <EyeOff className="w-3 h-3 mr-2" /> : <Eye className="w-3 h-3 mr-2" />}
-                {showMarkdown ? '纯文本' : 'Markdown'}
+                {showMarkdown ? t('variable.plain_text') : 'Markdown'}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -255,7 +257,7 @@ export const VariableFormView: React.FC<VariableFormViewProps> = ({
 
       {/* 主内容区 */}
       <div className="flex-1 overflow-hidden">
-        <ScrollArea className="h-full">
+        <ScrollArea className="h-full apple-scrollbar">
           <div className="p-3 space-y-4">
             {/* 变量表单区域 - 紧凑设计 */}
             <div className="space-y-3">
@@ -307,7 +309,7 @@ export const VariableFormView: React.FC<VariableFormViewProps> = ({
             {/* 历史记录快速应用 - 紧凑显示 */}
             {variableHistory.length > 0 && (
               <div className="space-y-2 border-t pt-3">
-                <h4 className="text-xs font-medium text-muted-foreground">历史记录：</h4>
+                <h4 className="text-xs font-medium text-muted-foreground">{t('variable.history')}：</h4>
                 <div className="space-y-1">
                   {variableHistory.slice(0, 1).map((history, index) => (
                     <Button
@@ -332,8 +334,8 @@ export const VariableFormView: React.FC<VariableFormViewProps> = ({
 
             {/* 预览区域 - 紧凑显示 */}
             <div className="space-y-2 border-t pt-3">
-              <h3 className="text-xs font-medium text-muted-foreground">预览</h3>
-              <div className="p-3 bg-muted/30 rounded-lg border min-h-[120px] max-h-[200px] overflow-y-auto">
+              <h3 className="text-xs font-medium text-muted-foreground">{t('variable.live_preview')}</h3>
+              <div className="p-3 bg-muted/30 rounded-lg border min-h-[120px] max-h-[200px] overflow-y-auto custom-scrollbar">
                 {previewText ? (
                   showMarkdown ? (
                     <div className="prose prose-xs max-w-none dark:prose-invert">
@@ -348,7 +350,7 @@ export const VariableFormView: React.FC<VariableFormViewProps> = ({
                   )
                 ) : (
                   <div className="text-muted-foreground text-xs text-center py-4">
-                    填写变量后显示预览...
+                    {t('variable.preview_placeholder')}
                   </div>
                 )}
               </div>
@@ -356,7 +358,7 @@ export const VariableFormView: React.FC<VariableFormViewProps> = ({
               {/* 统计信息 */}
               {previewText && (
                 <div className="text-xs text-muted-foreground text-center">
-                  {previewText.length}字符 | {Object.values(values).filter(v => v.trim()).length}/{formFields.length}已填写
+                  {previewText.length} {t('variable.characters')} | {Object.values(values).filter(v => v.trim()).length}/{formFields.length} {t('variable.completed')}
                 </div>
               )}
             </div>
@@ -366,7 +368,7 @@ export const VariableFormView: React.FC<VariableFormViewProps> = ({
               <div className="p-2 bg-destructive/10 border border-destructive/20 rounded-lg">
                 <div className="flex items-center gap-2 text-destructive text-xs font-medium mb-1">
                   <AlertCircle className="w-3 h-3" />
-                  请填写必需变量：
+                  {t('variable.required_fields')}：
                 </div>
                 <div className="flex flex-wrap gap-1">
                   {errors.map(variableName => (
@@ -391,7 +393,7 @@ export const VariableFormView: React.FC<VariableFormViewProps> = ({
             className="flex-1 h-8 text-sm"
           >
             <Copy className="w-3 h-3 mr-1" />
-            {isLoading ? '复制中...' : '复制'}
+            {isLoading ? t('variable.copying') : t('variable.copy')}
           </Button>
           <Button
             onClick={handleInject}
@@ -399,7 +401,7 @@ export const VariableFormView: React.FC<VariableFormViewProps> = ({
             className="flex-1 h-8 text-sm"
           >
             <Send className="w-3 h-3 mr-1" />
-            {isLoading ? '注入中...' : '注入到页面'}
+            {isLoading ? t('variable.injecting') : t('variable.inject')}
           </Button>
         </div>
       </div>

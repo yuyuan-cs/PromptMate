@@ -92,7 +92,7 @@ export const SyncSettings: React.FC<SyncSettingsProps> = ({
   };
 
   // 测试连接
-  const testConnection = React.useCallback(async () => {
+  const testConnection = React.useCallback(async (method: 'native' | 'file' | 'manual') => {
     setSyncStatus(prev => ({ ...prev, syncing: true, error: null }));
     
     try {
@@ -101,17 +101,17 @@ export const SyncSettings: React.FC<SyncSettingsProps> = ({
       let connected = false;
       let error = null;
 
-      switch (syncMethod) {
+      switch (method) {
         case 'native':
           connected = checkNativeConnection();
           if (!connected) {
-            error = t('sync_error_native_host_connection_failed');
+            error = t('sync.error.native_host_connection_failed');
           }
           break;
         case 'file':
           connected = !!fileSyncPath;
           if (!connected) {
-            error = t('sync_error_invalid_file_path');
+            error = t('sync.error.invalid_file_path');
           }
           break;
         case 'manual':
@@ -129,16 +129,16 @@ export const SyncSettings: React.FC<SyncSettingsProps> = ({
       setSyncStatus(prev => ({
         ...prev,
         connected: false,
-        error: t('sync_error_connection_test_failed'),
+        error: t('sync.error.connection_test_failed'),
         syncing: false
       }));
     }
-  }, [syncMethod, fileSyncPath]);
+  }, [fileSyncPath, t]);
 
   // 立即同步
   const performSync = React.useCallback(async () => {
     if (!syncStatus.connected) {
-      await testConnection();
+      await testConnection(syncMethod);
       return;
     }
 
@@ -161,7 +161,7 @@ export const SyncSettings: React.FC<SyncSettingsProps> = ({
       setSyncStatus(prev => ({
         ...prev,
         syncing: false,
-        error: t('sync_error_sync_failed_retry')
+        error: t('sync.error.sync_failed_retry')
       }));
     }
   }, [syncStatus.connected, testConnection]);
@@ -179,7 +179,7 @@ export const SyncSettings: React.FC<SyncSettingsProps> = ({
     }));
 
     // 自动测试新的连接方法
-    setTimeout(() => testConnection(), 500);
+    setTimeout(() => testConnection(method), 500);
   }, [testConnection]);
 
   // 更新文件同步路径
@@ -191,7 +191,7 @@ export const SyncSettings: React.FC<SyncSettingsProps> = ({
       setSyncStatus(prev => ({
         ...prev,
         connected: !!path,
-        error: path ? null : '请设置有效的同步文件路径'
+        error: path ? null : t('sync.error.invalid_file_path')
       }));
     }
   }, [syncMethod]);
@@ -223,10 +223,10 @@ export const SyncSettings: React.FC<SyncSettingsProps> = ({
   };
 
   const getStatusText = () => {
-    if (syncStatus.syncing) return t('sync_status_connecting');
+    if (syncStatus.syncing) return t('sync.status.connecting');
     if (syncStatus.error) return syncStatus.error;
-    if (syncStatus.connected) return t('sync_status_connected');
-    return t('sync_status_disconnected');
+    if (syncStatus.connected) return t('sync.status.connected');
+    return t('sync.status.disconnected');
   };
 
   const getMethodIcon = (method: 'native' | 'file' | 'manual') => {
@@ -244,7 +244,7 @@ export const SyncSettings: React.FC<SyncSettingsProps> = ({
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-sm font-medium flex items-center gap-2">
             {getStatusIcon()}
-            {t('sync_status_title')}
+            {t('sync.status.title')}
           </h3>
           <Badge variant={syncStatus.connected ? 'default' : 'secondary'}>
             {getStatusText()}
@@ -253,7 +253,7 @@ export const SyncSettings: React.FC<SyncSettingsProps> = ({
         
         {syncStatus.lastSync && (
           <p className="text-xs text-muted-foreground">
-            {t('sync_status_last_sync')}: {syncStatus.lastSync}
+            {t('sync.status.last_sync')}: {syncStatus.lastSync}
           </p>
         )}
         
@@ -266,7 +266,7 @@ export const SyncSettings: React.FC<SyncSettingsProps> = ({
 
       {/* 同步方式选择 */}
       <div className="space-y-4">
-        <h3 className="text-sm font-medium">{t('sync_method_title')}</h3>
+        <h3 className="text-sm font-medium">{t('sync.method.title')}</h3>
         
         <div className="grid gap-3">
           {/* Native Messaging */}
@@ -279,12 +279,12 @@ export const SyncSettings: React.FC<SyncSettingsProps> = ({
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2">
                 <Monitor className="w-4 h-4" />
-                <span className="text-sm font-medium">{t('sync_method_native_messaging_title')}</span>
+                <span className="text-sm font-medium">{t('sync.method.native_messaging.title')}</span>
               </div>
               {syncMethod === 'native' && <CheckCircle className="w-4 h-4 text-primary ml-auto" />}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              {t('sync_method_native_messaging_description')}
+              {t('sync.method.native_messaging.description')}
             </p>
           </div>
 
@@ -298,12 +298,12 @@ export const SyncSettings: React.FC<SyncSettingsProps> = ({
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2">
                 <Folder className="w-4 h-4" />
-                <span className="text-sm font-medium">{t('sync_method_file_sync_title')}</span>
+                <span className="text-sm font-medium">{t('sync.method.file_sync.title')}</span>
               </div>
               {syncMethod === 'file' && <CheckCircle className="w-4 h-4 text-primary ml-auto" />}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              {t('sync_method_file_sync_description')}
+              {t('sync.method.file_sync.description')}
             </p>
           </div>
 
@@ -317,12 +317,12 @@ export const SyncSettings: React.FC<SyncSettingsProps> = ({
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2">
                 <Smartphone className="w-4 h-4" />
-                <span className="text-sm font-medium">{t('sync_method_manual_sync_title')}</span>
+                <span className="text-sm font-medium">{t('sync.method.manual_sync.title')}</span>
               </div>
               {syncMethod === 'manual' && <CheckCircle className="w-4 h-4 text-primary ml-auto" />}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              {t('sync_method_manual_sync_description')}
+              {t('sync.method.manual_sync.description')}
             </p>
           </div>
         </div>
@@ -331,22 +331,34 @@ export const SyncSettings: React.FC<SyncSettingsProps> = ({
       {/* 文件同步配置 */}
       {syncMethod === 'file' && (
         <div className="space-y-4">
-          <h3 className="text-sm font-medium">{t('sync_config_file_sync_title')}</h3>
+          <h3 className="text-sm font-medium">{t('sync.config.file_sync.title')}</h3>
+          <div className="grid gap-4">
+            <div className="space-y-2">
+              <Label className="text-xs font-medium">{t('sync.config.file_path')}</Label>
+              <Input
+                type="text"
+                value={fileSyncPath}
+                onChange={(e) => updateFileSyncPath(e.target.value)}
+                placeholder={t('sync.config.file_path_placeholder')}
+                className="h-8"
+              />
+              <p className="text-xs text-muted-foreground">
+                {t('sync.config.file_path_description')}
               </p>
             </div>
 
             <div className="space-y-2">
-              <Label className="text-xs font-medium">{t('sync_config_interval_seconds')}</Label>
+              <Label className="text-xs font-medium">{t('sync.config.interval_seconds')}</Label>
               <Select value={syncInterval.toString()} onValueChange={(value) => updateSyncInterval(parseInt(value))}>
                 <SelectTrigger className="h-8">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="10">{t('sync_config_interval_10s')}</SelectItem>
-                  <SelectItem value="30">{t('sync_config_interval_30s')}</SelectItem>
-                  <SelectItem value="60">{t('sync_config_interval_1m')}</SelectItem>
-                  <SelectItem value="300">{t('sync_config_interval_5m')}</SelectItem>
-                  <SelectItem value="600">{t('sync_config_interval_10m')}</SelectItem>
+                  <SelectItem value="10">{t('sync.config.interval_10s')}</SelectItem>
+                  <SelectItem value="30">{t('sync.config.interval_30s')}</SelectItem>
+                  <SelectItem value="60">{t('sync.config.interval_1m')}</SelectItem>
+                  <SelectItem value="300">{t('sync.config.interval_5m')}</SelectItem>
+                  <SelectItem value="600">{t('sync.config.interval_10m')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -356,11 +368,11 @@ export const SyncSettings: React.FC<SyncSettingsProps> = ({
 
       {/* 同步选项 */}
       <div className="space-y-4">
-        <h3 className="text-sm font-medium">{t('sync_options_title')}</h3>
+        <h3 className="text-sm font-medium">{t('sync.options.title')}</h3>
         
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <Label className="text-xs font-medium">{t('sync_options_auto_sync')}</Label>
+            <Label className="text-xs font-medium">{t('sync.options.auto_sync')}</Label>
             <Switch
               checked={autoSync}
               onCheckedChange={updateAutoSync}
@@ -368,7 +380,7 @@ export const SyncSettings: React.FC<SyncSettingsProps> = ({
           </div>
 
           <div className="flex items-center justify-between">
-            <Label className="text-xs font-medium">{t('sync_options_auto_export_on_change')}</Label>
+            <Label className="text-xs font-medium">{t('sync.options.auto_export_on_change')}</Label>
             <Switch
               checked={settings.autoExportOnChange || false}
               onCheckedChange={(checked) => onUpdateSettings({ autoExportOnChange: checked })}
@@ -381,25 +393,25 @@ export const SyncSettings: React.FC<SyncSettingsProps> = ({
 
       {/* 同步操作 */}
       <div className="space-y-4">
-        <h3 className="text-sm font-medium">{t('sync_actions_title')}</h3>
+        <h3 className="text-sm font-medium">{t('sync.actions.title')}</h3>
         
         <div className="grid grid-cols-2 gap-2">
           <Button
             variant="outline"
             size="sm"
-            onClick={testConnection}
+            onClick={() => testConnection(syncMethod)}
             disabled={syncStatus.syncing}
             className="h-8 text-sm"
           >
             {syncStatus.syncing ? (
               <>
                 <Loader2 className="w-3 h-3 mr-2 animate-spin" />
-                {t('sync_actions_testing_connection_in_progress')}
+                {t('sync.actions.testing_connection_in_progress')}
               </>
             ) : (
               <>
                 <Wifi className="w-3 h-3 mr-2" />
-                {t('sync_actions_test_connection')}
+                {t('sync.actions.test_connection')}
               </>
             )}
           </Button>
@@ -414,12 +426,12 @@ export const SyncSettings: React.FC<SyncSettingsProps> = ({
             {syncStatus.syncing ? (
               <>
                 <Loader2 className="w-3 h-3 mr-2 animate-spin" />
-                {t('sync_actions_syncing_in_progress')}
+                {t('sync.actions.syncing_in_progress')}
               </>
             ) : (
               <>
                 <RefreshCw className="w-3 h-3 mr-2" />
-                {t('sync_actions_sync_now')}
+                {t('sync.actions.sync_now')}
               </>
             )}
           </Button>
@@ -431,9 +443,9 @@ export const SyncSettings: React.FC<SyncSettingsProps> = ({
         <div className="flex items-start gap-2">
           <Info className="w-4 h-4 text-muted-foreground mt-0.5 flex-shrink-0" />
           <div className="text-xs text-muted-foreground space-y-1">
-            <p><strong>{t('sync_help_native_messaging_title')}</strong> {t('sync_help_native_messaging_description')}</p>
-            <p><strong>{t('sync_help_file_sync_title')}</strong> {t('sync_help_file_sync_description')}</p>
-            <p><strong>{t('sync_help_manual_sync_title')}</strong> {t('sync_help_manual_sync_description')}</p>
+            <p><strong>{t('sync.help.native_messaging.title')}</strong> {t('sync.help.native_messaging.description')}</p>
+            <p><strong>{t('sync.help.file_sync.title')}</strong> {t('sync.help.file_sync.description')}</p>
+            <p><strong>{t('sync.help.manual_sync.title')}</strong> {t('sync.help.manual_sync.description')}</p>
           </div>
         </div>
       </div>

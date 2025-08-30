@@ -54,7 +54,7 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground text-sm;
   }
 }
 
@@ -71,4 +71,216 @@
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+/* AI button breathing animation */
+@keyframes breathing {
+  0%, 100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+}
+
+.animate-breathing {
+  animation: breathing 2s ease-in-out infinite;
+}
+
+/* Browser extension specific font size overrides */
+.extension-dialog {
+  font-size: 14px !important;
+}
+
+.extension-dialog h1,
+.extension-dialog h2,
+.extension-dialog h3 {
+  font-size: 16px !important;
+}
+
+.extension-dialog .text-lg {
+  font-size: 16px !important;
+}
+
+.extension-dialog .text-base {
+  font-size: 14px !important;
+}
+
+.extension-dialog .text-sm {
+  font-size: 12px !important;
+}
+
+.extension-dialog .text-xs {
+  font-size: 11px !important;
+}
+
+/* 桌面版优化滚动条样式 - 更美观更窄 */
+.apple-scrollbar {
+  scrollbar-width: 2px;
+  scrollbar-color: rgba(97, 170, 242, 0.2) transparent;
+}
+
+.apple-scrollbar::-webkit-scrollbar {
+  width: 2px;
+  height: 2px;
+}
+
+.apple-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.apple-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(113, 167, 253, 0.15);
+  border-radius: 10px;
+  border: 2px solid transparent;
+}
+
+.dark .apple-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+/* 全局应用桌面版滚动条样式 - 更高优先级 */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(97, 170, 242, 0.2) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 3px !important;
+  height: 3px !important;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent !important;
+  border-radius: 4px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: rgba(97, 170, 242, 0.2) !important;
+  border-radius: 10px;
+  transition: background-color 0.2s ease;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: rgba(97, 170, 242, 0.4) !important;
+}
+
+*::-webkit-scrollbar-corner {
+  background: transparent !important;
+}
+
+/* Dark mode scrollbar adjustments */
+.dark *::-webkit-scrollbar-thumb {
+  background: rgba(113, 167, 253, 0.2) !important;
+}
+
+.dark *::-webkit-scrollbar-thumb:hover {
+  background: rgba(113, 167, 253, 0.4) !important;
+}
+
+.dark * {
+  scrollbar-color: rgba(113, 167, 253, 0.2) transparent;
+}
+
+/* 侧边栏容器确保可滚动 */
+.extension-sidepanel {
+  height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* 确保主要内容区域可滚动 */
+.extension-main-content {
+  height: calc(100vh - 120px);
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* 自定义滚动条样式 - 直接应用到组件 */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(97, 170, 242, 0.3);
+  border-radius: 10px;
+  transition: background-color 0.2s ease;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(97, 170, 242, 0.5);
+}
+
+.custom-scrollbar::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* 深色模式下的滚动条 */
+.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(113, 167, 253, 0.3);
+}
+
+.dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(113, 167, 253, 0.5);
+}
+
+/* Firefox 滚动条支持 */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(97, 170, 242, 0.3) transparent;
+}
+
+.dark .custom-scrollbar {
+  scrollbar-color: rgba(113, 167, 253, 0.3) transparent;
+}
+
+/* 美化下拉菜单样式 */
+select {
+  background-image: none;
+}
+
+select::-ms-expand {
+  display: none;
+}
+
+/* 下拉菜单选项美化 */
+select option {
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  padding: 8px 12px;
+  border: none;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+select option:hover {
+  background: hsl(var(--muted));
+}
+
+select option:checked {
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+}
+
+/* 深色模式下的选项样式 */
+.dark select option {
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+
+.dark select option:hover {
+  background: hsl(var(--muted));
+}
+
+.dark select option:checked {
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
 }

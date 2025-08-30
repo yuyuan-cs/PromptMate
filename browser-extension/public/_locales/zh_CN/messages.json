@@ -365,5 +365,72 @@
   },
   "sync_help_manual_sync_description": {
     "message": "通过导入导出 JSON 文件手动管理数据"
+  },
+
+  "sidepanel_componentLoadFailed": {
+    "message": "组件加载失败"
+  },
+  "sidepanel_reload": {
+    "message": "重新加载"
+  },
+  "sidepanel_invalidPromptData": {
+    "message": "无效的提示词数据"
+  },
+  "sidepanel_importFailed": {
+    "message": "导入失败"
+  },
+  "sidepanel_searchPlaceholder": {
+    "message": "搜索提示词..."
+  },
+  "sidepanel_showAll": {
+    "message": "显示全部"
+  },
+  "sidepanel_favoritesOnly": {
+    "message": "仅收藏"
+  },
+  "sidepanel_all": {
+    "message": "全部"
+  },
+  "sidepanel_recent": {
+    "message": "最近"
+  },
+  "sidepanel_newCategory": {
+    "message": "新建分类"
+  },
+  "sidepanel_loadingEditor": {
+    "message": "加载编辑器..."
+  },
+  "sidepanel_editViewError": {
+    "message": "编辑视图错误"
+  },
+  "sidepanel_backToList": {
+    "message": "返回列表"
+  },
+  "sidepanel_loading": {
+    "message": "加载中..."
+  },
+  "sidepanel_noMatches": {
+    "message": "没有匹配的结果"
+  },
+  "sidepanel_noMatchesHint": {
+    "message": "尝试调整搜索条件或创建新的提示词"
+  },
+  "sidepanel_new": {
+    "message": "新建"
+  },
+  "sidepanel_settings": {
+    "message": "设置"
+  },
+  "sidepanel_newCategoryTitle": {
+    "message": "新建分类"
+  },
+  "sidepanel_categoryNamePlaceholder": {
+    "message": "请输入分类名称"
+  },
+  "sidepanel_cancel": {
+    "message": "取消"
+  },
+  "sidepanel_create": {
+    "message": "创建"
   }
 }

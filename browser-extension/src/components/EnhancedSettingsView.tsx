@@ -155,7 +155,7 @@ export const EnhancedSettingsView: React.FC<EnhancedSettingsViewProps> = ({
         <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
           {/* 标签页导航 */}
           <div className="flex-shrink-0 px-3 py-2 border-b border-border/30">
-            <ScrollArea className="w-full">
+            <ScrollArea className="w-full apple-scrollbar">
               <TabsList className="grid w-full grid-cols-4 lg:grid-cols-8 gap-1">
                 {settingsTabs.map((tab) => {
                   const Icon = tab.icon;
@@ -176,7 +176,7 @@ export const EnhancedSettingsView: React.FC<EnhancedSettingsViewProps> = ({
 
           {/* 标签页内容 */}
           <div className="flex-1 overflow-hidden">
-            <ScrollArea className="h-full">
+            <ScrollArea className="h-full apple-scrollbar">
               {/* 常规设置 */}
               <TabsContent value="general" className="p-3 space-y-6 m-0">
                 <div className="space-y-4">

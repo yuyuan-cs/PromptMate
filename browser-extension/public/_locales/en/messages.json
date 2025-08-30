@@ -364,6 +364,73 @@
     "message": "Manual Sync:"
   },
   "sync_help_manual_sync_description": {
-    "message": "Manually manage data by importing/exporting JSON files."
+    "message": "Manually manage data through import/export JSON files"
+  },
+
+  "sidepanel_componentLoadFailed": {
+    "message": "Component load failed"
+  },
+  "sidepanel_reload": {
+    "message": "Reload"
+  },
+  "sidepanel_invalidPromptData": {
+    "message": "Invalid prompt data"
+  },
+  "sidepanel_importFailed": {
+    "message": "Import failed"
+  },
+  "sidepanel_searchPlaceholder": {
+    "message": "Search prompts..."
+  },
+  "sidepanel_showAll": {
+    "message": "Show All"
+  },
+  "sidepanel_favoritesOnly": {
+    "message": "Favorites Only"
+  },
+  "sidepanel_all": {
+    "message": "All"
+  },
+  "sidepanel_recent": {
+    "message": "Recent"
+  },
+  "sidepanel_newCategory": {
+    "message": "New Category"
+  },
+  "sidepanel_loadingEditor": {
+    "message": "Loading editor..."
+  },
+  "sidepanel_editViewError": {
+    "message": "Edit view error"
+  },
+  "sidepanel_backToList": {
+    "message": "Back to List"
+  },
+  "sidepanel_loading": {
+    "message": "Loading..."
+  },
+  "sidepanel_noMatches": {
+    "message": "No matches found"
+  },
+  "sidepanel_noMatchesHint": {
+    "message": "Try adjusting search criteria or create new prompts"
+  },
+  "sidepanel_new": {
+    "message": "New"
+  },
+  "sidepanel_settings": {
+    "message": "Settings"
+  },
+  "sidepanel_newCategoryTitle": {
+    "message": "New Category"
+  },
+  "sidepanel_categoryNamePlaceholder": {
+    "message": "Enter category name"
+  },
+  "sidepanel_cancel": {
+    "message": "Cancel"
+  },
+  "sidepanel_create": {
+    "message": "Create"
   }
 }

@@ -141,7 +141,7 @@ export const NewPromptList: React.FC<NewPromptListProps> = ({
   return (
     <div
       ref={parentRef}
-      className="h-full w-full overflow-y-auto"
+      className="h-full w-full overflow-y-auto custom-scrollbar"
       // style={{ height }}
     >
       <div

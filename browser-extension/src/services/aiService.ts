@@ -118,7 +118,13 @@ export class AIService {
 
   // 检查是否已配置
   public isConfigured(): boolean {
-    return this.config !== null && this.config.apiKey.trim() !== '';
+    const configured = this.config !== null && this.config.apiKey.trim() !== '';
+    console.log('🔍 AI服务配置检查:', { 
+      hasConfig: this.config !== null, 
+      hasApiKey: this.config?.apiKey?.trim() !== '', 
+      configured 
+    });
+    return configured;
   }
 
   // 测试连接
@@ -222,7 +228,10 @@ export class AIService {
     request: AIOptimizeRequest, 
     streamCallback?: StreamCallback
   ): Promise<AIOptimizeResponse> {
+    console.log('🎯 开始AI优化请求', { request, hasCallback: !!streamCallback });
+    
     if (!this.isConfigured()) {
+      console.log('❌ AI服务未配置');
       throw new Error('AI服务未配置，请先配置API密钥');
     }
 
@@ -233,13 +242,16 @@ export class AIService {
       .replace('{title}', title)
       .replace('{content}', content || '请生成一个高质量的提示词');
 
+    console.log('📝 构建的提示词:', prompt.substring(0, 200) + '...');
+
     try {
       const response = streamCallback 
         ? await this.callAIStream(prompt, streamCallback)
         : await this.callAI(prompt);
+      console.log('✅ AI响应获取成功', response.substring(0, 100) + '...');
       return this.parseResponse(response);
     } catch (error) {
-      console.error('AI优化失败:', error);
+      console.error('❌ AI优化失败:', error);
       throw new Error('AI服务调用失败，请检查网络连接和API配置');
     }
   }

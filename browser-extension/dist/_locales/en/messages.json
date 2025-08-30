@@ -231,5 +231,206 @@
   },
   "injectLastPrompt": {
     "message": "Inject the most recently used prompt directly into the current page"
+  },
+
+  "settings_sync_title": {
+    "message": "Data Sync"
+  },
+  "settings_sync_description": {
+    "message": "Sync data with desktop app or other devices"
+  },
+
+  "sync_error_native_host_connection_failed": {
+    "message": "Native Host not installed or connection failed"
+  },
+  "sync_error_invalid_file_path": {
+    "message": "Please set a valid sync file path"
+  },
+  "sync_error_connection_test_failed": {
+    "message": "Connection test failed"
+  },
+  "sync_error_sync_failed_retry": {
+    "message": "Sync failed, please try again"
+  },
+
+  "sync_status_connecting": {
+    "message": "Connecting..."
+  },
+  "sync_status_connected": {
+    "message": "Connected"
+  },
+  "sync_status_disconnected": {
+    "message": "Disconnected"
+  },
+  "sync_status_title": {
+    "message": "Sync Status"
+  },
+  "sync_status_last_sync": {
+    "message": "Last sync"
+  },
+
+  "sync_method_title": {
+    "message": "Sync Method"
+  },
+  "sync_method_native_messaging_title": {
+    "message": "Native Messaging"
+  },
+  "sync_method_native_messaging_description": {
+    "message": "Real-time sync with desktop app via Chrome Native Messaging (Recommended)"
+  },
+  "sync_method_file_sync_title": {
+    "message": "File Sync"
+  },
+  "sync_method_file_sync_description": {
+    "message": "Sync via a shared folder, supports cloud drives and multi-device"
+  },
+  "sync_method_manual_sync_title": {
+    "message": "Manual Sync"
+  },
+  "sync_method_manual_sync_description": {
+    "message": "Manually sync data by importing/exporting files"
+  },
+
+  "sync_config_file_sync_title": {
+    "message": "File Sync Configuration"
+  },
+  "sync_config_file_path": {
+    "message": "Sync File Path"
+  },
+  "sync_config_file_path_placeholder": {
+    "message": "e.g., C:\\Users\\YourUser\\Dropbox\\PromptMate\\sync-data.json"
+  },
+  "sync_config_file_path_description": {
+    "message": "Recommend using a cloud drive folder, like Dropbox, OneDrive, Google Drive, etc."
+  },
+  "sync_config_interval_seconds": {
+    "message": "Sync Interval (seconds)"
+  },
+  "sync_config_interval_10s": {
+    "message": "10 seconds"
+  },
+  "sync_config_interval_30s": {
+    "message": "30 seconds"
+  },
+  "sync_config_interval_1m": {
+    "message": "1 minute"
+  },
+  "sync_config_interval_5m": {
+    "message": "5 minutes"
+  },
+  "sync_config_interval_10m": {
+    "message": "10 minutes"
+  },
+
+  "sync_options_title": {
+    "message": "Sync Options"
+  },
+  "sync_options_auto_sync": {
+    "message": "Enable Auto Sync"
+  },
+  "sync_options_auto_export_on_change": {
+    "message": "Auto-export on data change"
+  },
+
+  "sync_actions_title": {
+    "message": "Sync Actions"
+  },
+  "sync_actions_testing_connection_in_progress": {
+    "message": "Testing..."
+  },
+  "sync_actions_test_connection": {
+    "message": "Test Connection"
+  },
+  "sync_actions_syncing_in_progress": {
+    "message": "Syncing..."
+  },
+  "sync_actions_sync_now": {
+    "message": "Sync Now"
+  },
+
+  "sync_help_native_messaging_title": {
+    "message": "Native Messaging:"
+  },
+  "sync_help_native_messaging_description": {
+    "message": "Requires installing the Native Host component from the desktop app."
+  },
+  "sync_help_file_sync_title": {
+    "message": "File Sync:"
+  },
+  "sync_help_file_sync_description": {
+    "message": "Syncs by watching for changes in a shared file, supports multi-device."
+  },
+  "sync_help_manual_sync_title": {
+    "message": "Manual Sync:"
+  },
+  "sync_help_manual_sync_description": {
+    "message": "Manually manage data through import/export JSON files"
+  },
+
+  "sidepanel_componentLoadFailed": {
+    "message": "Component load failed"
+  },
+  "sidepanel_reload": {
+    "message": "Reload"
+  },
+  "sidepanel_invalidPromptData": {
+    "message": "Invalid prompt data"
+  },
+  "sidepanel_importFailed": {
+    "message": "Import failed"
+  },
+  "sidepanel_searchPlaceholder": {
+    "message": "Search prompts..."
+  },
+  "sidepanel_showAll": {
+    "message": "Show All"
+  },
+  "sidepanel_favoritesOnly": {
+    "message": "Favorites Only"
+  },
+  "sidepanel_all": {
+    "message": "All"
+  },
+  "sidepanel_recent": {
+    "message": "Recent"
+  },
+  "sidepanel_newCategory": {
+    "message": "New Category"
+  },
+  "sidepanel_loadingEditor": {
+    "message": "Loading editor..."
+  },
+  "sidepanel_editViewError": {
+    "message": "Edit view error"
+  },
+  "sidepanel_backToList": {
+    "message": "Back to List"
+  },
+  "sidepanel_loading": {
+    "message": "Loading..."
+  },
+  "sidepanel_noMatches": {
+    "message": "No matches found"
+  },
+  "sidepanel_noMatchesHint": {
+    "message": "Try adjusting search criteria or create new prompts"
+  },
+  "sidepanel_new": {
+    "message": "New"
+  },
+  "sidepanel_settings": {
+    "message": "Settings"
+  },
+  "sidepanel_newCategoryTitle": {
+    "message": "New Category"
+  },
+  "sidepanel_categoryNamePlaceholder": {
+    "message": "Enter category name"
+  },
+  "sidepanel_cancel": {
+    "message": "Cancel"
+  },
+  "sidepanel_create": {
+    "message": "Create"
   }
 }
