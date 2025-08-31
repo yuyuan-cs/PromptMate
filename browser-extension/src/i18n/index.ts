@@ -85,6 +85,11 @@ const messages: Record<string, Record<string, string>> = {
     'ai_cancel': '取消',
     'ai_applyOptimization': '应用优化',
     'ai_copyFailed': '复制失败',
+    'ai_close': '关闭',
+    'ai_regenerate': '重新生成',
+    'ai_interrupted': '已中断',
+    'ai_lastOptimizeResult': '上次AI优化结果',
+    
     
     // AI Settings
     'ai_settings_title': 'AI优化服务配置',
@@ -454,6 +459,11 @@ const messages: Record<string, Record<string, string>> = {
     'ai_cancel': 'Cancel',
     'ai_applyOptimization': 'Apply Optimization',
     'ai_copyFailed': 'Copy failed',
+    'ai_close': 'Close',
+    'ai_regenerate': 'Regenerate',
+    'ai_interrupted': 'Interrupted',
+    'ai_lastOptimizeResult': 'Last AI Optimization Result',
+    
     
     // AI Settings
     'ai_settings_title': 'AI Optimization Service Configuration',

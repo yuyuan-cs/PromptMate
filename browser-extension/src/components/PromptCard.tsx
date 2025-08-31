@@ -255,6 +255,16 @@ export const PromptCard = React.forwardRef<HTMLDivElement, PromptCardProps>(
                     <Icons.edit className="w-3 h-3" />
                   </Button>
                 )}
+                {/* 复制按钮 */}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 w-6 p-0 text-muted-foreground/60 hover:text-foreground hover:bg-muted/60 border-0"
+                  onClick={(e) => handleQuickAction(e, () => onCopyWithVariables(prompt))}
+                  title={t('common_copy')}
+                >
+                  <Icons.copy className="w-3 h-3" />
+                </Button>
               </div>
               
               {/* 内容区域 - 编辑模式或预览模式 */}

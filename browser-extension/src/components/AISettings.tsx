@@ -10,6 +10,7 @@ import { Badge } from './ui/badge';
 import { aiService, type AIConfig, getModelsForProvider, type AIModel } from '../services/aiService';
 import { ButtonLoading } from './ui/loading-states';
 import { useTranslation } from '../i18n';
+import { ConciergeBell } from 'lucide-react';
 
 interface AISettingsProps {
   onConfigChange?: (config: AIConfig) => void;
@@ -294,14 +295,31 @@ export const AISettings: React.FC<AISettingsProps> = ({ onConfigChange }) => {
     setTestResult(null);
   };
 
+  // const [isFetchingModels, setIsFetchingModels] = useState(false);
+
+  // const refreshModels = async () => {
+  //   setIsFetchingModels(true);
+  //   try {
+  //     const models = await aiService.fetchAvailableModels(config);
+  //     setAvailableModels(models);
+  //     // 可以将 models 缓存到 localStorage
+  //   } catch (error) {
+  //     // 显示错误提示
+  //   } finally {
+  //     setIsFetchingModels(false);
+  //   }
+  // };
+
+
+
+  const selectedModel = availableModels.find(m => m.id === config.model);
   return (
     <Card className="w-full max-w-none">
       <CardHeader className="pb-4">
-        <CardTitle className="flex items-center gap-2 text-base">
-          <TestTube className="h-5 w-5" />
+        <CardTitle className="flex items-center gap-2 text-md">
           {t('ai_settings_title')}
         </CardTitle>
-        <CardDescription className="text-sm">
+        <CardDescription className="text-xs">
           {t('ai_settings_description')}
           <br />
           <span className="text-blue-600 text-xs mt-1 block">
@@ -314,13 +332,13 @@ export const AISettings: React.FC<AISettingsProps> = ({ onConfigChange }) => {
       </CardHeader>
       <CardContent className="space-y-4 px-4 pb-4">
         {/* 服务提供商选择 */}
-        <div className="space-y-2">
+        <div className="space-y-2 text-xs">
           <Label htmlFor="provider">{t('ai_settings_provider')}</Label>
           <Select
             value={currentProvider}
             onValueChange={handleProviderChange}
           >
-            <SelectTrigger>
+            <SelectTrigger >
               <SelectValue placeholder={t('ai_settings_selectProvider')} />
             </SelectTrigger>
             <SelectContent className="max-h-[300px] w-[350px] max-w-[90vw]">
@@ -358,7 +376,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ onConfigChange }) => {
         <Separator />
 
         {/* API Key */}
-        <div className="space-y-2">
+        <div className="space-y-2 text-xs">
           <Label htmlFor="apiKey">{t('ai_settings_apiKey')}</Label>
           <div className="relative">
             <Input
@@ -382,11 +400,15 @@ export const AISettings: React.FC<AISettingsProps> = ({ onConfigChange }) => {
                 <Eye className="h-4 w-4" />
               )}
             </Button>
+            {/* <Button onClick={refreshModels} isLoading={isFetchingModels}>
+              <RefreshCw className="h-4 w-4 mr-2" />
+                {t('ai_settings_refreshModels')}
+            </Button> */}
           </div>
         </div>
 
         {/* API地址 */}
-        <div className="space-y-2">
+        <div className="space-y-2 text-xs">
           <Label htmlFor="baseUrl">{t('ai_settings_apiUrl')}</Label>
           <Input
             id="baseUrl"
@@ -397,7 +419,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ onConfigChange }) => {
         </div>
 
         {/* 模型 */}
-        <div className="space-y-2">
+        <div className="space-y-2 text-xs">
           <Label htmlFor="model" className="flex items-center gap-2">
             <Sparkles className="h-4 w-4" />
             {t('ai_settings_modelSelection')}
@@ -408,8 +430,31 @@ export const AISettings: React.FC<AISettingsProps> = ({ onConfigChange }) => {
             value={isCustomModel ? 'custom' : config.model}
             onValueChange={handleModelChange}
           >
-            <SelectTrigger>
+            {/* <SelectTrigger>
               <SelectValue placeholder={t('ai_settings_selectModel')} />
+            </SelectTrigger> */}
+            <SelectTrigger className="w-full">
+              {isCustomModel ? (
+                // 如果是自定义模型，直接显示模型ID
+                <span className="font-semibold text-left">{config.model}</span>
+              ) : selectedModel ? (
+                // 如果找到了选中的模型对象，渲染简化布局
+                <div className="flex items-center justify-between w-full">
+                  <span className="font-semibold text-left truncate">{selectedModel.name}</span>
+                  {selectedModel.contextLength && (
+                    <Badge variant="secondary" className="text-xs flex-shrink-0">
+                      {selectedModel.contextLength >= 1000000 
+                        ? `${Math.round(selectedModel.contextLength / 1000000)}M` 
+                        : selectedModel.contextLength >= 1000 
+                        ? `${Math.round(selectedModel.contextLength / 1000)}K`
+                        : selectedModel.contextLength}
+                    </Badge>
+                  )}
+                </div>
+              ) : (
+                // 如果还没选择，显示占位符
+                <span className="text-muted-foreground">{t('ai_settings_selectModel')}</span>
+              )}
             </SelectTrigger>
             <SelectContent className="max-h-[300px] w-[400px] max-w-[90vw]">
               {availableModels.map((model) => (
@@ -418,7 +463,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ onConfigChange }) => {
                     <div className="flex items-center gap-2 w-full min-w-0">
                       <span className="font-medium truncate flex-1">{model.name}</span>
                       {model.contextLength && (
-                        <Badge variant="secondary" className="text-xs flex-shrink-0">
+                        <Badge variant="secondary" className="text-sm flex-shrink-0">
                           {model.contextLength >= 1000000 
                             ? `${Math.round(model.contextLength / 1000000)}M` 
                             : model.contextLength >= 1000 
@@ -428,7 +473,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ onConfigChange }) => {
                       )}
                     </div>
                     {model.description && (
-                      <span className="text-xs text-muted-foreground truncate w-full">{model.description}</span>
+                      <span className="text-sm text-muted-foreground truncate w-full">{model.description}</span>
                     )}
                   </div>
                 </SelectItem>
@@ -450,7 +495,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ onConfigChange }) => {
                 value={config.model}
                 onChange={(e) => handleCustomModelChange(e.target.value)}
                 placeholder={t('ai_settings_customModelPlaceholder')}
-                className="font-mono text-sm"
+                className="font-mono text-x"
               />
               <p className="text-xs text-muted-foreground mt-1">
                 {t('ai_settings_customModelTip')}
@@ -469,7 +514,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ onConfigChange }) => {
                     <div className="flex items-center gap-2">
                       <span className="font-medium text-sm">{selectedModel.name}</span>
                       {selectedModel.contextLength && (
-                        <Badge variant="outline" className="text-xs">
+                        <Badge variant="outline" className="text-sm">
                           {t('ai_settings_context')}: {selectedModel.contextLength >= 1000000 
                             ? `${Math.round(selectedModel.contextLength / 1000000)}M` 
                             : selectedModel.contextLength >= 1000 
@@ -479,7 +524,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ onConfigChange }) => {
                       )}
                     </div>
                     {selectedModel.description && (
-                      <p className="text-xs text-muted-foreground">{selectedModel.description}</p>
+                      <p className="text-sm text-muted-foreground">{selectedModel.description}</p>
                     )}
                   </div>
                 );
@@ -602,7 +647,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ onConfigChange }) => {
         <Separator />
 
         {/* 操作按钮 */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between  flex-wrap gap-y-">
           <div className="flex items-center gap-2">
             <Button
               onClick={testConnection}
@@ -611,7 +656,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ onConfigChange }) => {
             >
               <ButtonLoading isLoading={isTesting} loadingText={t('ai_settings_testing')}>
                 <>
-                  <TestTube className="h-4 w-4 mr-2" />
+                  <ConciergeBell className="h-4 w-4 mr-2" />
                   {t('ai_settings_testConnection')}
                 </>
               </ButtonLoading>
