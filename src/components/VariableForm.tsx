@@ -38,6 +38,7 @@ import {
 } from '@/lib/variableUtils';
 import { cn } from '@/lib/utils';
 import { VariableDisplay } from './VariableHighlighter';
+import { useTranslation } from 'react-i18next';
 
 interface VariableFormProps {
   content: string;
@@ -52,6 +53,7 @@ export const VariableForm: React.FC<VariableFormProps> = ({
   onPreviewChange,
   className = '',
 }) => {
+  const { t } = useTranslation();
   const [variableValues, setVariableValues] = useState<VariableValues>({});
   const [showPreview, setShowPreview] = useState(true); // 默认显示预览
   const [previewContent, setPreviewContent] = useState('');
@@ -172,10 +174,10 @@ export const VariableForm: React.FC<VariableFormProps> = ({
         <CardContent className="p-6 text-center">
           <Variable className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
           <p className="text-sm text-muted-foreground">
-            当前提示词中没有发现变量占位符
+            {t('variableForm.noVariables')}
           </p>
           <p className="text-xs text-muted-foreground mt-1">
-            支持的格式：
+            {t('variableForm.supportedFormats')}
             <code className="mx-1">{`{variable}`}</code>
             、
             <code className="mx-1">{`{{variable}}`}</code>
@@ -196,19 +198,19 @@ export const VariableForm: React.FC<VariableFormProps> = ({
         <CardHeader className="pb-3">
           <CardTitle className="text-sm flex items-center gap-2">
             <Variable className="h-4 w-4" />
-            变量统计
+            {t('variableForm.variableStats')}
           </CardTitle>
         </CardHeader>
         <CardContent className="pt-0">
           <div className="flex flex-wrap gap-2 text-xs">
             <Badge variant="secondary">
-              总计: {stats.totalVariables}
+              {t('variableForm.total')}: {stats.totalVariables}
             </Badge>
             <Badge variant="secondary">
-              唯一: {stats.uniqueVariables}
+              {t('variableForm.unique')}: {stats.uniqueVariables}
             </Badge>
             <Badge variant={validation.isValid ? "default" : "destructive"}>
-              {validation.isValid ? "已完成" : `${validation.missingVariables.length} 个待填写`}
+              {validation.isValid ? t('variableForm.completed') : `${validation.missingVariables.length} ${t('variableForm.pending')}`}
             </Badge>
           </div>
         </CardContent>
@@ -218,7 +220,7 @@ export const VariableForm: React.FC<VariableFormProps> = ({
       <Card>
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-sm">变量填写</CardTitle>
+            <CardTitle className="text-sm">{t('variableForm.variableFill')}</CardTitle>
             <div className="flex gap-2">
               <Button
                 variant="outline"
@@ -227,7 +229,7 @@ export const VariableForm: React.FC<VariableFormProps> = ({
                 className="h-7 px-2 text-xs"
               >
                 <RefreshCw className="h-3 w-3 mr-1" />
-                填充示例
+                {t('variableForm.fillExample')}
               </Button>
               <Button
                 variant="outline"
@@ -235,7 +237,7 @@ export const VariableForm: React.FC<VariableFormProps> = ({
                 onClick={clearAllVariables}
                 className="h-7 px-2 text-xs"
               >
-                清空
+                {t('variableForm.clear')}
               </Button>
             </div>
           </div>
@@ -306,9 +308,9 @@ export const VariableForm: React.FC<VariableFormProps> = ({
                   </PopoverTrigger>
                   <PopoverContent className="w-48 p-0" align="end">
                     <Command>
-                      <CommandInput placeholder="搜索建议..." />
+                      <CommandInput placeholder={t('variableForm.searchSuggestions')} />
                       <CommandList>
-                        <CommandEmpty>没有找到建议</CommandEmpty>
+                        <CommandEmpty>{t('variableForm.noSuggestions')}</CommandEmpty>
                         <CommandGroup>
                           {field.suggestions.map((suggestion) => (
                             <CommandItem
@@ -347,7 +349,7 @@ export const VariableForm: React.FC<VariableFormProps> = ({
           className="h-8 px-3 text-xs"
         >
           {showPreview ? <EyeOff className="h-2 w-2 mr-1" /> : <Eye className="h-2 w-2 mr-1" />}
-          {showPreview ?  '隐藏预览':'显示预览'}
+          {showPreview ? t('variableForm.hidePreview') : t('variableForm.showPreview')}
         </Button>
         
         {showPreview && (
@@ -360,7 +362,7 @@ export const VariableForm: React.FC<VariableFormProps> = ({
             className="h-8 px-3"
           >
             <Copy className="h-4 w-4 mr-1" />
-            复制预览内容
+            {t('variableForm.copyPreview')}
           </Button>
         )}
       </div>
@@ -369,7 +371,7 @@ export const VariableForm: React.FC<VariableFormProps> = ({
       {showPreview && (
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm">实时预览</CardTitle>
+            <CardTitle className="text-sm">{t('variableForm.livePreview')}</CardTitle>
           </CardHeader>
           <CardContent className="pt-0">
             <div className="bg-muted/30 rounded-md p-4 min-h-[100px]">
@@ -383,7 +385,7 @@ export const VariableForm: React.FC<VariableFormProps> = ({
                   {/* 变量高亮显示 */}
                   <div className="pt-2 border-t border-border/30">
                     <div className="text-xs text-muted-foreground mb-2">
-                      变量替换情况：
+                      {t('variableForm.variableReplacement')}
                     </div>
                     <VariableDisplay
                       content={previewContent}
@@ -394,7 +396,7 @@ export const VariableForm: React.FC<VariableFormProps> = ({
                 </div>
               ) : (
                 <span className="text-muted-foreground text-sm">
-                  填写变量后，这里将显示替换后的内容
+                  {t('variableForm.fillVariablesHint')}
                 </span>
               )}
             </div>

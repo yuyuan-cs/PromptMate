@@ -9,6 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ChevronDown, Type } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface FontSelectorProps {
   value?: string;
@@ -17,7 +18,7 @@ interface FontSelectorProps {
 
 export function FontSelector({ value, onChange }: FontSelectorProps = {}) {
   const { settings, availableFonts, updateSettings } = useSettings();
-  
+  const { t } = useTranslation();
   // 使用传入的value或从settings中获取
   const currentFont = value || settings.font;
 
@@ -47,7 +48,7 @@ export function FontSelector({ value, onChange }: FontSelectorProps = {}) {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent>
-          <DropdownMenuLabel>选择字体</DropdownMenuLabel>
+          <DropdownMenuLabel>{t('font.selectFont')}</DropdownMenuLabel>
           <DropdownMenuSeparator />
           {availableFonts.map((font) => (
             <DropdownMenuItem

@@ -14,6 +14,7 @@ import { usePrompts } from "@/hooks/usePrompts";
 import { AIOptimizeButton } from "./AIOptimizeButton";
 import { AISettingsDialog } from "./AISettingsDialog";
 import ReactMarkdown from "react-markdown";
+import { useTranslation } from "react-i18next";
 
 interface CreatePromptDialogProps {
   open: boolean;
@@ -38,6 +39,7 @@ export const CreatePromptDialog: React.FC<CreatePromptDialogProps> = ({
 }) => {
   const { categories, allTags } = usePrompts();
   const [showAISettings, setShowAISettings] = React.useState(false);
+  const { t } = useTranslation();
   
   const {
     formData,
@@ -87,17 +89,17 @@ export const CreatePromptDialog: React.FC<CreatePromptDialogProps> = ({
     <Dialog open={open} onOpenChange={handleDialogOpenChange}>
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle>新建提示词</DialogTitle>
+          <DialogTitle>{t('common.create_prompt.title')}</DialogTitle>
         </DialogHeader>
         
         <ScrollArea className="flex-1 max-h-[calc(90vh-130px)] overflow-auto">
           <div className="space-y-4 py-4 px-1">
             {/* 标题 */}
             <div className="space-y-2">
-              <Label htmlFor="title">标题</Label>
+              <Label htmlFor="title">{t('common.create_prompt.title')}</Label>
               <Input 
                 id="title" 
-                placeholder="请输入提示词标题" 
+                placeholder={t('common.create_prompt.description')}
                 value={formData.title}
                 onChange={(e) => updateField('title', e.target.value)}
               />
@@ -105,11 +107,11 @@ export const CreatePromptDialog: React.FC<CreatePromptDialogProps> = ({
 
             {/* 内容 */}
             <div className="space-y-2">
-              <Label htmlFor="content">内容</Label>
+              <Label htmlFor="content">{t('common.create_prompt.content_title')}</Label>
               <div className="relative">
                 <Textarea 
                   id="content" 
-                  placeholder="请输入提示词内容" 
+                  placeholder={t('common.create_prompt.content')} 
                   className="h-[200px] pr-12"
                   value={formData.content}
                   onChange={(e) => updateField('content', e.target.value)}
@@ -129,7 +131,7 @@ export const CreatePromptDialog: React.FC<CreatePromptDialogProps> = ({
               {/* Markdown 预览 */}
               {showMarkdownPreview && formData.content && (
                 <div className="mt-2 p-2 border rounded bg-muted/30">
-                  <div className="text-xs text-muted-foreground mb-1">Markdown 预览：</div>
+                  <div className="text-xs text-muted-foreground mb-1">{t('common.create_prompt.markdown')}</div>
                   <div className="markdown-body">
                     <ReactMarkdown>{formData.content}</ReactMarkdown>
                   </div>
@@ -139,13 +141,13 @@ export const CreatePromptDialog: React.FC<CreatePromptDialogProps> = ({
 
             {/* 分类 */}
             <div className="space-y-2">
-              <Label htmlFor="category">分类</Label>
+              <Label htmlFor="category">{t('common.create_prompt.category')}</Label>
               <Select 
                 value={formData.category}
                 onValueChange={(value) => updateField('category', value)}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="选择分类" />
+                  <SelectValue placeholder= {t('common.create_prompt.categoryPlaceholder')}/>
                 </SelectTrigger>
                 <SelectContent>
                   {categories.map(category => (
@@ -159,11 +161,11 @@ export const CreatePromptDialog: React.FC<CreatePromptDialogProps> = ({
 
             {/* 标签 */}
             <div className="space-y-2">
-              <Label htmlFor="tags">标签</Label>
+              <Label htmlFor="tags">{t('common.create_prompt.tags')}</Label>
               <div className="space-y-2">
                 <Input
                   id="tags" 
-                  placeholder="输入标签，用逗号、分号分隔"
+                  placeholder={t('common.create_prompt.tagsPlaceholder')}
                   value={formData.tags}
                   onChange={(e) => updateField('tags', e.target.value)}
                 />
@@ -171,7 +173,7 @@ export const CreatePromptDialog: React.FC<CreatePromptDialogProps> = ({
                 {/* 标签建议 */}
                 {showTagSuggestions && allTags && allTags.length > 0 && (
                   <div className="mt-2">
-                    <Label className="text-xs text-muted-foreground mb-1 block">选择已有标签</Label>
+                    <Label className="text-xs text-muted-foreground mb-1 block">{t('common.create_prompt.tagChosed')}</Label>
                     <div className="flex flex-wrap gap-1.5 max-h-[80px] overflow-y-auto p-1">
                       {allTags.map(tag => (
                         <Badge 
@@ -193,7 +195,7 @@ export const CreatePromptDialog: React.FC<CreatePromptDialogProps> = ({
             {showImageUpload && (
               <div className="space-y-2 pt-2 border-t">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="images">参考图片</Label>
+                  <Label htmlFor="images">{t('common.create_prompt.imageUpload')}</Label>
                   <Button
                     type="button"
                     variant="outline"
@@ -201,7 +203,7 @@ export const CreatePromptDialog: React.FC<CreatePromptDialogProps> = ({
                     onClick={() => document.getElementById('image-upload')?.click()}
                   >
                     <Icons.upload className="h-4 w-4 mr-2" />
-                    上传图片
+                    {t('common.create_prompt.imageUploadButton')}
                   </Button>
                 </div>
                 
@@ -227,7 +229,7 @@ export const CreatePromptDialog: React.FC<CreatePromptDialogProps> = ({
                       >
                         <img 
                           src={image.data} 
-                          alt={image.caption || `图片 ${index + 1}`}
+                          alt={image.caption || `${t('common.create_prompt.image')} ${index + 1}`}
                           className="w-full h-20 object-cover rounded"
                         />
                         <Button
@@ -250,10 +252,10 @@ export const CreatePromptDialog: React.FC<CreatePromptDialogProps> = ({
                 {/* 图片说明编辑 */}
                 {selectedImageIndex !== null && (
                   <div className="space-y-2 p-2 border rounded bg-muted/30">
-                    <Label htmlFor="image-caption">图片说明</Label>
+                    <Label htmlFor="image-caption">{t('common.create_prompt.imageCaption')}</Label>
                     <Input
                       id="image-caption"
-                      placeholder="为这张图片添加说明..."
+                      placeholder={t('common.create_prompt.imageCaptionPlaceholder')}
                       value={imageCaption}
                       onChange={(e) => setImageCaption(e.target.value)}
                       onBlur={() => {
@@ -271,10 +273,10 @@ export const CreatePromptDialog: React.FC<CreatePromptDialogProps> = ({
 
         <DialogFooter>
           <Button variant="outline" onClick={handleCancel}>
-            取消
+            {t('common.cancel')}
           </Button>
           <Button onClick={handleSubmit} disabled={!isValid}>
-            创建
+            {t('common.create')}
           </Button>
         </DialogFooter>
 

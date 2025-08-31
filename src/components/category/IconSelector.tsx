@@ -72,13 +72,9 @@ export function IconSelector({ value, onChange, className }: IconSelectorProps) 
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className={cn("w-full justify-between", className)}
+          className={cn("w-8 h-8 p-0 justify-center", className)}
         >
-          <div className="flex items-center">
-            <SelectedIconComponent className="h-4 w-4 mr-2" />
-            <span>{value || "选择图标"}</span>
-          </div>
-          <Icons.chevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          <SelectedIconComponent className="h-4 w-4" />
         </Button>
       </PopoverTrigger>
       

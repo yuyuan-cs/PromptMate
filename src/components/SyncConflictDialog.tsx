@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Dialog,
   DialogContent,
@@ -35,6 +36,7 @@ export const SyncConflictDialog: React.FC<SyncConflictDialogProps> = ({
   onOpenChange,
   onResolve
 }) => {
+  const { t } = useTranslation();
   const [resolving, setResolving] = useState(false);
   const [selectedResolution, setSelectedResolution] = useState<'local' | 'remote' | 'merge' | null>(null);
 
@@ -47,7 +49,7 @@ export const SyncConflictDialog: React.FC<SyncConflictDialogProps> = ({
       await onResolve(resolution);
       onOpenChange(false);
     } catch (error) {
-      console.error('解决冲突失败:', error);
+      console.error(t('syncConflictDialog.resolveFailed'), error);
     } finally {
       setResolving(false);
       setSelectedResolution(null);
@@ -82,10 +84,10 @@ export const SyncConflictDialog: React.FC<SyncConflictDialogProps> = ({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <AlertTriangle className="h-5 w-5 text-yellow-500" />
-            数据同步冲突
+            {t('syncConflictDialog.title')}
           </DialogTitle>
           <DialogDescription>
-            检测到本地数据与远程数据存在冲突，请选择如何解决：
+            {t('syncConflictDialog.description')}
           </DialogDescription>
         </DialogHeader>
 
@@ -95,12 +97,12 @@ export const SyncConflictDialog: React.FC<SyncConflictDialogProps> = ({
             <div className="p-4 border rounded-lg">
               <div className="flex items-center gap-2 mb-2">
                 <Database className="h-4 w-4 text-blue-500" />
-                <span className="font-medium">本地数据</span>
-                <Badge variant="outline">当前</Badge>
+                <span className="font-medium">{t('syncConflictDialog.localData')}</span>
+                <Badge variant="outline">{t('syncConflictDialog.currentBadge')}</Badge>
               </div>
               <div className="space-y-1 text-sm text-muted-foreground">
-                <div>提示词: {localStats.prompts} 个</div>
-                <div>分类: {localStats.categories} 个</div>
+                <div>{t('syncConflictDialog.promptsCount', { count: localStats.prompts })}</div>
+                <div>{t('syncConflictDialog.categoriesCount', { count: localStats.categories })}</div>
                 <div className="flex items-center gap-1">
                   <Clock className="h-3 w-3" />
                   {localStats.lastModified}
@@ -111,12 +113,12 @@ export const SyncConflictDialog: React.FC<SyncConflictDialogProps> = ({
             <div className="p-4 border rounded-lg">
               <div className="flex items-center gap-2 mb-2">
                 <Database className="h-4 w-4 text-green-500" />
-                <span className="font-medium">远程数据</span>
-                <Badge variant="outline">同步</Badge>
+                <span className="font-medium">{t('syncConflictDialog.remoteData')}</span>
+                <Badge variant="outline">{t('syncConflictDialog.syncBadge')}</Badge>
               </div>
               <div className="space-y-1 text-sm text-muted-foreground">
-                <div>提示词: {remoteStats.prompts} 个</div>
-                <div>分类: {remoteStats.categories} 个</div>
+                <div>{t('syncConflictDialog.promptsCount', { count: remoteStats.prompts })}</div>
+                <div>{t('syncConflictDialog.categoriesCount', { count: remoteStats.categories })}</div>
                 <div className="flex items-center gap-1">
                   <Clock className="h-3 w-3" />
                   {remoteStats.lastModified}
@@ -128,22 +130,22 @@ export const SyncConflictDialog: React.FC<SyncConflictDialogProps> = ({
           {/* 详细对比 */}
           <Tabs defaultValue="prompts" className="w-full">
             <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="prompts">提示词对比</TabsTrigger>
-              <TabsTrigger value="categories">分类对比</TabsTrigger>
-              <TabsTrigger value="settings">设置对比</TabsTrigger>
+              <TabsTrigger value="prompts">{t('syncConflictDialog.promptsTab')}</TabsTrigger>
+              <TabsTrigger value="categories">{t('syncConflictDialog.categoriesTab')}</TabsTrigger>
+              <TabsTrigger value="settings">{t('syncConflictDialog.settingsTab')}</TabsTrigger>
             </TabsList>
 
             <TabsContent value="prompts" className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <h4 className="font-medium mb-2">本地提示词 ({localStats.prompts})</h4>
+                  <h4 className="font-medium mb-2">{t('syncConflictDialog.localPrompts', { count: localStats.prompts })}</h4>
                   <ScrollArea className="h-48 border rounded p-2">
                     <div className="space-y-1">
                       {conflict.localData.prompts.map((prompt) => (
                         <div key={prompt.id} className="text-sm p-2 bg-muted/50 rounded">
                           <div className="font-medium">{prompt.title}</div>
                           <div className="text-xs text-muted-foreground">
-                            更新: {formatTimestamp(prompt.updatedAt)}
+                            {t('syncConflictDialog.updated', { time: formatTimestamp(prompt.updatedAt) })}
                           </div>
                         </div>
                       ))}
@@ -152,14 +154,14 @@ export const SyncConflictDialog: React.FC<SyncConflictDialogProps> = ({
                 </div>
 
                 <div>
-                  <h4 className="font-medium mb-2">远程提示词 ({remoteStats.prompts})</h4>
+                  <h4 className="font-medium mb-2">{t('syncConflictDialog.remotePrompts', { count: remoteStats.prompts })}</h4>
                   <ScrollArea className="h-48 border rounded p-2">
                     <div className="space-y-1">
                       {conflict.remoteData.prompts.map((prompt) => (
                         <div key={prompt.id} className="text-sm p-2 bg-muted/50 rounded">
                           <div className="font-medium">{prompt.title}</div>
                           <div className="text-xs text-muted-foreground">
-                            更新: {formatTimestamp(prompt.updatedAt)}
+                            {t('syncConflictDialog.updated', { time: formatTimestamp(prompt.updatedAt) })}
                           </div>
                         </div>
                       ))}
@@ -172,7 +174,7 @@ export const SyncConflictDialog: React.FC<SyncConflictDialogProps> = ({
             <TabsContent value="categories" className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <h4 className="font-medium mb-2">本地分类 ({localStats.categories})</h4>
+                  <h4 className="font-medium mb-2">{t('syncConflictDialog.localCategories', { count: localStats.categories })}</h4>
                   <ScrollArea className="h-48 border rounded p-2">
                     <div className="space-y-1">
                       {conflict.localData.categories.map((category) => (
@@ -188,7 +190,7 @@ export const SyncConflictDialog: React.FC<SyncConflictDialogProps> = ({
                 </div>
 
                 <div>
-                  <h4 className="font-medium mb-2">远程分类 ({remoteStats.categories})</h4>
+                  <h4 className="font-medium mb-2">{t('syncConflictDialog.remoteCategories', { count: remoteStats.categories })}</h4>
                   <ScrollArea className="h-48 border rounded p-2">
                     <div className="space-y-1">
                       {conflict.remoteData.categories.map((category) => (
@@ -208,7 +210,7 @@ export const SyncConflictDialog: React.FC<SyncConflictDialogProps> = ({
             <TabsContent value="settings" className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <h4 className="font-medium mb-2">本地设置</h4>
+                  <h4 className="font-medium mb-2">{t('syncConflictDialog.localSettings')}</h4>
                   <ScrollArea className="h-48 border rounded p-2">
                     <pre className="text-xs">
                       {JSON.stringify(conflict.localData.settings, null, 2)}
@@ -217,7 +219,7 @@ export const SyncConflictDialog: React.FC<SyncConflictDialogProps> = ({
                 </div>
 
                 <div>
-                  <h4 className="font-medium mb-2">远程设置</h4>
+                  <h4 className="font-medium mb-2">{t('syncConflictDialog.remoteSettings')}</h4>
                   <ScrollArea className="h-48 border rounded p-2">
                     <pre className="text-xs">
                       {JSON.stringify(conflict.remoteData.settings, null, 2)}
@@ -231,7 +233,7 @@ export const SyncConflictDialog: React.FC<SyncConflictDialogProps> = ({
 
         <DialogFooter className="flex-col space-y-2">
           <div className="text-sm text-muted-foreground text-center">
-            选择解决方案：
+            {t('syncConflictDialog.chooseResolution')}
           </div>
           
           <div className="flex gap-2 w-full">
@@ -245,7 +247,7 @@ export const SyncConflictDialog: React.FC<SyncConflictDialogProps> = ({
               )}
             >
               <Upload className="h-4 w-4 mr-2" />
-              {resolving && selectedResolution === 'local' ? '处理中...' : '使用本地数据'}
+              {resolving && selectedResolution === 'local' ? t('syncConflictDialog.processing') : t('syncConflictDialog.useLocalData')}
             </Button>
 
             <Button
@@ -258,7 +260,7 @@ export const SyncConflictDialog: React.FC<SyncConflictDialogProps> = ({
               )}
             >
               <Download className="h-4 w-4 mr-2" />
-              {resolving && selectedResolution === 'remote' ? '处理中...' : '使用远程数据'}
+              {resolving && selectedResolution === 'remote' ? t('syncConflictDialog.processing') : t('syncConflictDialog.useRemoteData')}
             </Button>
 
             <Button
@@ -271,14 +273,14 @@ export const SyncConflictDialog: React.FC<SyncConflictDialogProps> = ({
               )}
             >
               <Merge className="h-4 w-4 mr-2" />
-              {resolving && selectedResolution === 'merge' ? '处理中...' : '智能合并'}
+              {resolving && selectedResolution === 'merge' ? t('syncConflictDialog.processing') : t('syncConflictDialog.smartMerge')}
             </Button>
           </div>
 
           <div className="text-xs text-muted-foreground text-center space-y-1">
-            <div>• 本地数据：保留当前本地的所有数据</div>
-            <div>• 远程数据：使用同步过来的数据覆盖本地</div>
-            <div>• 智能合并：自动合并两边的数据，保留最新版本</div>
+            <div>{t('syncConflictDialog.localDataDesc')}</div>
+            <div>{t('syncConflictDialog.remoteDataDesc')}</div>
+            <div>{t('syncConflictDialog.smartMergeDesc')}</div>
           </div>
         </DialogFooter>
       </DialogContent>

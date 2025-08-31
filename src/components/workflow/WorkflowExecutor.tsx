@@ -17,6 +17,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { Workflow, WorkflowExecution } from "@/types/workflow";
+import { useSidebarAlert } from "@/hooks/useSidebarAlert";
 
 interface WorkflowExecutorProps {
   workflow: Workflow;
@@ -24,6 +25,7 @@ interface WorkflowExecutorProps {
 }
 
 export function WorkflowExecutor({ workflow, onClose }: WorkflowExecutorProps) {
+  const { showAlert, AlertComponent } = useSidebarAlert();
   const { 
     executions, 
     currentExecution,
@@ -73,7 +75,7 @@ export function WorkflowExecutor({ workflow, onClose }: WorkflowExecutorProps) {
       .map(variable => variable.name);
     
     if (missingVariables.length > 0) {
-      alert(`请填写必需变量: ${missingVariables.join(", ")}`);
+      showAlert(`请填写必需变量: ${missingVariables.join(", ")}`);
       return;
     }
 
@@ -159,6 +161,7 @@ export function WorkflowExecutor({ workflow, onClose }: WorkflowExecutorProps) {
 
   return (
     <div className="flex flex-col h-full">
+      <AlertComponent />
       {/* 头部 */}
       <div className="p-4 border-b">
         <div className="flex items-center justify-between">

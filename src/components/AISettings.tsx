@@ -10,8 +10,10 @@ import { useToast } from '@/hooks/use-toast';
 import { aiService, type AIConfig, getModelsForProvider, type AIModel } from '@/services/aiService';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
+import { useTranslation } from 'react-i18next';
 
 export const AISettings: React.FC = () => {
+  const { t } = useTranslation();
   const { toast } = useToast();
   const [config, setConfig] = useState<AIConfig>({
     apiKey: '',
@@ -26,7 +28,7 @@ export const AISettings: React.FC = () => {
   const [availableModels, setAvailableModels] = useState<AIModel[]>([]);
   const [currentProvider, setCurrentProvider] = useState<keyof typeof presetConfigs>('openai');
   const [providerConfigs, setProviderConfigs] = useState<Record<string, Partial<AIConfig>>>({});
-
+  const [usageInstructions, setUsageInstructions] = useState<string[]>([]);
   // 预设配置 - 基于Cherry Studio和市场主流AI服务商
   const presetConfigs = {
     // 主流云服务商
@@ -228,8 +230,8 @@ export const AISettings: React.FC = () => {
   const testConnection = async () => {
     if (!config.apiKey.trim()) {
       toast({
-        title: "测试失败",
-        description: "请先输入API Key",
+        title: t("ai.testConnection.error.apiKey"),
+        description: t("ai.testConnection.error.apiKeyDesc"),
         variant: "destructive",
       });
       return;
@@ -245,23 +247,23 @@ export const AISettings: React.FC = () => {
       if (isConnected) {
         setTestResult('success');
         toast({
-          title: "连接成功",
-          description: "AI服务配置正确，可以正常使用",
+          title: t("ai.testConnection.success.title"),
+          description: t("ai.testConnection.success.desc"),
           variant: "success",
         });
       } else {
         setTestResult('error');
         toast({
-          title: "连接失败",
-          description: "无法连接到AI服务，请检查配置信息",
+          title: t("ai.testConnection.error.title"),
+          description: t("ai.testConnection.error.desc"),
           variant: "destructive",
         });
       }
     } catch (error) {
       setTestResult('error');
       toast({
-        title: "连接失败",
-        description: error instanceof Error ? error.message : "请检查配置信息",
+        title: t("ai.testConnection.error.title"),
+        description: error instanceof Error ? error.message : t("ai.testConnection.error.desc"),
         variant: "destructive",
       });
     } finally {
@@ -280,13 +282,13 @@ export const AISettings: React.FC = () => {
       setProviderConfigs(prev => ({ ...prev, [currentProvider]: config }));
       
       toast({
-        title: "配置已保存",
+        title: t("ai.testConnection.success.title"),
         description: `${presetConfigs[currentProvider]?.baseUrl?.includes('openai') ? 'OpenAI' : currentProvider} 服务配置已成功保存`
       });
     } catch (error) {
       toast({
-        title: "保存失败",
-        description: "保存配置时出现错误",
+        title: t("ai.testConnection.error.title"),
+        description: t("ai.testConnection.error.desc"),
         variant: "destructive"
       });
     }
@@ -308,29 +310,29 @@ export const AISettings: React.FC = () => {
       <CardHeader className="pb-4">
         <CardTitle className="flex items-center gap-2 text-base">
           <TestTube className="h-5 w-5" />
-          AI优化服务配置
+          {t("ai.configureAI")}
         </CardTitle>
         <CardDescription className="text-sm">
-          配置AI服务以启用提示词优化和生成功能。支持国内外主流AI服务商、本地部署和第三方API聚合服务。
+          {t("ai.configureAIDesc")}
           <br />
           <span className="text-blue-600 text-xs mt-1 block">
-            💡 推荐：国内用户可优先选择DeepSeek、Kimi等国内服务，或使用硅基流动等聚合服务。
+            {t("ai.settings.tip")}
           </span>
           <span className="text-amber-600 text-xs mt-1 block">
-            ⚠️ 注意：部分国外服务可能需要网络代理才能访问。
+            {t("ai.settings.warning")}
           </span>
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4 px-4 pb-4">
         {/* 服务提供商选择 */}
         <div className="space-y-2">
-          <Label htmlFor="provider">服务提供商</Label>
+          <Label htmlFor="provider">{t("ai.settings.provider")}</Label>
           <Select
             value={currentProvider}
             onValueChange={handleProviderChange}
           >
             <SelectTrigger>
-              <SelectValue placeholder="选择AI服务提供商" />
+              <SelectValue placeholder={t("ai.settings.selectProvider")} />
             </SelectTrigger>
             <SelectContent className="max-h-[300px] w-[350px] max-w-[90vw]">
               {/* 主流云服务商 */}
@@ -368,14 +370,14 @@ export const AISettings: React.FC = () => {
 
         {/* API Key */}
         <div className="space-y-2">
-          <Label htmlFor="apiKey">API Key</Label>
+          <Label htmlFor="apiKey">{t("ai.settings.apiKey")}</Label>
           <div className="relative">
             <Input
               id="apiKey"
               type={showApiKey ? "text" : "password"}
               value={config.apiKey}
               onChange={(e) => handleConfigChange('apiKey', e.target.value)}
-              placeholder="输入您的API Key"
+              placeholder={t("ai.settings.apiKeyPlaceholder")}
               className="pr-10"
             />
             <Button
@@ -396,12 +398,12 @@ export const AISettings: React.FC = () => {
 
         {/* API地址 */}
         <div className="space-y-2">
-          <Label htmlFor="baseUrl">API地址</Label>
+          <Label htmlFor="baseUrl">{t("ai.settings.apiUrl")}</Label>
           <Input
             id="baseUrl"
             value={config.baseUrl}
             onChange={(e) => handleConfigChange('baseUrl', e.target.value)}
-            placeholder="API服务地址"
+            placeholder={t("ai.settings.apiUrlPlaceholder")}
           />
         </div>
 
@@ -409,7 +411,7 @@ export const AISettings: React.FC = () => {
         <div className="space-y-2">
           <Label htmlFor="model" className="flex items-center gap-2">
             <Sparkles className="h-4 w-4" />
-            模型选择
+            {t("ai.settings.modelSelection")}
           </Label>
           
           {/* 模型选择下拉框 */}
@@ -418,7 +420,7 @@ export const AISettings: React.FC = () => {
             onValueChange={handleModelChange}
           >
             <SelectTrigger>
-              <SelectValue placeholder="选择模型或自定义输入" />
+              <SelectValue placeholder={t("ai.settings.selectModel")} />
             </SelectTrigger>
             <SelectContent className="max-h-[300px] w-[400px] max-w-[90vw]">
               {availableModels.map((model) => (
@@ -446,7 +448,7 @@ export const AISettings: React.FC = () => {
               <SelectItem value="custom">
                 <div className="flex items-center gap-2">
                   <Edit3 className="h-4 w-4" />
-                  <span>自定义模型...</span>
+                  <span>{t("ai.settings.customModel")}</span>
                 </div>
               </SelectItem>
             </SelectContent>
@@ -458,11 +460,11 @@ export const AISettings: React.FC = () => {
               <Input
                 value={config.model}
                 onChange={(e) => handleCustomModelChange(e.target.value)}
-                placeholder="输入自定义模型名称，例如：gpt-4o-2024-08-06"
+                placeholder={t("ai.settings.customModelPlaceholder")}
                 className="font-mono text-sm"
               />
               <p className="text-xs text-muted-foreground mt-1">
-                💡 提示：请确保输入的模型名称与API服务商支持的模型完全一致
+                {t("ai.settings.customModelTip")}
               </p>
             </div>
           )}
@@ -479,7 +481,7 @@ export const AISettings: React.FC = () => {
                       <span className="font-medium text-sm">{selectedModel.name}</span>
                       {selectedModel.contextLength && (
                         <Badge variant="outline" className="text-xs">
-                          上下文: {selectedModel.contextLength >= 1000000 
+                          {t("ai.settings.context")}: {selectedModel.contextLength >= 1000000 
                             ? `${Math.round(selectedModel.contextLength / 1000000)}M` 
                             : selectedModel.contextLength >= 1000 
                             ? `${Math.round(selectedModel.contextLength / 1000)}K`
@@ -501,89 +503,89 @@ export const AISettings: React.FC = () => {
         <div className="bg-blue-50 dark:bg-blue-950/20 rounded-lg p-3 text-sm">
           <div className="flex items-center gap-2 mb-2">
             <span className="text-blue-600 dark:text-blue-400">💡</span>
-            <span className="font-medium text-blue-800 dark:text-blue-300">获取 API Key</span>
+            <span className="font-medium text-blue-800 dark:text-blue-300">{t("ai.settings.getApiKey")}</span>
           </div>
           {(() => {
             const helpLinks: Record<string, { name: string; url: string; description: string }> = {
               openai: { 
                 name: 'OpenAI API Keys', 
                 url: 'https://platform.openai.com/api-keys', 
-                description: '注册OpenAI账户并创建API密钥' 
+                description: t("ai.settings.getApiKeyDescription.openai") 
               },
               anthropic: { 
                 name: 'Anthropic Console', 
                 url: 'https://console.anthropic.com/', 
-                description: '访问Anthropic控制台获取Claude API密钥' 
+                description: t("ai.settings.getApiKeyDescription.anthropic") 
               },
               gemini: { 
                 name: 'Google AI Studio', 
                 url: 'https://makersuite.google.com/app/apikey', 
-                description: '在Google AI Studio中获取Gemini API密钥' 
+                description: t("ai.settings.getApiKeyDescription.gemini") 
               },
               deepseek: { 
                 name: 'DeepSeek Platform', 
                 url: 'https://platform.deepseek.com/api_keys', 
-                description: '注册DeepSeek账户并获取API密钥' 
+                description: t("ai.settings.getApiKeyDescription.deepseek") 
               },
               kimi: { 
                 name: 'Moonshot AI', 
                 url: 'https://platform.moonshot.cn/console/api-keys', 
-                description: '访问月之暗面平台获取Kimi API密钥' 
+                description: t("ai.settings.getApiKeyDescription.kimi") 
               },
               doubao: { 
                 name: '火山引擎', 
                 url: 'https://console.volcengine.com/ark/', 
-                description: '在火山引擎控制台获取豆包API密钥' 
+                description: t("ai.settings.getApiKeyDescription.doubao") 
               },
               qwen: { 
                 name: '阿里云百炼', 
                 url: 'https://bailian.console.aliyun.com/', 
-                description: '在阿里云百炼平台获取通义千问API密钥' 
+                description: t("ai.settings.getApiKeyDescription.qwen") 
               },
               baidu: { 
                 name: '百度智能云', 
                 url: 'https://console.bce.baidu.com/qianfan/ais/console/applicationConsole/application', 
-                description: '在百度智能云获取文心一言API密钥' 
+                description: t("ai.settings.getApiKeyDescription.baidu") 
               },
               siliconflow: { 
                 name: 'SiliconFlow', 
                 url: 'https://cloud.siliconflow.cn/account/ak', 
-                description: '注册硅基流动账户并获取API密钥' 
+                description: t("ai.settings.getApiKeyDescription.siliconflow") 
               },
               oneapi: { 
                 name: 'One API', 
                 url: 'https://github.com/songquanpeng/one-api', 
-                description: '部署One API服务并配置相关密钥' 
+                description: t("ai.settings.getApiKeyDescription.oneapi") 
               },
               groq: { 
                 name: 'Groq Console', 
                 url: 'https://console.groq.com/keys', 
-                description: '在Groq控制台获取API密钥' 
+                description: t("ai.settings.getApiKeyDescription.groq") 
               },
               perplexity: { 
                 name: 'Perplexity API', 
                 url: 'https://www.perplexity.ai/settings/api', 
-                description: '在Perplexity设置中获取API密钥' 
+                description: t("ai.settings.getApiKeyDescription.perplexity") 
               },
               together: { 
                 name: 'Together AI', 
                 url: 'https://api.together.xyz/settings/api-keys', 
-                description: '在Together AI平台获取API密钥' 
+                description: t("ai.settings.getApiKeyDescription.together") 
               },
               ollama: { 
                 name: 'Ollama', 
                 url: 'https://ollama.ai/', 
-                description: '下载并安装Ollama，无需API密钥' 
+                description: t("ai.settings.getApiKeyDescription.ollama") 
               },
               lmstudio: { 
                 name: 'LM Studio', 
                 url: 'https://lmstudio.ai/', 
-                description: '下载LM Studio并加载本地模型' 
+                description: t("ai.settings.getApiKeyDescription.lmstudio") 
               },
               custom: { 
-                name: '自定义服务', 
+                name: t("ai.settings.custom"), 
                 url: '', 
-                description: '请参考您的API服务商文档获取密钥' 
+                description: t("ai.settings.getApiKeyDescription.custom") 
               }
             };
             
@@ -621,12 +623,12 @@ export const AISettings: React.FC = () => {
               {isTesting ? (
                 <>
                   <TestTube className="h-4 w-4 mr-2 animate-spin" />
-                  测试中...
+                  {t("ai.settings.testing")}
                 </>
               ) : (
                 <>
                   <TestTube className="h-4 w-4 mr-2" />
-                  测试连接
+                  {t("ai.settings.testConnection")}
                 </>
               )}
             </Button>
@@ -639,7 +641,7 @@ export const AISettings: React.FC = () => {
                   <XCircle className="h-4 w-4 text-red-500" />
                 )}
                 <span className={`text-sm ${testResult === 'success' ? 'text-green-600' : 'text-red-600'}`}>
-                  {testResult === 'success' ? '连接成功' : '连接失败'}
+                  {testResult === 'success' ? t("ai.settings.connectionSuccess") : t("ai.settings.connectionFailed")}
                 </span>
               </div>
             )}
@@ -647,25 +649,25 @@ export const AISettings: React.FC = () => {
 
           <div className="flex gap-2">
             <Button variant="outline" onClick={resetConfig}>
-              重置
+              {t("ai.settings.reset")}
             </Button>
             <Button onClick={handleSave}>
-              保存配置
+              {t("ai.settings.saveConfig")}
             </Button>
           </div>
         </div>
 
         {/* 使用说明 */}
         <div className="bg-muted/50 rounded-lg p-4 text-sm text-muted-foreground">
-          <h4 className="font-medium mb-2">使用说明：</h4>
+          <h4 className="font-medium mb-2">{t("ai.settings.usageInstructions")}</h4>
           <ul className="space-y-1 list-disc list-inside">
-            <li>配置完成后，在新建或编辑提示词时会显示AI优化按钮</li>
-            <li>AI会根据提示词工程最佳实践优化您的内容</li>
-            <li>支持生成全新提示词或优化现有内容</li>
-            <li>国内服务：DeepSeek、Kimi、豆包等无需代理，速度快</li>
-            <li>聚合服务：硅基流动、One API等支持多种模型</li>
-            <li>本地部署：Ollama、LM Studio隐私安全，无网络费用</li>
-            <li>请确保API Key有足够的使用额度</li>
+            <li>{t("ai.settings.instruction1")}</li>
+            <li>{t("ai.settings.instruction2")}</li>
+            <li>{t("ai.settings.instruction3")}</li>
+            <li>{t("ai.settings.instruction4")}</li>
+            <li>{t("ai.settings.instruction5")}</li>
+            <li>{t("ai.settings.instruction6")}</li>
+            <li>{t("ai.settings.instruction7")}</li>
           </ul>
         </div>
       </CardContent>

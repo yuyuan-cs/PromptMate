@@ -1,3 +1,4 @@
+/* 旧版 */
 import { useState, useEffect, useCallback, useRef } from "react";
 import { usePrompts } from "@/hooks/usePrompts";
 import { Button } from "@/components/ui/button";
@@ -40,6 +41,7 @@ import {
 } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
 import ReactMarkdown from 'react-markdown';
+import { useTranslation } from "react-i18next";
 
 // 防抖函数
 function debounce<T extends (...args: any[]) => any>(func: T, wait: number): (...args: Parameters<T>) => void {
@@ -89,7 +91,7 @@ export function PromptEditor() {
   const [autoSaveStatus, setAutoSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
   const previousSelectedPromptIdRef = useRef<string | null>(null);
   const isAutoSavingRef = useRef<boolean>(false);
-  
+  const { t } = useTranslation();  
   // 添加切换提示词前的确认对话框状态
   const [switchConfirmOpen, setSwitchConfirmOpen] = useState(false);
   const [pendingPromptId, setPendingPromptId] = useState<string | null>(null);
@@ -192,15 +194,15 @@ export function PromptEditor() {
     navigator.clipboard.writeText(content)
       .then(() => {
         toast({
-          title: "复制成功", 
-          description: "提示词内容已复制到剪贴板",
+          title: t('common.message.copySuccess'), 
+          description: t('common.message.copySuccessDescription'),
           variant: "success",
         });
       })
       .catch(() => {
         toast({
-          title: "复制失败",
-          description: "无法复制到剪贴板，请手动复制", 
+          title: t('common.message.copyFailed'),
+          description: t('common.message.copyFailedDescription'), 
           variant: "destructive",
         });
       });
@@ -278,8 +280,8 @@ export function PromptEditor() {
     
     // 显示一个简短的保存成功提示
     toast({
-      title: "保存成功",
-      description: "更改已保存",
+      title: t('common.message.saveSuccess'),
+      description: t('common.message.saveSuccessDescription'),
       variant: "success",
       duration: 1000, // 1秒后自动关闭
     });
@@ -326,17 +328,17 @@ export function PromptEditor() {
     const file = files[0];
     if (!file.type.startsWith('image/')) {
       toast({
-        title: "格式错误",
-        description: "请上传图片文件",
+        title: t('common.message.fileType'),
+        description: t('common.message.fileTypeDescription'),
         variant: "destructive",
       });
       return;
     }
     
-    if (file.size > 5 * 1024 * 1024) { // 5MB限制
+    if (file.size > 10 * 1024 * 1024) { // 5MB限制
       toast({
-        title: "文件过大",
-        description: "图片大小不能超过5MB",
+        title: t('common.message.fileSize'),
+        description: t('common.message.fileSizeDescription'),
         variant: "destructive",
       });
       return;
@@ -395,8 +397,8 @@ export function PromptEditor() {
     setDeleteDialogOpen(false);
     
     toast({
-      title: "删除成功",
-      description: "您的提示词已被删除。",
+      title: t('common.message.deleteSuccess'),
+      description: t('common.message.deleteSuccessDescription'),
       variant: "warning",
     });
   };
@@ -409,8 +411,8 @@ export function PromptEditor() {
     setShowRecommended(false);
     
     toast({
-      title: "添加成功",
-      description: "推荐模板已添加到您的提示词库",
+      title: t('common.message.addSuccess'),
+      description: t('common.message.addSuccessDescription'),
       variant: "success",
     });
   };
@@ -426,14 +428,14 @@ export function PromptEditor() {
       <div className="flex items-center justify-center h-full p-6">
         <div className="text-center max-w-md p-8">
           <h2 className="text-2xl font-semibold mb-4">
-            选择或创建提示词
+            {t('prompts.chooseOrCreatePrompt')}
           </h2>
           <p className="text-muted-foreground mb-6">
-            从列表中选择一个提示词进行编辑，或创建一个新的提示词。
+            {t('prompts.chooseOrCreatePromptDesc')}
           </p>
           <Button>
             <Plus className="h-4 w-4 mr-2" />
-            新建提示词
+            {t('prompts.createNew')}
           </Button>
         </div>
       </div>
@@ -477,12 +479,12 @@ export function PromptEditor() {
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    <span>保存中...</span>
+                    <span>{t('common.message.saving')}</span>
                   </>
                 ) : (
                   <>
                     <Icons.check className="h-3 w-3 mr-1 text-green-500" />
-                    <span className="text-green-500">已保存</span>
+                    <span className="text-green-500">{t('common.message.saveSuccess')}</span>
                   </>
                 )}
               </div>
@@ -513,7 +515,7 @@ export function PromptEditor() {
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>{isFavorite ? "取消收藏" : "添加到收藏"}</p>
+                    <p>{isFavorite ? t('common.removeFavorite') : t('common.addFavorite')}</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -526,7 +528,7 @@ export function PromptEditor() {
                 className="h-8 flex items-center flex-shrink-0"
               >
                 <Copy className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
-                <span className="text-xs md:text-sm">添加到我的提示词</span>
+                <span className="text-xs md:text-sm">{t('common.addmyPrompt')}</span>
               </Button>
             )}
             {/* 编辑/查看切换按钮 (非推荐模式) */}
@@ -549,7 +551,7 @@ export function PromptEditor() {
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p>立即保存</p>
+                      <p>{t('common.instantSave')}</p>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
@@ -568,7 +570,7 @@ export function PromptEditor() {
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p>返回查看模式</p>
+                      <p>{t('common.backToViewMode')}</p>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
@@ -588,7 +590,7 @@ export function PromptEditor() {
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p>编辑提示词</p>
+                      <p>{t('prompts.editPrompt')}</p>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
@@ -612,7 +614,7 @@ export function PromptEditor() {
                           </Button>
                       </TooltipTrigger>
                       <TooltipContent>
-                          <p>删除提示词</p>
+                          <p>{t('prompts.deletePrompt')}</p>
                       </TooltipContent>
                   </Tooltip>
               </TooltipProvider>
@@ -649,7 +651,7 @@ export function PromptEditor() {
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p>复制提示词内容</p>
+                      <p>{t('prompts.copyPrompt')}</p>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
@@ -661,13 +663,13 @@ export function PromptEditor() {
               <div className="space-y-4">
                 <div className="grid gap-2">
                   <label htmlFor="title" className="text-sm font-medium">
-                    标题
+                    {t('common.title')}
                   </label>
                   <Input
                     id="title"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    placeholder="提示词标题"
+                    placeholder={t('common.promptTitle')}
                   />
                 </div>
 
@@ -679,12 +681,12 @@ export function PromptEditor() {
                     id="content"
                     value={content}
                     onChange={(e) => setContent(e.target.value)}
-                    placeholder="输入提示词内容"
+                    placeholder={t('prompteditform.promptContentPlaceholder')}
                     className="min-h-[200px]"
                   />
                   {/* Markdown 预览 */}
                   <div className="mt-2 p-2 border rounded bg-muted/30">
-                    <div className="text-xs text-muted-foreground mb-1">Markdown 预览：</div>
+                    <div className="text-xs text-muted-foreground mb-1">{t('common.markdownPreview')}: </div>
                     <div className="markdown-body">
                       <ReactMarkdown>{content}</ReactMarkdown>
                     </div>
@@ -700,7 +702,7 @@ export function PromptEditor() {
                     onValueChange={setCategory}
                   >
                     <SelectTrigger id="category">
-                      <SelectValue placeholder="选择分类" />
+                      <SelectValue placeholder={t('prompteditform.categoryPlaceholder')} />
                     </SelectTrigger>
                     <SelectContent>
                       {categories.map((cat) => (

@@ -5,8 +5,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useExtensionPrompts } from '../hooks/useExtensionPrompts';
 import { Settings } from '../shared/types';
+import { useSidebarAlert } from '../hooks/useSidebarAlert';
 
 export const Options: React.FC = () => {
+  const { showConfirm, AlertComponent } = useSidebarAlert();
   const {
     settings,
     updateSettings,
@@ -177,12 +179,22 @@ export const Options: React.FC = () => {
 
               <button
                 onClick={async () => {
-                  if (confirm('确定清空所有扩展数据吗？此操作不可撤销。')) {
-                    await clearAllData();
-                    await refreshData();
-                    setMessage('已清空所有数据');
-                    setTimeout(() => setMessage(null), 2000);
-                  }
+                  let confirmed = false;
+                  await new Promise<void>((resolve) => {
+                    showConfirm(
+                      '确定清空所有扩展数据吗？此操作不可撤销。',
+                      '',
+                      () => { confirmed = true; resolve(); },
+                      () => { confirmed = false; resolve(); },
+                      '确定',
+                      '取消'
+                    );
+                  });
+                  if (!confirmed) return;
+                  await clearAllData();
+                  await refreshData();
+                  setMessage('已清空所有数据');
+                  setTimeout(() => setMessage(null), 2000);
                 }}
                 style={{ padding: '8px 12px', border: '1px solid #ef4444', color: '#991b1b', borderRadius: 6, background: '#fff7ed' }}
               >清空数据</button>
@@ -244,6 +256,9 @@ export const Options: React.FC = () => {
       </div>
 
       <div style={{ marginTop: 16 }}>
+        {/* Alert component for custom dialogs */}
+        <AlertComponent />
+
         <button
           onClick={handleSave}
           style={{ padding: '10px 16px', background: '#111827', color: '#fff', borderRadius: 8, border: 'none' }}

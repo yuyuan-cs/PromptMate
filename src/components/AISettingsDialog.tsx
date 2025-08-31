@@ -7,6 +7,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { AISettings } from "./AISettings";
+import { useTranslation } from "react-i18next";
 
 interface AISettingsDialogProps {
   open: boolean;
@@ -21,14 +22,15 @@ export const AISettingsDialog: React.FC<AISettingsDialogProps> = ({
   open,
   onOpenChange,
 }) => {
+  const { t } = useTranslation();
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px] w-[90vw] h-[90vh] flex flex-col p-0">
         <div className="flex-shrink-0 p-6 pb-0">
           <DialogHeader>
-            <DialogTitle>AI设置</DialogTitle>
+            <DialogTitle>{t('ai_settings.title')}</DialogTitle>
             <DialogDescription>
-              配置您的AI服务提供商和API密钥，以启用提示词优化和生成功能
+              {t('ai_settings.description')}
             </DialogDescription>
           </DialogHeader>
         </div>

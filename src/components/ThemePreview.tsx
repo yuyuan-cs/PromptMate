@@ -1,6 +1,7 @@
 // src/components/ThemePreview.tsx
 import { cn } from "@/lib/utils";
 import { ThemePreset } from "@/lib/themes";
+import { useTranslation } from "react-i18next";
 
 interface ThemePreviewProps {
   theme: ThemePreset;
@@ -9,6 +10,7 @@ interface ThemePreviewProps {
 }
 
 export function ThemePreview({ theme, selected, onClick }: ThemePreviewProps) {
+  const { t } = useTranslation();
   return (
     <div 
       className={cn(
@@ -28,7 +30,7 @@ export function ThemePreview({ theme, selected, onClick }: ThemePreviewProps) {
       >
         <div className="flex justify-between items-center">
           <div className="text-xs font-medium" style={{ color: theme.preview.foreground }}>
-            {theme.isDefault ? '系统主题' : '自定义主题'}
+            {theme.isDefault ? t('themePreview.systemTheme') : t('themePreview.customTheme')}
           </div>
           <div 
             className="w-5 h-5 rounded-full flex items-center justify-center"
@@ -43,7 +45,7 @@ export function ThemePreview({ theme, selected, onClick }: ThemePreviewProps) {
           className="w-14 h-5 rounded-md flex items-center justify-center text-xs"
           style={{ background: theme.preview.accent, color: theme.preview.foreground }}
         >
-          按钮
+          {t('themePreview.button')}
         </div>
       </div>
       <div className="p-2 bg-background">

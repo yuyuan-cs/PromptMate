@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { aiService, AIOptimizeResponse, StreamCallback } from "@/services/aiService";
 import { AIOptimizeDialog } from "./AIOptimizeDialog";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 
 interface AIOptimizeButtonProps {
   content: string;
@@ -39,6 +40,7 @@ export const AIOptimizeButton: React.FC<AIOptimizeButtonProps> = ({
   const [isConfigured, setIsConfigured] = useState(false);
   const [streamingContent, setStreamingContent] = useState<string>('');
   const [isStreaming, setIsStreaming] = useState(false);
+  const { t } = useTranslation();
 
   // 检测是否有内容和AI配置
   useEffect(() => {
@@ -71,13 +73,13 @@ export const AIOptimizeButton: React.FC<AIOptimizeButtonProps> = ({
     // 检查AI服务是否已配置
     if (!aiService.isConfigured()) {
       toast({
-        title: "AI服务未配置",
-        description: "请先在设置中配置AI服务",
+        title: t("ai_optimize.error.title"),
+        description: t("ai_optimize.error.desc"),
         variant: "destructive",
         action: onOpenSettings ? (
           <Button variant="outline" size="sm" onClick={onOpenSettings}>
             <Settings className="h-4 w-4 mr-2" />
-            去设置
+            {t("ai_optimize.error.action")}
           </Button>
         ) : undefined,
       });
@@ -122,7 +124,7 @@ export const AIOptimizeButton: React.FC<AIOptimizeButtonProps> = ({
         setIsStreaming(false);
         setShowDialog(false);
         toast({
-          title: "AI优化失败",
+          title: t("ai_optimize.error.failed"),
           description: error.message,
           variant: "destructive",
         });
@@ -141,12 +143,12 @@ export const AIOptimizeButton: React.FC<AIOptimizeButtonProps> = ({
         await aiService.optimizePrompt(payload, streamCallback);
       }
     } catch (error) {
-      console.error('AI优化失败:', error);
+      console.error(t("ai_optimize.error.failed"), error);
       setIsStreaming(false);
       setShowDialog(false);
       toast({
-        title: "AI优化失败",
-        description: error instanceof Error ? error.message : "请稍后重试",
+        title: t("ai_optimize.error.failed"),
+        description: error instanceof Error ? error.message : t("ai_optimize.error.retry"),
         variant: "destructive",
       });
     } finally {
@@ -161,8 +163,8 @@ export const AIOptimizeButton: React.FC<AIOptimizeButtonProps> = ({
     setOptimizeResult(null);
     setStreamingContent('');
     toast({
-      title: "优化完成",
-      description: "AI优化的内容已应用",
+      title: t("ai_optimize.success.title"),
+      description: t("ai_optimize.success.desc"),
       variant: "success",
     });
   };
@@ -175,8 +177,8 @@ export const AIOptimizeButton: React.FC<AIOptimizeButtonProps> = ({
   };
 
   const tooltipText = hasContent 
-    ? "使用AI优化当前提示词" 
-    : "使用AI生成新的提示词";
+    ? t("ai_optimize.tooltipText") 
+    : t("ai_optimize.tooltipText2");
 
   // 根据variant决定按钮样式
   const getButtonStyles = () => {
@@ -225,13 +227,13 @@ export const AIOptimizeButton: React.FC<AIOptimizeButtonProps> = ({
               ) : (
                 <>
                   <Settings className="h-2 w-2 mr-2" />
-                  配置AI
+                  {t("ai.settings.title")}
                 </>
               )}
             </Button>
           </TooltipTrigger>
           <TooltipContent side={variant === 'inline' ? 'top' : 'left'}>
-            <p>点击配置AI服务以启用优化功能</p>
+            <p>{t("ai.settings.description")}</p>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
@@ -263,7 +265,7 @@ export const AIOptimizeButton: React.FC<AIOptimizeButtonProps> = ({
               )}
               {variant === 'floating' && (
                 <span className="ml-2">
-                  {isOptimizing ? '优化中...' : (hasContent ? 'AI优化' : 'AI生成')}
+                  {isOptimizing ? t("ai_optimize.optimizing.title") : (hasContent ? t("ai_optimize.tooltipText") : t("ai_optimize.tooltipText2"))}
                 </span>
               )}
             </Button>
@@ -271,7 +273,7 @@ export const AIOptimizeButton: React.FC<AIOptimizeButtonProps> = ({
           <TooltipContent side={variant === 'inline' ? 'top' : 'left'}>
             <p>
               {isOptimizing && !showDialog 
-                ? "点击查看AI优化进度" 
+                ? t("ai_optimize.optimizing.tooltip") 
                 : tooltipText
               }
             </p>

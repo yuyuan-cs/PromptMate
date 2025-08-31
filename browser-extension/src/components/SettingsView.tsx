@@ -19,6 +19,7 @@ import { AISettings } from './AISettings';
 import { LanguageSelector } from './ui/LanguageSelector';
 import { SyncSettings } from './SyncSettings';
 import EnhancedSettingsView from './settings/EnhancedSettingsView';
+import { useSidebarAlert } from '../hooks/useSidebarAlert';
 
 interface SettingsViewProps {
   onBack: () => void;
@@ -27,6 +28,7 @@ interface SettingsViewProps {
 export const SettingsView: React.FC<SettingsViewProps> = ({ onBack }) => {
   const { t } = useTranslation();
   const { theme, setTheme } = useTheme();
+  const { showConfirm, AlertComponent } = useSidebarAlert();
   const [activeTab, setActiveTab] = useState('general');
   const [currentView, setCurrentView] = useState('main');
   const [settings, setSettings] = useState<ExtensionSettings>({
@@ -161,7 +163,18 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onBack }) => {
   };
 
   const handleClearAllData = async () => {
-    if (!confirm(t('settings.confirmClearData'))) {
+    let confirmed = false;
+    await new Promise<void>((resolve) => {
+      showConfirm(
+        t('settings.confirmClearData'),
+        '',
+        () => { confirmed = true; resolve(); },
+        () => { confirmed = false; resolve(); },
+        t('common_confirm') || '确定',
+        t('common_cancel') || '取消'
+      );
+    });
+    if (!confirmed) {
       return;
     }
     
@@ -220,6 +233,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onBack }) => {
 
   return (
     <div className="flex flex-col h-full bg-background">
+      {/* Alert component for custom dialogs */}
+      <AlertComponent />
       {/* 标题栏 */}
       <div className="flex items-center justify-between p-3 border-b border-border/50">
         <div className="flex items-center gap-2">

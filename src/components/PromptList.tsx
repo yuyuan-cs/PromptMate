@@ -46,6 +46,8 @@ import {
   ContextMenuTrigger
 } from "@/components/ui/context-menu";
 import ReactMarkdown from 'react-markdown';
+import ErrorBoundary from "./ErrorBoundary";
+
 
 // 提示词详情查看对话框组件 (Memoized)
 const PromptDetailDialog = memo(function PromptDetailDialog({ 
