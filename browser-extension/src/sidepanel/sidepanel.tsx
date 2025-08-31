@@ -23,6 +23,7 @@ import { debounce, performSearch, sortPrompts } from '../utils/searchUtils';
 import { useTranslation, t } from '../i18n';
 import { useTheme } from '../hooks/useTheme';
 import '../assets/styles.css';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuTrigger } from '../components/ui/dropdown-menu';
 
 interface SidePanelProps {}
 
@@ -63,7 +64,7 @@ const SidePanel: React.FC<SidePanelProps> = () => {
       <div className="flex-1 flex items-center justify-center p-4">
         <div className="text-center">
           <div className="text-destructive mb-2">❌ {t('sidepanel_componentLoadFailed')}</div>
-          <p className="text-sm text-muted-foreground mb-4">{errorMessage}</p>
+          <p className="text-xs text-muted-foreground mb-4">{errorMessage}</p>
           <Button 
             onClick={() => {
               setHasError(false);
@@ -559,12 +560,45 @@ const SidePanel: React.FC<SidePanelProps> = () => {
               placeholder={t('sidepanel_searchPlaceholder')}
               value={searchInput}
               onChange={(e) => { const v = e.target.value; setSearchInput(v); debouncedSetSearch(v); }}
-              className="pl-8 h-8 text-sm bg-background/80 border-border/40 focus:border-primary/50 transition-all duration-200"
+              className="pl-8 h-8 text-xs bg-background/80 border-border/40 focus:border-primary/50 transition-all duration-200"
             />
           </div>
           
           {/* 排序选择器 - 美化样式 */}
-          <div className="relative">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" className="h-8 px-3 text-xs shrink-0 transition-all duration-200 min-w-[90px] justify-between">
+                <span>{t(`sort_${sortBy}`)}</span> {/* 直接显示当前排序名称 */}
+                <Icons.chevronDown className="w-3 h-3 text-muted-foreground/60 ml-2" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-[160px]">
+              <DropdownMenuLabel>{t('sort_by')}</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuRadioGroup value={sortBy} onValueChange={(value) => setSortBy(value as any)}>
+                <DropdownMenuRadioItem value="relevance">{t('sort_relevance')}</DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="usage">{t('sort_usage')}</DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="updated">{t('sort_updated')}</DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="created">{t('sort_created')}</DropdownMenuRadioItem>
+              </DropdownMenuRadioGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* 2. 将收藏筛选的 Emoji 替换为 SVG 图标 */}
+          <Button
+            variant={showFavorites ? 'default' : 'ghost'}
+            size="sm"
+            className="h-8 rounded-8 px-2.5 text-xs shrink-0 transition-all duration-200" // px可以微调
+            onClick={() => setShowFavorites(!showFavorites)}
+            title={showFavorites ? t('sidepanel_showAll') : t('sidepanel_favoritesOnly')}
+          >
+            <Icons.star className={cn(
+              "w-4 h-4 mr-1.5", 
+              showFavorites ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground"
+            )} />
+            <span className="font-medium">{favoritePrompts}</span>
+          </Button>
+          {/* <div className="relative">
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as any)}
@@ -579,7 +613,7 @@ const SidePanel: React.FC<SidePanelProps> = () => {
           </div>
           
           {/* 收藏筛选 */}
-          <Button
+          {/* <Button
             variant={showFavorites ? 'default' : 'ghost'}
             size="sm"
             className="h-8 px-3 text-xs shrink-0 transition-all duration-200"
@@ -588,7 +622,7 @@ const SidePanel: React.FC<SidePanelProps> = () => {
           >
             <span className={cn('mr-1.5', showFavorites ? 'text-yellow-400' : 'text-muted-foreground')}>⭐</span>
             <span className="font-medium">{favoritePrompts}</span>
-          </Button>
+          </Button> */}
         </div>
 
         {/* 分类筛选 - 带箭头控制的滚动设计 */}
@@ -599,7 +633,7 @@ const SidePanel: React.FC<SidePanelProps> = () => {
               variant="ghost"
               size="sm"
               onClick={() => scrollCategories('left')}
-              className="absolute left-0 z-10 h-6 w-6 p-0 bg-background/80 backdrop-blur-sm border border-border/50 rounded-full shadow-sm"
+              className="absolute left-0 z-10 h-6 w-6 p-0 bg-background/80 backdrop-blur-sm border border-border/50 rounded-full shadow-sm top-1/2 -translate-y-1/2"
             >
               <Icons.chevronDown className="h-3 w-3 rotate-90" />
             </Button>
@@ -665,7 +699,7 @@ const SidePanel: React.FC<SidePanelProps> = () => {
               variant="ghost"
               size="sm"
               onClick={() => scrollCategories('right')}
-              className="absolute right-0 z-10 h-6 w-6 p-0 bg-background/80 backdrop-blur-sm border border-border/50 rounded-full shadow-sm"
+              className="absolute right-0 z-10 h-6 w-6 p-0 bg-background/80 backdrop-blur-sm border border-border/50 rounded-full shadow-sm top-1/2 -translate-y-1/2"
             >
               <Icons.chevronDown className="h-3 w-3 -rotate-90" />
             </Button>
@@ -751,7 +785,7 @@ const SidePanel: React.FC<SidePanelProps> = () => {
                   <div className="flex-1 flex items-center justify-center p-4">
                     <div className="text-center">
                       <div className="text-red-500 mb-2">❌ {t('sidepanel_editViewError')}</div>
-                      <p className="text-sm text-gray-600 mb-4">{error.message}</p>
+                      <p className="text-xs text-gray-600 mb-4">{error.message}</p>
                       <button onClick={() => setCurrentView('list')} className="px-4 py-2 bg-blue-500 text-white rounded">
                         {t('sidepanel_backToList')}
                       </button>
@@ -878,7 +912,7 @@ const SidePanel: React.FC<SidePanelProps> = () => {
                   setNewCategoryName('');
                 }
               }}
-              className="mb-3"
+              className="mb-3 text-xs placeholder:text-muted-foreground/60 focus:ring-1 focus:ring-primary/20"
               autoFocus
             />
             <div className="flex gap-2 justify-end">

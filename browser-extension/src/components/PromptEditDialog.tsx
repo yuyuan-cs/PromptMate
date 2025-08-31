@@ -1,3 +1,4 @@
+/* 提示词编辑对话框 */
 import * as React from 'react';
 import { 
   Dialog, 

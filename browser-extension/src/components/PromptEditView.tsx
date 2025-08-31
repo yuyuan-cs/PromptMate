@@ -1,3 +1,5 @@
+/* 提示词 */
+
 import React from 'react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -66,7 +68,7 @@ export const PromptEditView: React.FC<PromptEditViewProps> = ({
       <div className="flex-1 flex items-center justify-center p-4">
         <div className="text-center">
           <div className="text-red-500 mb-2">❌ PromptEditView 错误</div>
-          <p className="text-sm text-gray-600 mb-4">{errorMessage}</p>
+          <p className="text-xs text-gray-600 mb-4">{errorMessage}</p>
           <button onClick={() => setHasError(false)} className="px-4 py-2 bg-blue-500 text-white rounded">
             重试
           </button>
@@ -237,32 +239,32 @@ export const PromptEditView: React.FC<PromptEditViewProps> = ({
       <div className="flex flex-col h-full bg-white">
         {/* Simple Header */}
         <div className="p-4 border-b">
-          <h2 className="text-lg font-semibold">
+          <h3 className="text-xs font-semibold">
             {isEditMode ? t('prompts_editPrompt') : t('prompts_newPrompt')}
-          </h2>
+          </h3>
         </div>
 
         {/* Simple Form */}
         <div className="flex-1 p-4 space-y-4 overflow-y-auto custom-scrollbar">
           <div>
-            <label className="block text-sm font-medium mb-1">{t('prompts_title')} *</label>
+            <label className="block text-xs font-medium mb-1">{t('prompts_title')} *</label>
             <Input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder={t('prompts_titlePlaceholder')}
-              className="w-full"
+              className="w-full  text-xs placeholder:text-muted-foreground/60"
             />
             {errors.title && <p className="text-red-500 text-xs mt-1">{errors.title}</p>}
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">{t('prompts_content')} *</label>
+            <label className="block text-xs font-medium mb-1">{t('prompts_content')} *</label>
             <div className="relative">
               <Textarea
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
                 placeholder={t('prompts_contentPlaceholder')}
-                className="w-full font-mono text-sm min-h-[120px] pr-12"
+                className="w-full font-mono text-xs min-h-[120px] pr-12"
               />
               <div className="absolute bottom-2 right-2">
                 <AIOptimizeIconButton
@@ -280,17 +282,17 @@ export const PromptEditView: React.FC<PromptEditViewProps> = ({
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">{t('prompts_description')}</label>
+            <label className="block text-xs font-medium mb-1">{t('prompts_description')}</label>
             <Textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder={t('prompts_descriptionPlaceholder')}
-              className="w-full min-h-[60px]"
+              className="w-full min-h-[60px] text-xs placeholder:text-muted-foreground/60"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">{t('prompts_category')}</label>
+            <label className="block text-xs font-medium mb-1">{t('prompts_category')}</label>
             <Combobox
               options={categoryOptions}
               value={category}
@@ -299,7 +301,7 @@ export const PromptEditView: React.FC<PromptEditViewProps> = ({
               placeholder={t('prompts_selectCategory')}
               searchPlaceholder="搜索分类..."
               createLabel="创建分类"
-              className="w-full"
+              className="w-full text-xs placeholder:text-muted-foreground/60"
             />
           </div>
 
@@ -309,23 +311,22 @@ export const PromptEditView: React.FC<PromptEditViewProps> = ({
                 type="checkbox"
                 checked={isFavorite}
                 onChange={(e) => setIsFavorite(e.target.checked)}
-                className="mr-2"
+                className="mr-2 text-xs placeholder:text-muted-foreground/60"
               />
               {t('prompts_addToFavorites')}
             </label>
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">{t('prompts_tags')}</label>
+            <label className="block text-xs font-medium mb-1">{t('prompts_tags')}</label>
             <div className="flex flex-wrap gap-2 mb-2">
               {tags.map((tag) => (
-                <span key={tag} className="bg-gray-100 px-2 py-1 rounded text-sm flex items-center gap-1">
+                <span key={tag} className="bg-gray-100 px-2 py-1 rounded text-xs flex items-center gap-1">
                   {tag}
                   <button 
                     onClick={() => removeTag(tag)}
                     className="text-gray-500 hover:text-red-500"
                   >
-                    ×
                   </button>
                 </span>
               ))}
@@ -335,7 +336,7 @@ export const PromptEditView: React.FC<PromptEditViewProps> = ({
               onChange={(e) => setTagInput(e.target.value)}
               onKeyDown={handleTagKeyDown}
               placeholder={t('prompts_tagsPlaceholder')}
-              className="w-full"
+              className="w-full text-xs placeholder:text-muted-foreground/60"
             />
           </div>
         </div>
@@ -367,7 +368,7 @@ export const PromptEditView: React.FC<PromptEditViewProps> = ({
       <div className="flex-1 flex items-center justify-center p-4">
         <div className="text-center">
           <div className="text-red-500 mb-2">❌ {t('prompts_renderError')}</div>
-          <p className="text-sm text-gray-600 mb-4">{error.message}</p>
+          <p className="text-xs text-gray-600 mb-4">{error.message}</p>
           <Button onClick={handleCancel}>{t('prompts_back')}</Button>
         </div>
       </div>

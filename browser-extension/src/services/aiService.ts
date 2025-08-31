@@ -8,11 +8,22 @@ export interface AIModel {
 }
 
 // AI服务配置接口
+export const presetConfigs = {
+  openai: { /* ... */ },
+  anthropic: { /* ... */ },
+  gemini: { /* ... */ },
+  deepseek: { /* ... */ },
+  kimi: { /* ... */ },
+  // ... 所有其他服务商 ...
+  custom: { /* ... */ }
+};
+
 export interface AIConfig {
   apiKey: string;
   baseUrl: string;
   model: string;
-  provider: 'openai' | 'anthropic' | 'gemini' | 'custom';
+  // 👇 使用 keyof typeof 动态生成所有可能的 provider 类型
+  provider: keyof typeof presetConfigs;
 }
 
 // AI优化请求接口
@@ -517,7 +528,101 @@ export class AIService {
       };
     }
   }
+  // async fetchAvailableModels(config: AIConfig): Promise<AIModel[]> {
+  //   if (!config.apiKey && config.provider !== 'ollama' && config.provider !== 'lmstudio') {
+  //     // 对本地服务Ollama等，不需要API Key
+  //     throw new Error('API Key is required to fetch models.');
+  //   }
+
+  //   const { apiKey, baseUrl, provider } = config;
+
+  //   // 1. 根据不同服务商，确定请求的端点和头部
+  //   let endpoint = '';
+  //   const headers: HeadersInit = {};
+
+  //   switch (provider) {
+  //     case 'openai':
+  //     case 'deepseek': // 很多国产模型也兼容OpenAI的API格式
+  //     case 'kimi':
+  //     case 'groq':
+  //     case 'together':
+  //       endpoint = `${baseUrl}/v1/models`;
+  //       headers['Authorization'] = `Bearer ${apiKey}`;
+  //       break;
+  //     case 'anthropic':
+  //       endpoint = `${baseUrl}/v1/models`; // 假设端点，请查阅Anthropic文档
+  //       headers['x-api-key'] = apiKey;
+  //       // headers['anthropic-version'] = '2023-06-01';
+  //       break;
+  //     case 'ollama':
+  //       endpoint = `${baseUrl}/api/tags`; // Ollama获取本地模型的端点
+  //       break;
+  //     // ... 为其他服务商添加case ...
+  //     default:
+  //       // 对于不确定的 "custom" 或其他服务，可以尝试OpenAI兼容的端点
+  //       endpoint = `${baseUrl}/v1/models`;
+  //       headers['Authorization'] = `Bearer ${apiKey}`;
+  //   }
+
+  //   if (!endpoint) {
+  //      console.log(`No model fetching logic for provider: ${provider}. Falling back to presets.`);
+  //      return getModelsForProvider(provider); // 如果没有API，回退到预设列表
+  //   }
+
+  //   // 2. 发起API请求
+  //   try {
+  //     const response = await fetch(endpoint, { headers });
+  //     if (!response.ok) {
+  //       throw new Error(`Failed to fetch models: ${response.statusText}`);
+  //     }
+  //     const data = await response.json();
+
+  //     // 3. 解析并格式化返回的数据
+  //     // 注意：每个服务商返回的格式都不同，这里需要做适配
+  //     if (provider === 'openai' || provider === 'custom') { // 假设兼容OpenAI
+  //       return data.data
+  //         .map((model: any) => ({
+  //           id: model.id,
+  //           name: model.id, // OpenAI的id就是name
+  //           // 其他信息可以尝试从model对象中解析
+  //         }))
+  //         .sort((a,b) => a.name.localeCompare(b.name)); // 排序
+  //     }
+  //     if (provider === 'ollama') {
+  //        return data.models
+  //         .map((model: any) => ({
+  //           id: model.name,
+  //           name: model.name,
+  //         }))
+  //         .sort((a,b) => a.name.localeCompare(b.name));
+  //     }
+
+  //     // 如果无法解析，回退到预设
+  //     return getModelsForProvider(provider);
+  //   } catch (error) {
+  //     console.error(`Error fetching models for ${provider}:`, error);
+  //     // 请求失败时，优雅地回退到预设列表
+  //     return getModelsForProvider(provider);
+  //   }
+  // }
 }
 
 // 全局AI服务实例
 export const aiService = new AIService();
+
+//  AI提供者接口
+interface IAIProvider {
+  // 构建API请求体、头部和URL
+  buildRequest(config: AIConfig, prompt: string, stream: boolean): { requestBody: any; headers: Record<string, string>; requestUrl: string };
+  
+  // 解析非流式响应
+  parseResponse(data: any): string;
+
+  // 解析流式响应的单个数据块
+  extractStreamContent(data: any): string;
+
+  // (可选) 动态获取模型列表的方法
+  fetchModels?(config: AIConfig): Promise<AIModel[]>;
+}
+
+
