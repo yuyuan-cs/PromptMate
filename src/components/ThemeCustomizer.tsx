@@ -1,10 +1,11 @@
-﻿import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Settings } from "@/types";
 import { Input } from "@/components/ui/input";
 import { hexToHsl } from "@/lib/themes";
+import { useTranslation } from "react-i18next";
 
 interface ColorPickerProps {
   label: string;
@@ -14,6 +15,7 @@ interface ColorPickerProps {
 
 // 颜色选择器组件
 function ColorPicker({ label, value, onChange }: ColorPickerProps) {
+  const { t } = useTranslation();
   return (
     <div className="space-y-1.5">
       <div className="flex justify-between items-center">
@@ -51,6 +53,7 @@ interface ThemeCustomizerProps {
 
 // 主题定制器组件
 export function ThemeCustomizer({ customTheme, onChange, onApply }: ThemeCustomizerProps) {
+  const { t } = useTranslation();
   const [colors, setColors] = useState<Settings['customTheme']>({
     background: "#ffffff",
     foreground: "#000000",
@@ -82,35 +85,35 @@ export function ThemeCustomizer({ customTheme, onChange, onApply }: ThemeCustomi
     <div className="space-y-4">
       <div className="space-y-4">
         <ColorPicker
-          label="背景色"
+          label={t('themeCustomizer.backgroundColor')}
           value={colors.background}
           onChange={(value) => updateColor('background', value)}
         />
         <ColorPicker
-          label="文本色"
+          label={t('themeCustomizer.textColor')}
           value={colors.foreground}
           onChange={(value) => updateColor('foreground', value)}
         />
         <ColorPicker
-          label="主题色"
+          label={t('themeCustomizer.primaryColor')}
           value={colors.primary}
           onChange={(value) => updateColor('primary', value)}
         />
         <ColorPicker
-          label="强调色"
+          label={t('themeCustomizer.accentColor')}
           value={colors.accent}
           onChange={(value) => updateColor('accent', value)}
         />
       </div>
 
       <div className="mt-4 space-y-3">
-        <Label>主题预览</Label>
+        <Label>{t('themeCustomizer.themePreview')}</Label>
         <div
           className="p-4 rounded-md border space-y-3"
           style={previewStyle}
         >
           <div className="flex justify-between items-center">
-            <span>自定义主题预览</span>
+            <span>{t('themeCustomizer.customThemePreview')}</span>
             <div
               className="h-6 w-6 rounded-full"
               style={{ backgroundColor: colors.primary }}
@@ -121,20 +124,20 @@ export function ThemeCustomizer({ customTheme, onChange, onApply }: ThemeCustomi
               className="px-3 py-1.5 rounded-md text-sm"
               style={{ backgroundColor: colors.primary, color: colors.background }}
             >
-              主按钮
+              {t('themeCustomizer.primaryButton')}
             </button>
             <button
               className="px-3 py-1.5 rounded-md text-sm"
               style={{ backgroundColor: colors.accent, color: colors.foreground }}
             >
-              次按钮
+              {t('themeCustomizer.secondaryButton')}
             </button>
           </div>
         </div>
       </div>
 
       <div className="flex justify-end">
-        <Button onClick={onApply}>应用主题</Button>
+        <Button onClick={onApply}>{t('themeCustomizer.applyTheme')}</Button>
       </div>
     </div>
   );

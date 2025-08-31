@@ -7,11 +7,28 @@ import { PromptsProvider } from "@/hooks/usePrompts";
 import { AppViewProvider, useAppView } from "@/hooks/useAppView";
 import { Toaster } from "@/components/ui/toaster";
 import { Icons } from "@/components/ui/icons"; // Import Icons for fallback
+import ErrorBoundary from "@/components/ErrorBoundary";
+import NotFoundPage from "@/components/NotFoundPage";
 
 // Lazy load the Index component (handle named export)
-const Index = lazy(() => import("@/pages/Index").then(module => ({ default: module.Index })));
+const Index = lazy(() => 
+  import("@/pages/Index")
+    .then(module => ({ default: module.Index }))
+    .catch(error => {
+      console.error('Failed to load Index component:', error);
+      return { default: () => <NotFoundPage error="Failed to load main page" /> };
+    })
+);
+
 // Lazy load the WorkflowView component (dev only)
-const WorkflowView = lazy(() => import("@/views/WorkflowView").then(module => ({ default: module.WorkflowView })));
+const WorkflowView = lazy(() => 
+  import("@/views/WorkflowView")
+    .then(module => ({ default: module.WorkflowView }))
+    .catch(error => {
+      console.error('Failed to load WorkflowView component:', error);
+      return { default: () => <NotFoundPage error="Failed to load workflow view" /> };
+    })
+);
 
 function AppContent() {
   const { currentView } = useAppView();
@@ -64,10 +81,16 @@ function AppContent() {
 
 export default function App() {
   return (
-    <AppViewProvider>
-      <PromptsProvider>
-        <AppContent />
-      </PromptsProvider>
-    </AppViewProvider>
+    <ErrorBoundary>
+      <AppViewProvider>
+        <ErrorBoundary>
+          <PromptsProvider>
+            <ErrorBoundary>
+              <AppContent />
+            </ErrorBoundary>
+          </PromptsProvider>
+        </ErrorBoundary>
+      </AppViewProvider>
+    </ErrorBoundary>
   );
 }

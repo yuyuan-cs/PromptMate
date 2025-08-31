@@ -4,6 +4,7 @@ import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
 import { extractVariables, VariableInfo } from '@/lib/variableUtils';
 import { cn } from '@/lib/utils';
+import { useTranslation } from 'react-i18next';
 
 interface VariableHighlighterProps {
   content: string;
@@ -18,6 +19,7 @@ export const VariableHighlighter: React.FC<VariableHighlighterProps> = ({
   onVariableClick,
   highlightClassName = '',
 }) => {
+  const { t } = useTranslation();
   // 提取变量信息
   const variables = useMemo(() => extractVariables(content), [content]);
   
@@ -81,7 +83,7 @@ export const VariableHighlighter: React.FC<VariableHighlighterProps> = ({
                 highlightClassName
               )}
               onClick={() => onVariableClick?.(element.variable!)}
-              title={`变量: ${element.variable.name}`}
+              title={`${t('variableHighlighter.variableLabel')}: ${element.variable.name}`}
               data-variable={element.variable.name}
             >
               {element.content}
@@ -119,6 +121,7 @@ export const VariableTextArea: React.FC<VariableTextAreaProps> = ({
   disabled = false,
   showVariables = true,
 }) => {
+  const { t } = useTranslation();
   // 提取变量信息用于显示
   const variables = useMemo(() => extractVariables(value), [value]);
   
@@ -160,7 +163,7 @@ export const VariableTextArea: React.FC<VariableTextAreaProps> = ({
       {showVariables && variables.length > 0 && (
         <div className="absolute top-2 right-2 pointer-events-none">
           <div className="bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400 text-xs px-2 py-1 rounded-full">
-            {variables.length} 个变量
+            {variables.length} {t('variableHighlighter.variableCount')}
           </div>
         </div>
       )}
@@ -182,6 +185,7 @@ export const VariableDisplay: React.FC<VariableDisplayProps> = ({
   showVariableCount = true,
   onVariableClick,
 }) => {
+  const { t } = useTranslation();
   const variables = useMemo(() => extractVariables(content), [content]);
 
   const processedContent = useMemo(() => {
@@ -230,7 +234,7 @@ export const VariableDisplay: React.FC<VariableDisplayProps> = ({
                     'transition-colors duration-200'
                   )}
                   onClick={() => onVariableClick?.(variable)}
-                  title={`变量: ${name}`}
+                  title={`${t('variableHighlighter.variableLabel')}: ${name}`}
                   data-variable={name}
                 >
                   {originalText}
@@ -245,7 +249,7 @@ export const VariableDisplay: React.FC<VariableDisplayProps> = ({
       
       {showVariableCount && variables.length > 0 && (
         <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
-          <span>发现 {variables.length} 个变量占位符</span>
+          <span>{t('variableHighlighter.foundVariables')} {variables.length} {t('variableHighlighter.variablePlaceholders')}</span>
           <div className="flex gap-1">
             {variables.slice(0, 3).map((variable) => (
               <span
@@ -257,7 +261,7 @@ export const VariableDisplay: React.FC<VariableDisplayProps> = ({
             ))}
             {variables.length > 3 && (
               <span className="text-muted-foreground">
-                +{variables.length - 3} 个
+                +{variables.length - 3} {t('variableHighlighter.moreVariables')}
               </span>
             )}
           </div>

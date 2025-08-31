@@ -57,7 +57,7 @@ export const AIOptimizeDialog: React.FC<AIOptimizeDialogProps> = ({
   return ReactDOM.createPortal(
     (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 flex items-center justify-center p-4">
-      <div className="extension-dialog bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 flex flex-col min-h-0 max-h-full">
+      <div className="extension-dialog bg-white rounded-lg shadow-xl max-w-[80%] w-full mx-auto flex flex-col min-h-0 max-h-[80%]">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b flex-shrink-0">
           <div className="flex items-center gap-2">
@@ -85,14 +85,14 @@ export const AIOptimizeDialog: React.FC<AIOptimizeDialogProps> = ({
           {/* <ScrollArea className="flex-1 min-h-0"> */}
               <div className="space-y-4">
               {/* Loading State */}
-              <div className="flex items-center justify-center h-12">
-                {(isLoading || isStreaming) && (
-                  <LoadingState 
-                    text={isStreaming ? t('ai_optimizing') : t('ai_processing')} 
-                    size="md"
-                  />
+              {(isLoading || isStreaming) && (
+                    <div className="flex items-center justify-center h-12">
+                        <LoadingState 
+                            text={isStreaming ? t('ai_optimizing') : t('ai_processing')} 
+                            size="md"
+                        />
+                    </div>
                 )}
-              </div>
               {/* Streaming Content */}
               {isStreaming && streamingContent && (
                 <div className="space-y-3 flex flex-col min-h-0">
@@ -178,7 +178,7 @@ export const AIOptimizeDialog: React.FC<AIOptimizeDialogProps> = ({
                             <div className="text-sm text-gray-600 flex-1">
                               <div className="prose prose-sm max-w-none">
                                 <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                                  {suggestion}
+                                  {suggestion.trim()}
                                 </ReactMarkdown>
                               </div>
                             </div>

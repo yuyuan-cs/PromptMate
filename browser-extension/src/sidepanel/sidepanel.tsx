@@ -24,6 +24,7 @@ import { useTranslation, t } from '../i18n';
 import { useTheme } from '../hooks/useTheme';
 import '../assets/styles.css';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuTrigger } from '../components/ui/dropdown-menu';
+import { useSidebarAlert } from '../hooks/useSidebarAlert';
 
 interface SidePanelProps {}
 
@@ -31,7 +32,8 @@ const SidePanel: React.FC<SidePanelProps> = () => {
   console.log('🔄 SidePanel component rendering...');
   const { t } = useTranslation();
   const { theme, setTheme } = useTheme();
-  
+  const { showConfirm, AlertComponent } = useSidebarAlert();
+
   // Error boundary state
   const [hasError, setHasError] = React.useState(false);
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
@@ -295,7 +297,6 @@ const SidePanel: React.FC<SidePanelProps> = () => {
     }, 3000);
   }, []);
 
-
   // Type guard for prompt validation
   const isValidPrompt = React.useCallback((prompt: any): prompt is Prompt => {
     return prompt && 
@@ -453,7 +454,18 @@ const SidePanel: React.FC<SidePanelProps> = () => {
 
   // 删除提示词
   const handleDeletePrompt = React.useCallback(async (prompt: Prompt) => {
-    if (confirm(t('confirm_deletePrompt', { title: prompt.title }))) {
+    let confirmed = false;
+    await new Promise<void>((resolve) => {
+      showConfirm(
+        t('confirm_deletePrompt', { title: prompt.title }),
+        '',
+        () => { confirmed = true; resolve(); },
+        () => { confirmed = false; resolve(); },
+        t('common_confirm') || '确定',
+        t('common_cancel') || '取消'
+      );
+    });
+    if (confirmed) {
       try {
         await deletePrompt(prompt.id);
         showToast(t('success_promptDeleted'), 'success');
@@ -465,7 +477,7 @@ const SidePanel: React.FC<SidePanelProps> = () => {
         showToast(t('error_deletePromptFailed'), 'error');
       }
     }
-  }, [deletePrompt, selectedPrompt, t]);
+  }, [deletePrompt, selectedPrompt, t, showConfirm]);
 
   // 处理变量视图的复制
   const handleVariableCopy = React.useCallback(async (finalText: string, variableValues: VariableValues) => {
@@ -509,7 +521,6 @@ const SidePanel: React.FC<SidePanelProps> = () => {
     setCurrentPromptForVariables(null);
     setVariableHistory([]);
   }, []);
-
 
   // 打开设置视图
   const handleOpenSettings = React.useCallback(() => {
@@ -567,7 +578,7 @@ const SidePanel: React.FC<SidePanelProps> = () => {
           {/* 排序选择器 - 美化样式 */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-8 px-3 text-xs shrink-0 transition-all duration-200 min-w-[90px] justify-between">
+              <Button variant="ghost" size="sm" className="h-8 rounded-full px-3 text-xs shrink-0 transition-all duration-200 min-w-[90px] justify-between">
                 <span>{t(`sort_${sortBy}`)}</span> {/* 直接显示当前排序名称 */}
                 <Icons.chevronDown className="w-3 h-3 text-muted-foreground/60 ml-2" />
               </Button>
@@ -588,7 +599,7 @@ const SidePanel: React.FC<SidePanelProps> = () => {
           <Button
             variant={showFavorites ? 'default' : 'ghost'}
             size="sm"
-            className="h-8 rounded-8 px-2.5 text-xs shrink-0 transition-all duration-200" // px可以微调
+            className="h-8 rounded-full px-2.5 text-xs shrink-0 transition-all duration-200" // px可以微调
             onClick={() => setShowFavorites(!showFavorites)}
             title={showFavorites ? t('sidepanel_showAll') : t('sidepanel_favoritesOnly')}
           >
@@ -598,31 +609,6 @@ const SidePanel: React.FC<SidePanelProps> = () => {
             )} />
             <span className="font-medium">{favoritePrompts}</span>
           </Button>
-          {/* <div className="relative">
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as any)}
-              className="appearance-none bg-background/90 border border-border/50 rounded-md px-3 py-1.5 pr-8 text-xs text-foreground hover:border-border/80 focus:border-primary/60 focus:ring-2 focus:ring-primary/20 focus:outline-none transition-all duration-200 cursor-pointer min-w-[80px]"
-            >
-              <option value="relevance">{t('sort_relevance')}</option>
-              <option value="usage">{t('sort_usage')}</option>
-              <option value="updated">{t('sort_updated')}</option>
-              <option value="created">{t('sort_created')}</option>
-            </select>
-            <Icons.chevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 w-3 h-3 text-muted-foreground/60 pointer-events-none" />
-          </div>
-          
-          {/* 收藏筛选 */}
-          {/* <Button
-            variant={showFavorites ? 'default' : 'ghost'}
-            size="sm"
-            className="h-8 px-3 text-xs shrink-0 transition-all duration-200"
-            onClick={() => setShowFavorites(!showFavorites)}
-            title={showFavorites ? t('sidepanel_showAll') : t('sidepanel_favoritesOnly')}
-          >
-            <span className={cn('mr-1.5', showFavorites ? 'text-yellow-400' : 'text-muted-foreground')}>⭐</span>
-            <span className="font-medium">{favoritePrompts}</span>
-          </Button> */}
         </div>
 
         {/* 分类筛选 - 带箭头控制的滚动设计 */}
@@ -938,6 +924,8 @@ const SidePanel: React.FC<SidePanelProps> = () => {
         </div>
       )}
 
+      {/* Alert Component for confirmations */}
+      <AlertComponent />
     </div>
   );
 };

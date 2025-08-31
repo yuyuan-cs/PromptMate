@@ -14,6 +14,7 @@ import { Copy, Check, X, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import ReactMarkdown from 'react-markdown';
 import { AIOptimizeResponse } from "@/services/aiService";
+import { useTranslation } from "react-i18next";
 
 interface AIOptimizeDialogProps {
   open: boolean;
@@ -37,6 +38,7 @@ export const AIOptimizeDialog: React.FC<AIOptimizeDialogProps> = ({
   isStreaming = false,
 }) => {
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
 
   // 复制到剪贴板
@@ -45,15 +47,15 @@ export const AIOptimizeDialog: React.FC<AIOptimizeDialogProps> = ({
       await navigator.clipboard.writeText(text);
       setCopied(true);
       toast({
-        title: "复制成功",
-        description: "优化后的内容已复制到剪贴板",
+        title: t('common.copied'),
+        description: t('common.copiedDescription'),
         variant: "success",
       });
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {
       toast({
-        title: "复制失败",
-        description: "无法复制到剪贴板",
+        title: t('common.copyFailed'),
+        description: t('common.copyFailedDescription'),
         variant: "destructive",
       });
     }
@@ -82,7 +84,7 @@ export const AIOptimizeDialog: React.FC<AIOptimizeDialogProps> = ({
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <Sparkles className="h-5 w-5 animate-pulse text-purple-500" />
-                {isStreaming ? 'AI正在生成内容...' : 'AI正在优化您的提示词...'}
+                {isStreaming ? t('ai_optimize.optimizing.title') : t('ai_optimize.optimizing.description')}
               </DialogTitle>
             </DialogHeader>
           </div>
@@ -91,7 +93,7 @@ export const AIOptimizeDialog: React.FC<AIOptimizeDialogProps> = ({
             <div className="flex-1 overflow-y-auto px-6 py-4">
               <div className="mb-4">
                 <Badge variant="secondary" className="animate-pulse">
-                  实时生成中...
+                  {t('ai_optimize.optimizing.tooltip')}
                 </Badge>
               </div>
               <div className="border rounded-lg p-4">
@@ -105,7 +107,7 @@ export const AIOptimizeDialog: React.FC<AIOptimizeDialogProps> = ({
               <div className="text-center space-y-4">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500 mx-auto"></div>
                 <p className="text-muted-foreground">
-                  AI正在分析并优化您的提示词，请稍候...
+                  {t('ai_optimize.optimizing.description')}
                 </p>
               </div>
             </div>
@@ -128,7 +130,7 @@ export const AIOptimizeDialog: React.FC<AIOptimizeDialogProps> = ({
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Sparkles className="h-5 w-5 text-purple-500" />
-              AI优化结果
+              {t('ai_optimize.optimizing.result')}
             </DialogTitle>
           </DialogHeader>
         </div>
@@ -138,7 +140,7 @@ export const AIOptimizeDialog: React.FC<AIOptimizeDialogProps> = ({
               {/* 优化后的提示词 */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold">优化后的提示词</h3>
+                  <h3 className="text-lg font-semibold">{t('ai_optimize.optimizing.result')}</h3>
                   <Button
                     variant="outline"
                     size="sm"
@@ -150,7 +152,7 @@ export const AIOptimizeDialog: React.FC<AIOptimizeDialogProps> = ({
                     ) : (
                       <Copy className="h-4 w-4" />
                     )}
-                    {copied ? "已复制" : "复制"}
+                    {copied ? t('common.copied') : t('common.copy')}
                   </Button>
                 </div>
                 
@@ -166,7 +168,7 @@ export const AIOptimizeDialog: React.FC<AIOptimizeDialogProps> = ({
                 <>
                   <Separator />
                   <div className="space-y-3">
-                    <h3 className="text-lg font-semibold">优化说明</h3>
+                    <h3 className="text-lg font-semibold">{t('ai_optimize.optimizing.explanation')}</h3>
                     <div className="bg-blue-50 dark:bg-blue-950/30 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
                       <div className="prose prose-sm max-w-none text-blue-900 dark:text-blue-100">
                         <ReactMarkdown>{result.explanation}</ReactMarkdown>
@@ -181,7 +183,7 @@ export const AIOptimizeDialog: React.FC<AIOptimizeDialogProps> = ({
                 <>
                   <Separator />
                   <div className="space-y-3">
-                    <h3 className="text-lg font-semibold">进一步建议</h3>
+                    <h3 className="text-lg font-semibold">{t('ai_optimize.optimizing.suggestions')}</h3>
                     <div className="space-y-2">
                       {result.suggestions.map((suggestion, index) => (
                         <div
@@ -208,10 +210,10 @@ export const AIOptimizeDialog: React.FC<AIOptimizeDialogProps> = ({
         <div className="flex-shrink-0 p-6 pt-0">
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={handleReject}>
-              拒绝
+              {t('ai_optimize.optimizing.reject')}
             </Button>
             <Button onClick={handleAccept}>
-              接受
+              {t('ai_optimize.optimizing.accept')}
             </Button>
           </DialogFooter>
         </div>

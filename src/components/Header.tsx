@@ -13,6 +13,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useTranslation } from "react-i18next";
 
 // 定义样式接口扩展WebkitAppRegion属性
 interface DraggableStyle extends CSSProperties {
@@ -32,6 +33,7 @@ export function Header() {
   const isMobile = useMediaQuery("(max-width: 768px)");
   const { toast } = useToast();
   const isMac = isMacOS();
+  const { t } = useTranslation();
 
   // 检查electronAPI是否可用
   const isElectronAPIAvailable = () => {
@@ -57,8 +59,8 @@ export function Header() {
     } else {
       console.warn('electronAPI is not available');
       toast({
-        title: "调试信息",
-        description: "electronAPI 不可用，请检查preload脚本",
+        title: t("Header.message.debug"),
+        description: t("Header.message.debugDesc"),
       });
     }
   }, []);
@@ -84,19 +86,19 @@ export function Header() {
     try {
       if (isElectronAPIAvailable()) {
         window.electronAPI.minimize();
-        console.log('最小化窗口');
+        console.log(t("Header.message.minimizeWindow"));
       } else {
         console.warn('electronAPI 不可用');
         toast({
-          title: "功能不可用",
-          description: "窗口控制功能在当前环境下不可用",
+          title: t("Header.message.functionUnavailable"),
+          description: t("Header.message.functionUnavailableDesc"),
         });
       }
     } catch (error) {
-      console.error('最小化窗口失败:', error);
+      console.error(t("Header.message.minimizeWindowFailed"), error);
       toast({
-        title: "操作失败",
-        description: "最小化窗口时发生错误",
+        title: t("Header.message.operationFailed"),
+        description: t("Header.message.operationFailedDesc"),
         variant: "destructive",
       });
     }
@@ -106,19 +108,19 @@ export function Header() {
     try {
       if (isElectronAPIAvailable()) {
         window.electronAPI.maximize();
-        console.log('最大化/还原窗口');
+        console.log(t("Header.message.maximizeWindow"));
       } else {
         console.warn('electronAPI 不可用');
         toast({
-          title: "功能不可用",
-          description: "窗口控制功能在当前环境下不可用",
+          title: t("Header.message.functionUnavailable"),
+          description: t("Header.message.functionUnavailableDesc"),
         });
       }
     } catch (error) {
-      console.error('最大化窗口失败:', error);
+      console.error(t("Header.message.maximizeWindowFailed"), error);
       toast({
-        title: "操作失败",
-        description: "最大化窗口时发生错误",
+        title: t("Header.message.operationFailed"),
+        description: t("Header.message.maximizeWindowFailed"),
         variant: "destructive",
       });
     }
@@ -128,19 +130,19 @@ export function Header() {
     try {
       if (isElectronAPIAvailable()) {
         window.electronAPI.close();
-        console.log('关闭窗口');
+        console.log(t("Header.message.closeWindow"));
       } else {
         console.warn('electronAPI 不可用');
         toast({
-          title: "功能不可用",
-          description: "窗口控制功能在当前环境下不可用",
+          title: t("Header.message.functionUnavailable"),
+          description: t("Header.message.functionUnavailableDesc"),
         });
       }
     } catch (error) {
-      console.error('关闭窗口失败:', error);
+      console.error(t("Header.message.closeWindowFailed"), error);
       toast({
-        title: "操作失败",
-        description: "关闭窗口时发生错误",
+        title: t("Header.message.operationFailed"),
+        description: t("Header.message.closeWindowFailedDesc"),
         variant: "destructive",
       });
     }
@@ -164,7 +166,7 @@ export function Header() {
         <div className="relative w-full max-w-2xl">
           <Input
             type="search"
-            placeholder="搜索提示词..."
+            placeholder={t("Header.search.searchPlaceholder")}
               className="w-full pl-10 titlebar-no-drag h-8 !text-[14px] focus-visible:ring-1 focus-visible:ring-ring/50"
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -191,7 +193,7 @@ export function Header() {
               </Button>
             </TooltipTrigger>
             <TooltipContent>
-              <p>{settings.theme === 'dark' ? '切换到浅色模式' : '切换到深色模式'}</p>
+              <p>{settings.theme === 'dark' ? t("Header.button.light") : t("Header.button.dark")}</p>
             </TooltipContent>
           </Tooltip>
 
@@ -212,7 +214,7 @@ export function Header() {
               </Button>
             </TooltipTrigger>
             <TooltipContent>
-              <p>{settings.alwaysOnTop ? '取消窗口置顶' : '窗口置顶'}</p>
+              <p>{settings.alwaysOnTop ? t("Header.button.cancelPinWindow") : t("Header.button.pinWindow")}</p>
             </TooltipContent>
           </Tooltip>
 
@@ -220,7 +222,7 @@ export function Header() {
             <>
               <Tooltip>
                 <TooltipTrigger asChild>
-                                {/* 最小化按钮 */}
+              {/* 最小化按钮 */}
               <Button
                 variant="ghost"
                 size="icon"
@@ -231,7 +233,7 @@ export function Header() {
               </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>最小化</p>
+                  <p>{t("Header.button.minimize")}</p>
                 </TooltipContent>
               </Tooltip>
 
@@ -247,7 +249,7 @@ export function Header() {
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>最大化</p>
+                  <p>{t("Header.button.maximize")}</p>
                 </TooltipContent>
               </Tooltip>
 
@@ -263,7 +265,7 @@ export function Header() {
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>关闭</p>
+                  <p>{t("Header.button.close")}</p>
                 </TooltipContent>
               </Tooltip>
             </>

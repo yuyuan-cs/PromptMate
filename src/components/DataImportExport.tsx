@@ -1,3 +1,6 @@
+/**
+ * 数据导入导出组件
+ */
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -6,6 +9,10 @@ import { Icons } from "@/components/ui/icons";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Textarea } from "@/components/ui/textarea";
+import { useTranslation } from "react-i18next";
+import { useDataSync } from "@/hooks/useDataSync";
+import { SyncConflictDialog } from "@/components/SyncConflictDialog";
+import { SyncStatusIndicator } from "@/components/SyncStatusIndicator";
 
 interface DataImportExportProps {
   open?: boolean;
@@ -24,7 +31,12 @@ export function DataImportExport({
   const [exportedData, setExportedData] = useState("");
   const [importData, setImportData] = useState("");
   const [showConfirmReset, setShowConfirmReset] = useState(false);
-  const [activeTab, setActiveTab] = useState<"export" | "import">("export");
+  const [activeTab, setActiveTab] = useState<"export" | "import" | "sync">("export");
+  const { t } = useTranslation();
+  
+  // 同步相关状态
+  const { syncStatus, pendingConflict, manualSync, resolveConflict, toggleSync } = useDataSync();
+  const [showConflictDialog, setShowConflictDialog] = useState(false);
 
   // 组件挂载时强制渲染
   useEffect(() => {
@@ -32,22 +44,42 @@ export function DataImportExport({
     const forceRender = () => {};
     forceRender();
     
-    console.log('DataImportExport 组件已挂载:', { inline, activeTab, open });
+    console.log(t('dataManagement.message.loading'), { inline, activeTab, open });
   }, []);
   
   // 主动监听标签页变化
   useEffect(() => {
-    console.log('数据管理标签页切换:', activeTab);
+    console.log(t('dataManagement.message.log2'), activeTab);
   }, [activeTab]);
   
+  // 处理冲突对话框显示
+  useEffect(() => {
+    if (pendingConflict && !showConflictDialog) {
+      setShowConflictDialog(true);
+    }
+  }, [pendingConflict, showConflictDialog]);
+
+  // 处理冲突解决
+  const handleConflictResolve = async (resolution: 'local' | 'remote' | 'merge') => {
+    await resolveConflict(resolution);
+    setShowConflictDialog(false);
+    onDataChanged?.(); // 通知数据已更改
+  };
+
+  // 手动同步处理
+  const handleManualSync = async () => {
+    await manualSync();
+    onDataChanged?.(); // 通知数据已更改
+  };
+
   // 生成导出数据
   const handleExport = () => {
     const data = exportAllData();
     setExportedData(data);
     
     toast({
-      title: "数据已准备就绪",
-      description: "您可以复制数据或下载为JSON文件",
+      title: t('dataManagement.message.log3'),
+      description: t('dataManagement.message.log4'),
       variant: "success",
     });
   };
@@ -72,8 +104,8 @@ export function DataImportExport({
     exportPromptsToFile();
     
     toast({
-      title: "提示词已导出",
-      description: "提示词已成功导出为JSON文件",
+      title: t('dataManagement.message.exported'),
+      description: t('dataManagement.message.exportedFile'),
       variant: "success",
     });
   };
@@ -82,8 +114,8 @@ export function DataImportExport({
   const handleImport = () => {
     if (!importData.trim()) {
       toast({
-        title: "导入失败",
-        description: "请先输入要导入的JSON数据",
+        title: t('dataManagement.message.importFailed'),
+        description: t('dataManagement.message.importFailedData'),
         variant: "destructive",
       });
       return;
@@ -94,8 +126,8 @@ export function DataImportExport({
       
       if (success) {
         toast({
-          title: "导入成功",
-          description: "数据已成功导入",
+          title: t('dataManagement.message.importSuccess'),
+          description: t('dataManagement.message.importSuccessData'),
           variant: "success",
         });
         
@@ -104,15 +136,15 @@ export function DataImportExport({
         onOpenChange?.(false);
       } else {
         toast({
-          title: "导入失败",
-          description: "无法导入数据，请检查JSON格式是否正确",
+          title: t('dataManagement.message.importFailed'),
+          description: t('dataManagement.message.importFailedData'),
           variant: "destructive",
         });
       }
     } catch (error) {
       toast({
-        title: "导入出错",
-        description: "导入过程中出现错误",
+        title: t('dataManagement.message.importFailedError'),
+        description: t('dataManagement.message.importFailedError'),
         variant: "destructive",
       });
     }
@@ -131,14 +163,14 @@ export function DataImportExport({
         setImportData(content);
         
         toast({
-          title: "文件已加载",
-          description: "请点击导入按钮完成导入",
+          title: t('dataManagement.message.importFile'),
+          description: t('dataManagement.message.importFileDesc'),
           variant: "success",
         });
       } catch (error) {
         toast({
-          title: "读取文件失败",
-          description: "无法读取选择的文件",
+          title: t('dataManagement.message.importFileError'),
+          description: t('dataManagement.message.importFileErrorDesc'),
           variant: "destructive",
         });
       }
@@ -152,8 +184,8 @@ export function DataImportExport({
     resetToDefaults();
     
     toast({
-      title: "重置成功",
-      description: "所有数据已重置为默认值",
+      title: t('dataManagement.message.resetSuccess'),
+      description: t('dataManagement.message.resetSuccessData'),
       variant: "warning",
     });
     
@@ -169,24 +201,32 @@ export function DataImportExport({
         <Button
           variant={activeTab === "export" ? "default" : "outline"}
           onClick={() => {
-            console.log('切换到导出标签');
+            console.log(t('dataManagement.message.exchangeTag'));
             setActiveTab("export");
           }}
           className="flex-1"
         >
           <Icons.upload className="mr-2 h-4 w-4" />
-          导出数据
+          {t('dataManagement.exportFile')}
         </Button>
         <Button
           variant={activeTab === "import" ? "default" : "outline"}
           onClick={() => {
-            console.log('切换到导入标签');
+            console.log(t('dataManagement.message.exchangeTag'));
             setActiveTab("import");
           }}
           className="flex-1"
         >
           <Icons.download className="mr-2 h-4 w-4" />
-          导入数据
+          {t('dataManagement.importFile')}
+        </Button>
+        <Button
+          variant={activeTab === "sync" ? "default" : "outline"}
+          onClick={() => setActiveTab("sync")}
+          className="flex-1"
+        >
+          <Icons.refresh className="mr-2 h-4 w-4" />
+          {t('dataManagement.sync')}
         </Button>
       </div>
       
@@ -196,22 +236,22 @@ export function DataImportExport({
             <div className="flex space-x-2">
               <Button onClick={handleExport} className="flex-1">
                 <Icons.fileJson className="mr-2 h-4 w-4" />
-                生成导出数据
+                {t('dataManagement.exportData')}
               </Button>
               <Button onClick={handleDownload} className="flex-1" disabled={!exportedData}>
                 <Icons.download className="mr-2 h-4 w-4" />
-                下载为JSON文件
+                {t('dataManagement.exportDataDescription')}
               </Button>
             </div>
             <Button onClick={handleExportPrompts} variant="outline">
               <Icons.fileExport className="mr-2 h-4 w-4" />
-              仅导出提示词
+              {t('dataManagement.exportPrompts')}
             </Button>
           </div>
           
           {exportedData && (
             <div className="space-y-2">
-              <p className="text-sm text-muted-foreground">导出的数据（可复制）：</p>
+              <p className="text-sm text-muted-foreground">{t('dataManagement.exportDataDescription2')}</p>
               <Textarea
                 value={exportedData}
                 readOnly
@@ -228,7 +268,7 @@ export function DataImportExport({
               className="w-full"
             >
               <Icons.trash className="mr-2 h-4 w-4" />
-              重置为默认数据
+              {t('dataManagement.reset')}
             </Button>
           </div>
         </div>
@@ -238,19 +278,19 @@ export function DataImportExport({
         <div className="space-y-4">
           <Alert>
             <Icons.alertCircle className="h-4 w-4" />
-            <AlertTitle>注意</AlertTitle>
+            <AlertTitle>{t('common.alertTitle')}</AlertTitle>
             <AlertDescription>
-              导入数据将覆盖当前的所有提示词和分类。请确保您已备份重要数据。
+              {t('dataManagement.message.alertDescription')}
             </AlertDescription>
           </Alert>
           
           <div className="space-y-2">
-            <p className="text-sm text-muted-foreground">粘贴要导入的JSON数据：</p>
+            <p className="text-sm text-muted-foreground">{t('dataManagement.message.pasteData')}</p>
             <Textarea
               value={importData}
               onChange={(e) => setImportData(e.target.value)}
               className="h-[200px] font-mono text-xs"
-              placeholder="粘贴JSON格式的提示词数据..."
+              placeholder={t('dataManagement.message.pasteDataDesc')}
             />
           </div>
           
@@ -263,7 +303,7 @@ export function DataImportExport({
                 className="flex-1"
               >
                 <Icons.fileUp className="mr-2 h-4 w-4" />
-                从文件导入
+                {t('dataManagement.file')}
               </Button>
               <input
                 id="file-upload"
@@ -278,17 +318,86 @@ export function DataImportExport({
                 disabled={!importData.trim()}
               >
                 <Icons.check className="mr-2 h-4 w-4" />
-                确认导入
+                {t('dataManagement.confirmImport')}
               </Button>
             </div>
           </div>
         </div>
       )}
       
+      {activeTab === "sync" && (
+        <div className="space-y-4">
+          <Alert>
+            <Icons.info className="h-4 w-4" />
+            <AlertTitle>{t('dataManagement.sync')}</AlertTitle>
+            <AlertDescription>
+              {t('dataManagement.syncDescription')}
+            </AlertDescription>
+          </Alert>
+          
+          {/* 同步状态指示器 */}
+          <div className="flex items-center justify-between p-4 border rounded-lg">
+            <div className="flex items-center space-x-3">
+              <SyncStatusIndicator />
+              <div>
+                <div className="font-medium">{t('dataManagement.syncStatus')}</div>
+                <div className="text-sm text-muted-foreground">
+                  {syncStatus.enabled ? t('dataManagement.syncEnabled') : t('dataManagement.syncDisabled')}
+                </div>
+              </div>
+            </div>
+            <Button
+              variant="outline"
+              onClick={() => toggleSync(!syncStatus.enabled)}
+            >
+              {syncStatus.enabled ? t('dataManagement.disableSync') : t('dataManagement.enableSync')}
+            </Button>
+          </div>
+          
+          {/* 同步操作 */}
+          <div className="space-y-2">
+            <Button
+              onClick={handleManualSync}
+              disabled={!syncStatus.enabled || syncStatus.syncing}
+              className="w-full"
+            >
+              <Icons.refresh className={`mr-2 h-4 w-4 ${syncStatus.syncing ? 'animate-spin' : ''}`} />
+              {syncStatus.syncing ? t('dataManagement.syncing') : t('dataManagement.manualSync')}
+            </Button>
+            
+            {syncStatus.hasConflicts && (
+              <Button
+                variant="destructive"
+                onClick={() => setShowConflictDialog(true)}
+                className="w-full"
+              >
+                <Icons.alertTriangle className="mr-2 h-4 w-4" />
+                {t('dataManagement.resolveConflicts')}
+              </Button>
+            )}
+          </div>
+          
+          {/* 同步信息 */}
+          {syncStatus.lastSync && (
+            <div className="text-sm text-muted-foreground">
+              {t('dataManagement.lastSync')}: {new Date(syncStatus.lastSync).toLocaleString()}
+            </div>
+          )}
+          
+          {syncStatus.error && (
+            <Alert variant="destructive">
+              <Icons.alertCircle className="h-4 w-4" />
+              <AlertTitle>{t('common.error')}</AlertTitle>
+              <AlertDescription>{syncStatus.error}</AlertDescription>
+            </Alert>
+          )}
+        </div>
+      )}
+      
       {!inline && (
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange?.(false)}>
-            关闭
+              {t('common.close')}
           </Button>
         </DialogFooter>
       )}
@@ -305,28 +414,36 @@ export function DataImportExport({
         <Dialog open={showConfirmReset} onOpenChange={setShowConfirmReset}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>确认重置数据</DialogTitle>
+              <DialogTitle>{t('common.confirmReset')}</DialogTitle>
             </DialogHeader>
             <div className="py-4">
               <Alert variant="destructive">
                 <Icons.alertTriangle className="h-4 w-4" />
-                <AlertTitle>警告</AlertTitle>
+                <AlertTitle>{t('common.warning')}</AlertTitle>
                 <AlertDescription>
-                  此操作将删除所有自定义提示词和分类，并恢复到默认状态。此操作无法撤销。
+                  {t('dataManagement.message.resetWarning')}
                 </AlertDescription>
               </Alert>
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setShowConfirmReset(false)}>
-                取消
+                {t('common.cancel')}
               </Button>
               <Button variant="destructive" onClick={handleReset}>
                 <Icons.trash className="mr-2 h-4 w-4" />
-                确认重置
+                {t('common.confirm')}
               </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        
+        {/* 同步冲突对话框 */}
+        <SyncConflictDialog
+          conflict={pendingConflict}
+          open={showConflictDialog}
+          onOpenChange={setShowConflictDialog}
+          onResolve={handleConflictResolve}
+        />
       </div>
     );
   }
@@ -336,7 +453,7 @@ export function DataImportExport({
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
-            <DialogTitle>数据导入导出</DialogTitle>
+            <DialogTitle>{t('dataManagement.title')}</DialogTitle>
           </DialogHeader>
           
           {renderContent()}
@@ -347,28 +464,36 @@ export function DataImportExport({
       <Dialog open={showConfirmReset} onOpenChange={setShowConfirmReset}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>确认重置数据</DialogTitle>
+            <DialogTitle>{t('common.confirmReset')}</DialogTitle>
           </DialogHeader>
           <div className="py-4">
             <Alert variant="destructive">
               <Icons.alertTriangle className="h-4 w-4" />
-              <AlertTitle>警告</AlertTitle>
+              <AlertTitle>{t('common.warning')}</AlertTitle>
               <AlertDescription>
-                此操作将删除所有自定义提示词和分类，并恢复到默认状态。此操作无法撤销。
+                {t('dataManagement.message.resetWarning')}
               </AlertDescription>
             </Alert>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowConfirmReset(false)}>
-              取消
+              {t('common.cancel')}
             </Button>
             <Button variant="destructive" onClick={handleReset}>
               <Icons.trash className="mr-2 h-4 w-4" />
-              确认重置
+              {t('common.confirm')}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      
+      {/* 同步冲突对话框 */}
+      <SyncConflictDialog
+        conflict={pendingConflict}
+        open={showConflictDialog}
+        onOpenChange={setShowConflictDialog}
+        onResolve={handleConflictResolve}
+      />
     </>
   );
-} 
+}

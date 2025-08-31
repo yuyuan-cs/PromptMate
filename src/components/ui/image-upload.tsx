@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Icons } from "@/components/ui/icons";
 import { cn } from "@/lib/utils";
+import { useSidebarAlert } from "@/hooks/useSidebarAlert";
 
 interface ImageUploadProps {
   value?: string;
@@ -20,6 +21,7 @@ export function ImageUpload({
 }: ImageUploadProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [previewUrl, setPreviewUrl] = useState<string | undefined>(value || undefined);
+  const { showAlert, AlertComponent } = useSidebarAlert();
 
   // 当外部value变化时更新预览
   useEffect(() => {
@@ -33,13 +35,13 @@ export function ImageUpload({
 
     // 验证文件类型
     if (!file.type.startsWith('image/')) {
-      alert('请选择图片文件');
+      showAlert('请选择图片文件');
       return;
     }
 
     // 验证文件大小（2MB 以内）
     if (file.size > 2 * 1024 * 1024) {
-      alert('图片大小不能超过 2MB');
+      showAlert('图片大小不能超过 2MB');
       return;
     }
 
@@ -78,6 +80,7 @@ export function ImageUpload({
 
   return (
     <div className={cn("flex flex-col items-center gap-2", className)}>
+      <AlertComponent />
       {previewUrl ? (
         <div className="relative w-full">
           <div className="relative aspect-video w-full overflow-hidden rounded-md border border-border">

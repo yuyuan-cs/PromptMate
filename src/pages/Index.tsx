@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
+import { useTranslation } from "react-i18next";
 
 interface IndexProps {
   sidebarOpen?: boolean;
@@ -17,6 +18,7 @@ interface IndexProps {
 
 // 内容区域组件，负责根据当前状态显示不同内容
 function ContentArea({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
+  const { t } = useTranslation();
   const { 
     selectedPrompt,
     activeCategory,
@@ -60,7 +62,7 @@ function ContentArea({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
         <PromptList 
           key={viewKey}
           onToggleSidebar={onToggleSidebar} 
-          contentTitle={`搜索结果: "${searchTerm}"`}
+          contentTitle={`${t("common.search")}: "${searchTerm}"`}
           isEditPanelOpen={!!selectedPrompt}
         />
       );
@@ -72,7 +74,7 @@ function ContentArea({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
         <PromptList 
           key={viewKey}
           onToggleSidebar={onToggleSidebar} 
-          contentTitle="推荐模板"
+          contentTitle={`${t("common.recommended")}`}
           isEditPanelOpen={!!selectedPrompt}
         />
       );
@@ -84,7 +86,7 @@ function ContentArea({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
         <PromptList 
           key={viewKey}
           onToggleSidebar={onToggleSidebar} 
-          contentTitle="收藏提示词"
+          contentTitle={`${t("common.favorite")}`}
           isEditPanelOpen={!!selectedPrompt}
         />
       );
@@ -97,7 +99,7 @@ function ContentArea({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
         <PromptList 
           key={viewKey}
           onToggleSidebar={onToggleSidebar} 
-          contentTitle={`分类: ${categoryName}`}
+          contentTitle={`${t("common.category")}: ${categoryName}`}
           isEditPanelOpen={!!selectedPrompt}
         />
       );
@@ -108,7 +110,7 @@ function ContentArea({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
       <PromptList 
         key={viewKey}
         onToggleSidebar={onToggleSidebar} 
-        contentTitle="全部提示词"
+        contentTitle={`${t("common.all")}`}
         isEditPanelOpen={!!selectedPrompt}
       />
     );

@@ -7,6 +7,7 @@ import { Badge } from './ui/badge';
 import { Separator } from './ui/separator';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { ExternalLink, Download, Info, CheckCircle, AlertCircle, RefreshCw } from 'lucide-react';
+import { useTranslation } from 'react-i18next'; // 假设您使用的是 react-i18next
 
 // 应用信息接口
 interface AppInfo {
@@ -50,7 +51,7 @@ export function About() {
   const [updateAvailable, setUpdateAvailable] = useState(false);
   const [updateResult, setUpdateResult] = useState<UpdateResult | null>(null);
   const [lastCheckTime, setLastCheckTime] = useState<Date | null>(null);
-  
+  const { t } = useTranslation();
   // 加载应用信息
   useEffect(() => {
     const getAppInfo = async () => {
@@ -68,34 +69,34 @@ export function About() {
             setAppInfo({
               version: webVersion,
               name: 'PromptMate',
-              description: '帮助您创建和管理提示词的桌面应用',
+              description: t("about.description"),
               author: {
-                name: '泺源',
+                name: t("about.author"),
                 email: 'yuyuan3162021@163.com'
               },
               homepage: 'https://github.com/yy0691/PromptMate',
               repository: 'https://github.com/yy0691/PromptMate',
               buildDate: webBuildDate,
-              electronVersion: 'Web版本',
-              nodeVersion: 'Web版本',
-              chromeVersion: 'Web版本'
+              electronVersion: import.meta.env.VITE_ELECTRON_VERSION || t("about.version.webVersion"),
+              nodeVersion: import.meta.env.VITE_NODE_VERSION || t("about.version.webVersion"),
+              chromeVersion: import.meta.env.VITE_CHROME_VERSION || t("about.version.webVersion")
             });
           } catch (error) {
             // 如果无法获取，使用默认值
             setAppInfo({
               version: '1.0.14',
               name: 'PromptMate',
-              description: '帮助您创建和管理提示词的桌面应用',
+              description: t("about.description"),
               author: {
-                name: '泺源',
+                name: t("about.author"),
                 email: 'yuyuan3162021@163.com'
               },
               homepage: 'https://github.com/yy0691/PromptMate',
               repository: 'https://github.com/yy0691/PromptMate',
               buildDate: new Date().toISOString(),
-              electronVersion: 'Web版本',
-              nodeVersion: 'Web版本',
-              chromeVersion: 'Web版本'
+              electronVersion: import.meta.env.VITE_ELECTRON_VERSION || t("about.version.webVersion"),
+              nodeVersion: import.meta.env.VITE_NODE_VERSION || t("about.version.webVersion"),
+              chromeVersion: import.meta.env.VITE_CHROME_VERSION || t("about.version.webVersion")
             });
           }
         }
@@ -105,17 +106,17 @@ export function About() {
         setAppInfo({
           version: '1.0.14',
           name: 'PromptMate',
-          description: '帮助您创建和管理提示词的桌面应用',
+          description: t("about.description"),
           author: {
-            name: '泺源',
+            name: t("about.author"),
             email: 'yuyuan3162021@163.com'
           },
           homepage: 'https://github.com/yy0691/PromptMate',
           repository: 'https://github.com/yy0691/PromptMate',
           buildDate: new Date().toISOString(),
-          electronVersion: '未知',
-          nodeVersion: '未知',
-          chromeVersion: '未知'
+          electronVersion: t("about.unknown"),
+          nodeVersion: t("about.unknown"),
+          chromeVersion: t("about.unknown")
         });
       }
     };
@@ -127,25 +128,25 @@ export function About() {
   const checkForUpdates = async () => {
     // 检查是否在Electron环境中
     if (!window.electronAPI) {
-      setUpdateStatus('在Web环境中无法检查更新，请在桌面应用中查看');
-      toast.error('在Web环境中无法检查更新', {
-        description: '请在桌面应用中查看更新信息'
+      setUpdateStatus(t("about.checkForUpdates.error.web"));
+      toast.error(t("about.checkForUpdates.error.web"), {
+        description: t("about.checkForUpdates.error.desktop")
       });
       return;
     }
 
     // 检查API是否可用
     if (typeof window.electronAPI.checkForUpdates !== 'function') {
-      setUpdateStatus('更新检查功能不可用');
-      toast.error('更新检查功能不可用', {
-        description: '请确保使用最新版本的桌面应用'
+      setUpdateStatus(t("about.checkForUpdates.error.unavailable"));
+      toast.error(t("about.checkForUpdates.error.unavailable"), {
+        description: t("about.checkForUpdates.error.desktop")
       });
       return;
     }
     
     try {
       setIsLoading(true);
-      setUpdateStatus('正在检查更新...');
+      setUpdateStatus(t("about.checkForUpdates.checking"));
       setLastCheckTime(new Date());
       
       const result: UpdateResult = await window.electronAPI.checkForUpdates();
@@ -153,9 +154,9 @@ export function About() {
       
       if (result.success) {
         if (result.hasUpdate) {
-          setUpdateStatus('发现新版本!');
+          setUpdateStatus(t("about.checkForUpdates.newVersion"));
           setUpdateAvailable(true);
-          toast.success(`发现新版本: ${result.latestVersion}`, {
+          toast.success(t("about.checkForUpdates.newVersion"), {
             description: `当前版本: ${result.currentVersion}`,
             action: {
               label: '查看详情',
@@ -167,20 +168,20 @@ export function About() {
             }
           });
         } else {
-          setUpdateStatus('已是最新版本');
+          setUpdateStatus(t("about.checkForUpdates.upToDate"));
           setUpdateAvailable(false);
-          toast.info('当前已是最新版本', {
+          toast.info(t("about.checkForUpdates.upToDate"), {
             description: `版本: ${result.currentVersion}`
           });
         }
       } else {
-        setUpdateStatus(`检查更新失败: ${result.error || '未知错误'}`);
-        toast.error(`检查更新失败: ${result.error || '未知错误'}`);
+        setUpdateStatus(t("about.checkForUpdates.error.checkFailed"));
+        toast.error(t("about.checkForUpdates.error.checkFailed"));
       }
     } catch (error) {
-      setUpdateStatus('检查更新出错');
-      toast.error('检查更新出错', {
-        description: error instanceof Error ? error.message : '未知错误'
+      setUpdateStatus(t("about.checkForUpdates.error.checkFailed"));
+      toast.error(t("about.checkForUpdates.error.checkFailed"), {
+        description: error instanceof Error ? error.message : t("about.checkForUpdates.error.unknown")
       });
       console.error('检查更新出错:', error);
     } finally {
@@ -207,13 +208,13 @@ export function About() {
   const getUpdateTypeLabel = (type?: string) => {
     switch (type) {
       case 'major':
-        return { label: '主版本更新', color: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' };
+        return { label: t("about.majorversion"), color: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' };
       case 'minor':
-        return { label: '次版本更新', color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400' };
+        return { label: t("about.minorversion"), color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400' };
       case 'patch':
-        return { label: '补丁更新', color: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' };
+        return { label: t("about.patchversion"), color: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' };
       default:
-        return { label: '未知', color: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400' };
+        return { label: t("about.unknown"), color: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400' };
     }
   };
 
@@ -225,7 +226,7 @@ export function About() {
       return (
         <div className="flex items-center gap-2">
           <Badge variant="destructive" className="text-xs">
-            有新版本 {updateResult.latestVersion}
+            {t("about.updateAvailable")} {updateResult.latestVersion}
           </Badge>
           <Badge className={getUpdateTypeLabel(updateResult.updateType).color}>
             {getUpdateTypeLabel(updateResult.updateType).label}
@@ -236,7 +237,7 @@ export function About() {
     
     return (
       <Badge variant="secondary" className="text-xs">
-        已是最新版本
+        {t("about.updateNotAvailable")}
       </Badge>
     );
   };
@@ -261,31 +262,31 @@ export function About() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Info className="h-5 w-5" />
-            版本信息
+            {t("about.version.title")}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
-              <Label className="text-muted-foreground">当前版本</Label>
+              <Label className="text-muted-foreground">{t("about.version.currentVersion")}</Label>
               <div className="flex items-center gap-2 mt-1">
                 <span className="font-medium">{appInfo?.version || '1.0.14'}</span>
                 {getVersionStatus()}
               </div>
             </div>
             <div>
-              <Label className="text-muted-foreground">构建日期</Label>
+              <Label className="text-muted-foreground">{t("about.version.buildDate")}</Label>
               <div className="mt-1">
-                {appInfo?.buildDate ? formatDate(appInfo.buildDate) : '未知'}
+                {appInfo?.buildDate ? formatDate(appInfo.buildDate) : t("about.unknown")}
               </div>
             </div>
             <div>
-              <Label className="text-muted-foreground">Electron版本</Label>
-              <div className="mt-1">{appInfo?.electronVersion || '未知'}</div>
+              <Label className="text-muted-foreground">{t("about.version.electronVersion")}</Label>
+              <div className="mt-1">{appInfo?.electronVersion || t("about.unknown")}</div>
             </div>
             <div>
-              <Label className="text-muted-foreground">Node.js版本</Label>
-              <div className="mt-1">{appInfo?.nodeVersion || '未知'}</div>
+              <Label className="text-muted-foreground">{t("about.version.nodeVersion")}</Label>
+              <div className="mt-1">{appInfo?.nodeVersion || t("about.unknown")}</div>
             </div>
           </div>
           
@@ -293,7 +294,7 @@ export function About() {
           {updateResult && (
             <div className="pt-2 border-t">
               <div className="text-xs text-muted-foreground">
-                最后检查时间: {lastCheckTime ? formatDate(lastCheckTime.toISOString()) : '未知'}
+                {t("about.version.lastCheckTime")}: {lastCheckTime ? formatDate(lastCheckTime.toISOString()) : t("about.unknown")}
               </div>
             </div>
           )}
@@ -305,7 +306,7 @@ export function About() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Download className="h-5 w-5" />
-            检查更新
+            {t("about.update")}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -317,7 +318,7 @@ export function About() {
             >
               {isLoading && <Icons.loader className="mr-2 h-4 w-4 animate-spin" />}
               {!isLoading && <RefreshCw className="mr-2 h-4 w-4" />}
-              {!window.electronAPI ? 'Web环境不支持更新检查' : '检查更新'}
+              {!window.electronAPI ? t("about.updateCheckingError") : t("about.update")}
             </Button>
             
             {window.electronAPI && (
@@ -328,7 +329,7 @@ export function About() {
                 className="shrink-0"
               >
                 <ExternalLink className="mr-2 h-4 w-4" />
-                查看发布页
+                {t("about.viewReleasePage")}
               </Button>
             )}
           </div>
@@ -351,7 +352,7 @@ export function About() {
               {updateResult?.hasUpdate && updateResult.releaseInfo && (
                 <div className="space-y-2 mt-3">
                   <div className="flex items-center gap-2">
-                    <span className="text-muted-foreground">最新版本:</span>
+                    <span className="text-muted-foreground">{t("about.updateAvailable")}</span>
                     <span className="font-medium">{updateResult.latestVersion}</span>
                     <Badge className={getUpdateTypeLabel(updateResult.updateType).color}>
                       {getUpdateTypeLabel(updateResult.updateType).label}
@@ -360,14 +361,14 @@ export function About() {
                   
                   {updateResult.releaseInfo.name && (
                     <div>
-                      <span className="text-muted-foreground">发布名称:</span>
+                      <span className="text-muted-foreground">{t("about.releaseName")}</span>
                       <span className="ml-2">{updateResult.releaseInfo.name}</span>
                     </div>
                   )}
                   
                   {updateResult.releaseInfo.published_at && (
                     <div>
-                      <span className="text-muted-foreground">发布时间:</span>
+                      <span className="text-muted-foreground">{t("about.releaseDate")}</span>
                       <span className="ml-2">{formatDate(updateResult.releaseInfo.published_at)}</span>
                     </div>
                   )}
@@ -380,7 +381,7 @@ export function About() {
                       onClick={() => window.open(updateResult.releaseInfo.html_url, '_blank')}
                     >
                       <ExternalLink className="mr-2 h-4 w-4" />
-                      查看发布详情
+                      {t("about.viewReleaseDetails")}
                     </Button>
                   )}
                 </div>
@@ -393,16 +394,16 @@ export function About() {
       {/* 应用信息卡片 */}
       <Card>
         <CardHeader>
-          <CardTitle>应用信息</CardTitle>
+          <CardTitle>{t("about.appInfo")}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="grid grid-cols-1 gap-3 text-sm">
             <div>
-              <Label className="text-muted-foreground">开发者</Label>
-              <div className="mt-1">{appInfo?.author?.name || '泺源'}</div>
+              <Label className="text-muted-foreground">{t("about.author")}</Label>
+              <div className="mt-1">{appInfo?.author?.name || t("about.author")}</div>
             </div>
             <div>
-              <Label className="text-muted-foreground">项目地址</Label>
+              <Label className="text-muted-foreground">{t("about.repository")}</Label>
               <div className="mt-1">
                 <Button
                   variant="link"

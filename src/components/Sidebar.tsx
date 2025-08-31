@@ -40,12 +40,14 @@ import { useToast } from "@/hooks/use-toast";
 import { useAppView } from "@/hooks/useAppView";
 import { useTranslation } from 'react-i18next';
 import { LanguageSelector } from "@/components/ui/LanguageSelector";
+import { useSidebarAlert } from "@/hooks/useSidebarAlert";
 
 // 侧边栏显示模式类型
 type SidebarMode = "expanded" | "collapsed";
 
 export function Sidebar({ className }: { className?: string }) {
   const { t } = useTranslation();
+  const { showAlert, showConfirm, AlertComponent } = useSidebarAlert();
   const {
     activeCategory,
     setActiveCategory,
@@ -153,7 +155,7 @@ export function Sidebar({ className }: { className?: string }) {
     forceRefresh();
     
     // 添加强制刷新的调试日志
-    console.log('分类已更新:', targetCategory);
+    console.log(t("sidebar.message.categoryClicked"), targetCategory);
   };
 
   // 处理点击收藏
@@ -174,7 +176,7 @@ export function Sidebar({ className }: { className?: string }) {
     forceRefresh();
     
     // 添加强制刷新的调试日志
-    console.log('收藏已更新:', true);
+    console.log(t("sidebar.message.favoritesClicked"));
   };
 
   // 处理点击推荐模板
@@ -195,7 +197,7 @@ export function Sidebar({ className }: { className?: string }) {
     forceRefresh();
     
     // 添加强制刷新的调试日志
-    console.log('推荐已更新:', true);
+    console.log(t("sidebar.message.recommendedClicked"));
   };
 
   // 处理点击全部提示词
@@ -206,7 +208,7 @@ export function Sidebar({ className }: { className?: string }) {
     resetAllFilters();
     
     // 添加强制刷新的调试日志
-    console.log('所有状态已重置');
+    console.log(t("sidebar.message.allPromptsClicked"));
   };
 
   // 数据变更后刷新
@@ -333,14 +335,25 @@ export function Sidebar({ className }: { className?: string }) {
   // 添加删除处理函数
   const handleDelete = (categoryId: string) => {
     // 确认删除
-    if (window.confirm("确定要删除这个分类吗？")) {
+    let confirmed = false;
+    const confirmPromise = new Promise<void>((resolve) => {
+      showConfirm(
+        t("sidebar.message.deleteCategory"),
+        "",
+        () => { confirmed = true; resolve(); },
+        () => { confirmed = false; resolve(); }
+      );
+    });
+    confirmPromise.then(() => {
+      if (!confirmed) return;
       // 删除分类
       deleteCategory(categoryId);
+      console.log(t("sidebar.message.deleteCategorySuccess"));
       // 如果删除的是当前选中的分类，切换到全部提示词
       if (activeCategory === categoryId) {
         handleAllPromptsClick();
       }
-    }
+    });
   };
 
   // 处理右键菜单新建提示词
@@ -462,6 +475,7 @@ export function Sidebar({ className }: { className?: string }) {
       )}
       style={!isCollapsed ? { '--sidebar-width': `${sidebarWidth}px` } as React.CSSProperties : undefined}
     >
+      <AlertComponent />
       {/* 拖拽调整区域 - 整个右边缘 */}
       <div
         className="absolute top-0 right-0 w-4 h-full cursor-col-resize z-30 transform translate-x-0.5"
@@ -498,7 +512,7 @@ export function Sidebar({ className }: { className?: string }) {
               </Button>
             </TooltipTrigger>
             <TooltipContent side="right">
-              {isCollapsed ? "展开侧边栏" : "收起侧边栏"}
+              {isCollapsed ?  t('sidebar.expandSidebar') : t('sidebar.collapseSidebar')}
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
@@ -527,12 +541,12 @@ export function Sidebar({ className }: { className?: string }) {
                       onClick={handleAllPromptsClick}
                     >
                       <Icons.layout className="h-4 w-4" />
-                      {!isCollapsed && "全部提示词"}
+                      {!isCollapsed && t("sidebar.tooltip.allPrompts")}
                     </Button>
                   </TooltipTrigger>
                   {isCollapsed && (
                     <TooltipContent side="right">
-                      全部提示词
+                      {t("sidebar.tooltip.allPrompts")}
                     </TooltipContent>
                   )}
                 </Tooltip>
@@ -554,12 +568,12 @@ export function Sidebar({ className }: { className?: string }) {
                       onClick={handleFavoritesClick}
                       >
                       <Icons.starFilled className="h-4 w-4" />
-                      {!isCollapsed && "收藏提示词"}
+                      {!isCollapsed && t("sidebar.tooltip.favoritePrompts")}
                     </Button>
                   </TooltipTrigger>
                   {isCollapsed && (
                     <TooltipContent side="right">
-                      收藏提示词
+                      {t("sidebar.tooltip.favoritePrompts")}
                     </TooltipContent>
                   )}
                 </Tooltip>
@@ -580,12 +594,12 @@ export function Sidebar({ className }: { className?: string }) {
                       onClick={handleRecommendedClick}
                     >
                       <Icons.gift className="h-4 w-4" />
-                      {!isCollapsed && "推荐模板"}
+                      {!isCollapsed && t("sidebar.tooltip.recommendedPrompts")}
                     </Button>
                   </TooltipTrigger>
                   {isCollapsed && (
                     <TooltipContent side="right">
-                      推荐模板
+                      {t("sidebar.tooltip.recommendedPrompts")}
                     </TooltipContent>
                   )}
                 </Tooltip>
@@ -606,12 +620,12 @@ export function Sidebar({ className }: { className?: string }) {
                         onClick={() => setCurrentView('workflows')}
                       >
                         <Icons.workflow className="h-4 w-4" />
-                        {!isCollapsed && "工作流管理"}
+                        {!isCollapsed && t("sidebar.tooltip.workflows")}
                       </Button>
                     </TooltipTrigger>
                     {isCollapsed && (
                       <TooltipContent side="right">
-                        工作流管理
+                        {t("sidebar.tooltip.workflows")}
                       </TooltipContent>
                     )}
                   </Tooltip>
@@ -630,7 +644,7 @@ export function Sidebar({ className }: { className?: string }) {
 
               {!isCollapsed && (
                 <h2 className="text-sm font-medium text-muted-foreground">
-                  分类
+                  {t("sidebar.categories")}
                 </h2>
               )}
               {/* 管理分类 */}
@@ -650,7 +664,7 @@ export function Sidebar({ className }: { className?: string }) {
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent side="right">
-                    管理分类
+                    {t("sidebar.tooltip.manageCategories")}
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -713,16 +727,16 @@ export function Sidebar({ className }: { className?: string }) {
                                     className="h-6 hover:scale-105 transition-transform"
                                   >
                                     <Icons.x className="h-4 w-4" />
-                                    取消
+                                    {t('common.cancel')}
                                   </Button>
                                   <Button
-                                    variant="ghost"
+                                    variant="default"
                                     size="sm"
                                     onClick={() => handleRename(category.id)}
                                     className="h-6 hover:scale-105 transition-transform"
                                   >
                                     <Icons.check className="h-4 w-4" />
-                                    确定
+                                    {t('common.ok')}
                                   </Button>
                                 </div>
                               </div>
@@ -764,17 +778,19 @@ export function Sidebar({ className }: { className?: string }) {
                         </ContextMenuTrigger>
                         <ContextMenuContent>
                           <ContextMenuItem onClick={() => handleEditCategory(category)}>
-                            编辑
+                            <Icons.edit className="h-4 w-4 mr-2" />
+                            {t('common.edit')}
                           </ContextMenuItem>
                           <ContextMenuItem onClick={() => handleContextMenuNewPrompt(category.id)}>
                             <Icons.plus className="h-4 w-4 mr-2" />
-                            新建提示词
+                            {t('common.newprompt')}
                           </ContextMenuItem>
                           <ContextMenuItem 
                             className="text-destructive"
                             onClick={() => handleDelete(category.id)}
                           >
-                            删除
+                            <Icons.trash className="h-4 w-4 mr-2" />
+                            {t('common.delete')}
                           </ContextMenuItem>
                         </ContextMenuContent>
                       </ContextMenu>
@@ -840,16 +856,26 @@ export function Sidebar({ className }: { className?: string }) {
         
         
         {/* 新建提示词 */}
-        <QuickCreatePrompt
-          variant="icon"
-          className={cn(
-            "bg-primary/10 text-primary hover:bg-primary/20",
-            isCollapsed ? "mx-auto" : ""
-          )}
-          options={{
-            defaultCategory: activeCategory || categories[0]?.id || "general"
-          }}
-        />
+        
+
+        <TooltipProvider delayDuration={100}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <QuickCreatePrompt
+                variant="icon"
+                className={cn(
+                  "bg-primary/10 text-primary hover:bg-primary/20",
+                  isCollapsed ? "mx-auto" : ""
+                )}
+                options={{
+                  defaultCategory: activeCategory || categories[0]?.id || "general"
+                }}
+              />
+            </TooltipTrigger>
+            <TooltipContent side="right">{t('common.newprompt')}</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+        
         
         {/* 设置 */}
         <TooltipProvider delayDuration={100}>
@@ -950,7 +976,7 @@ export function Sidebar({ className }: { className?: string }) {
                   
                   {/* 系统主题部分 */}
                   <div>
-                    <h3 className="text-sm font-medium mb-2">默认主题</h3>
+                    <h3 className="text-sm font-medium mb-2">{t('settings.default_theme')}</h3>
                     <div className="grid grid-cols-3 gap-6  px-2">
                       {themePresets
                         .filter(theme => theme.isDefault)
@@ -967,7 +993,7 @@ export function Sidebar({ className }: { className?: string }) {
                   
                   {/* 自定义主题部分 */}
                   <div>
-                    <h3 className="text-sm font-medium mb-2">自定义主题</h3>
+                    <h3 className="text-sm font-medium mb-2">{t('settings.custom_theme.title')}</h3>
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-6 px-2">
                       {themePresets
                         .filter(theme => !theme.isDefault)
@@ -988,8 +1014,8 @@ export function Sidebar({ className }: { className?: string }) {
                         <div className="w-12 h-12 rounded-full flex items-center justify-center bg-muted">
                           <Icons.palette className="h-6 w-6 text-primary" />
                         </div>
-                        <span className="mt-2 text-sm font-medium">自定义主题</span>
-                        <span className="text-xs text-muted-foreground">创建专属配色</span>
+                        <span className="mt-2 text-sm font-medium">{t('settings.custom_theme.title')}</span>
+                        <span className="text-xs text-muted-foreground">{t('settings.custom_theme.create')}</span>
                       </div>
                     </div>
                   </div>
@@ -997,7 +1023,7 @@ export function Sidebar({ className }: { className?: string }) {
                 
                 {/* 窗口置顶设置 */}
                 <div className="flex items-center justify-between space-x-2">
-                  <Label htmlFor="always-on-top" className="flex-1">窗口置顶</Label>
+                  <Label htmlFor="always-on-top" className="flex-1">{t('common.alwaysOnTop')}</Label>
                   <Switch 
                     id="always-on-top"
                     checked={settings.alwaysOnTop}
@@ -1051,9 +1077,9 @@ export function Sidebar({ className }: { className?: string }) {
       <Dialog open={showThemeCustomizer} onOpenChange={setShowThemeCustomizer}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle>自定义主题</DialogTitle>
+            <DialogTitle>{t('common.custom_theme.title')}</DialogTitle>
             <DialogDescription>
-              选择您喜欢的颜色，创建个性化主题
+              {t('common.custom_theme.description')}
             </DialogDescription>
           </DialogHeader>
           <ThemeCustomizer

@@ -22,6 +22,7 @@ import { Category } from "@/types";
 import { AIOptimizeButton } from "./AIOptimizeButton";
 import { VariableForm } from "./VariableForm";
 import { VariableTextArea } from "./VariableHighlighter";
+import { useTranslation } from "react-i18next";
 
 interface PromptEditFormProps {
   state: PromptEditorState;
@@ -52,6 +53,7 @@ export const PromptEditForm: React.FC<PromptEditFormProps> = ({
   onAIOptimize,
   onOpenSettings,
 }) => {
+  const { t } = useTranslation();
   // 获取标签建议
   const getTagSuggestions = () => {
     const currentTags = state.tags.split(/[,，;；]/).map(tag => tag.trim()).filter(Boolean);
@@ -82,13 +84,13 @@ export const PromptEditForm: React.FC<PromptEditFormProps> = ({
     files.forEach(file => {
       // 检查文件大小（10MB限制）
       if (file.size > 10 * 1024 * 1024) {
-        console.warn(`文件 ${file.name} 超过10MB限制`);
+        console.warn(`${t('common.file')} ${file.name} ${t('prompteditform.message.fileSize')}`);
         return;
       }
       
       // 检查文件类型
       if (!file.type.startsWith('image/')) {
-        console.warn(`文件 ${file.name} 不是有效的图片格式`);
+        console.warn(`${t('common.file')} ${file.name} ${t('prompteditform.message.fileType')}`);
         return;
       }
       
@@ -114,24 +116,24 @@ export const PromptEditForm: React.FC<PromptEditFormProps> = ({
     <div className="space-y-4 relative">
       {/* 标题输入 */}
       <div className="space-y-2">
-        <label className="text-sm font-medium">标题</label>
+        <label className="text-sm font-medium">{t('common.title')}</label>
         <Input
           value={state.title}
           onChange={(e) => onFieldChange('title', e.target.value)}
-          placeholder="输入提示词标题"
+          placeholder={t('prompteditform.description')}
           className="w-full"
         />
       </div>
 
       {/* 分类选择 */}
       <div className="space-y-2">
-        <label className="text-sm font-medium">分类</label>
+        <label className="text-sm font-medium">{t('prompts.promptCategory')}</label>
         <Select
           value={state.category}
           onValueChange={(value) => onFieldChange('category', value)}
         >
           <SelectTrigger>
-            <SelectValue placeholder="选择分类" />
+            <SelectValue placeholder={t('prompteditform.promptCategoryPlaceholder')} />
           </SelectTrigger>
           <SelectContent>
             {categories.map((cat) => (
@@ -147,7 +149,7 @@ export const PromptEditForm: React.FC<PromptEditFormProps> = ({
       <div className="flex flex-col gap-6">
         {/* 内容编辑器区域 */}
         <div className="space-y-4">
-          <label className="text-sm font-medium">内容编辑</label>
+          <label className="text-sm font-medium">{t('prompteditform.promptContent')}</label>
           <div className="space-y-2">
             {/* 注释掉变量占位符说明，避免编辑时显示未填充变量内容 */}
             {/* <div className="text-xs text-muted-foreground">
@@ -157,7 +159,7 @@ export const PromptEditForm: React.FC<PromptEditFormProps> = ({
               <VariableTextArea
                 value={state.content}
                 onChange={(value) => onFieldChange('content', value)}
-                placeholder="输入提示词内容，支持 Markdown 格式和变量占位符"
+                placeholder={t('prompteditform.promptContentPlaceholder')}
                 rows={8}
                 showVariables={false}
               />
@@ -192,7 +194,7 @@ export const PromptEditForm: React.FC<PromptEditFormProps> = ({
 
         {/* Markdown 预览 - 编辑模式下注释掉，避免显示未填充变量内容 */}
         <div className="space-y-2">
-          <div className="text-xs text-muted-foreground">Markdown 预览</div>
+          <div className="text-xs text-muted-foreground">{t('common.markdownPreview')}</div>
           <div className="border rounded-md min-h-[200px] p-4 bg-muted/30 overflow-auto">
             {state.content ? (
               <div className="markdown-body">
@@ -200,7 +202,7 @@ export const PromptEditForm: React.FC<PromptEditFormProps> = ({
               </div>
             ) : (
               <div className="text-muted-foreground text-sm">
-                在上方编辑器中输入内容，这里将显示 Markdown 预览
+                {t('common.markdownPreviewPlaceholder')}
               </div>
             )}
           </div>
@@ -209,19 +211,19 @@ export const PromptEditForm: React.FC<PromptEditFormProps> = ({
 
       {/* 标签输入 */}
       <div className="space-y-2">
-        <label className="text-sm font-medium">标签</label>
+        <label className="text-sm font-medium">{t('prompteditform.tags')}</label>
         <div className="relative">
           <Input
             value={state.tags}
             onChange={(e) => onFieldChange('tags', e.target.value)}
-            placeholder="输入标签，用逗号分隔"
+            placeholder={t('prompteditform.tagsPlaceholder')}
             className="w-full"
           />
           
           {/* 标签建议 */}
           {state.tags && getTagSuggestions().length > 0 && (
             <div className="absolute top-full left-0 right-0 z-10 bg-popover border rounded-md shadow-md mt-1 p-2">
-              <div className="text-xs text-muted-foreground mb-2">建议标签：</div>
+              <div className="text-xs text-muted-foreground mb-2">{t('prompteditform.tagSuggestion')}</div>
               <div className="flex flex-wrap gap-1">
                 {getTagSuggestions().map((tag) => (
                   <Badge
@@ -242,7 +244,7 @@ export const PromptEditForm: React.FC<PromptEditFormProps> = ({
       {/* 图片管理 */}
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <label className="text-sm font-medium">参考图片</label>
+          <label className="text-sm font-medium">{t('prompteditform.image')}</label>
           <Button
             type="button"
             variant="outline"
@@ -251,7 +253,7 @@ export const PromptEditForm: React.FC<PromptEditFormProps> = ({
             className="h-8"
           >
             <Plus className="h-4 w-4 mr-1" />
-            添加图片
+            {t('prompteditform.imageUploadButton')}
           </Button>
         </div>
         {/* 拖拽和粘贴图片区域 */}
@@ -294,15 +296,15 @@ export const PromptEditForm: React.FC<PromptEditFormProps> = ({
                 </svg>
               </div>
               <div>
-                <p className="text-sm font-medium">拖拽图片到此处或粘贴图片</p>
+                <p className="text-sm font-medium">{t('prompteditform.imageUploadPlaceholder')}</p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  支持 JPG、PNG、GIF 等格式，最大 10MB
+                  {t('prompteditform.imageUploadDescription')}
                 </p>
               </div>
             </div>
             
             <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
-              <span>或者</span>
+              <span>{t('prompteditform.or')}</span>
               <Button
                 type="button"
                 variant="outline"
@@ -311,7 +313,7 @@ export const PromptEditForm: React.FC<PromptEditFormProps> = ({
                 className="h-6 text-xs"
               >
                 <Plus className="h-3 w-3 mr-1" />
-                选择文件
+                {t('prompteditform.imageUploadButton')}
               </Button>
             </div>
           </div>
@@ -334,7 +336,7 @@ export const PromptEditForm: React.FC<PromptEditFormProps> = ({
                     >
                       <img 
                         src={image.data} 
-                        alt={image.caption || `图片 ${index + 1}`} 
+                        alt={image.caption || `${t('common.image')} ${index + 1}`} 
                         className="w-full h-20 object-cover"
                       />
                     </div>
@@ -342,11 +344,11 @@ export const PromptEditForm: React.FC<PromptEditFormProps> = ({
                   <PopoverContent className="p-2 max-w-xs">
                     <img 
                       src={image.data} 
-                      alt={image.caption || `图片 ${index + 1}`} 
+                      alt={image.caption || `${t('common.image')} ${index + 1}`} 
                       className="w-full mb-2 rounded" 
                     />
                     <div className="text-xs text-muted-foreground">
-                      {image.caption || "无说明"}
+                      {image.caption || `${t('common.imageCaption')} ${index + 1}`}
                     </div>
                   </PopoverContent>
                 </Popover>
@@ -369,12 +371,12 @@ export const PromptEditForm: React.FC<PromptEditFormProps> = ({
         {/* 图片编辑区域 */}
         {state.selectedImageIndex !== null && (
           <div className="rounded-md p-3 bg-muted/50">
-            <p className="text-sm font-medium mb-2">图片说明</p>
+            <p className="text-sm font-medium mb-2">{t('common.imageCaption')}</p>
             <div className="flex gap-2">
               <Input
                 value={state.imageCaption}
                 onChange={(e) => onFieldChange('imageCaption', e.target.value)}
-                placeholder="添加图片说明"
+                placeholder={t('prompteditform.imageCaptionPlaceholder')}
                 className="flex-1"
               />
               <Button 
@@ -385,7 +387,7 @@ export const PromptEditForm: React.FC<PromptEditFormProps> = ({
                   onFieldChange('imageCaption', '');
                 }}
               >
-                确定
+                {t('common.confirm')}
               </Button>
             </div>
           </div>

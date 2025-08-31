@@ -9,6 +9,7 @@ import { Combobox } from './ui/combobox';
 import { Prompt, Category } from '../shared/types';
 import { useTranslation } from '../i18n';
 import { AIOptimizeIconButton } from './AIOptimizeIconButton';
+import { useSidebarAlert } from '../hooks/useSidebarAlert';
 
 // Props for the component
 export interface PromptEditViewProps {
@@ -32,6 +33,7 @@ export const PromptEditView: React.FC<PromptEditViewProps> = ({
   showCloseButton = true,
 }) => {
   const { t } = useTranslation();
+  const { showConfirm, AlertComponent } = useSidebarAlert();
   console.log('🎯 PromptEditView rendered with:', { prompt: prompt?.title || 'new' });
   
   console.log('🚀 PromptEditView START - Props received:', {
@@ -195,7 +197,6 @@ export const PromptEditView: React.FC<PromptEditViewProps> = ({
     ...categories.map(cat => ({ value: cat.id, label: cat.name }))
   ], [categories, t]);
 
-
   // Draft protection
   const hasUnsavedChanges = React.useMemo(() => {
     if (!isEditMode) {
@@ -211,9 +212,20 @@ export const PromptEditView: React.FC<PromptEditViewProps> = ({
     );
   }, [prompt, title, content, description, category, isFavorite, tags, isEditMode]);
 
-  const handleCancel = () => {
+  const handleCancel = async () => {
     if (hasUnsavedChanges) {
-      if (window.confirm(t('prompts_unsavedChanges'))) {
+      let confirmed = false;
+      await new Promise<void>((resolve) => {
+        showConfirm(
+          t('prompts_unsavedChanges'),
+          '',
+          () => { confirmed = true; resolve(); },
+          () => { confirmed = false; resolve(); },
+          t('common_confirm') || '确定',
+          t('common_cancel') || '取消'
+        );
+      });
+      if (confirmed) {
         onCancel();
       }
     } else {
@@ -237,6 +249,8 @@ export const PromptEditView: React.FC<PromptEditViewProps> = ({
     
     return (
       <div className="flex flex-col h-full bg-white">
+        {/* Alert component for custom dialogs */}
+        <AlertComponent />
         {/* Simple Header */}
         <div className="p-4 border-b">
           <h3 className="text-xs font-semibold">
