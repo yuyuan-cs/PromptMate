@@ -1,8 +1,47 @@
 import { useState, useEffect, useCallback } from 'react';
-import { SyncManager, SyncData } from '../lib/syncManager';
 import { usePrompts } from './usePrompts';
 import { useToast } from './use-toast';
 import { Prompt, Category, Settings } from '../types';
+
+// 条件导入SyncManager，仅在Electron环境中可用
+let SyncManager: any = null;
+let SyncData: any = null;
+
+// 检查是否在Electron环境中
+const isElectron = () => {
+  return typeof window !== 'undefined' && 
+         window.process && 
+         window.process.type === 'renderer';
+};
+
+// 临时类型定义
+interface SyncDataType {
+  version: string;
+  lastModified: string;
+  prompts: Prompt[];
+  categories: Category[];
+  settings: Settings;
+  syncMetadata: {
+    source: 'desktop' | 'extension';
+    checksum: string;
+  };
+}
+
+// 动态导入SyncManager
+const loadSyncManager = async () => {
+  if (isElectron() && !SyncManager) {
+    try {
+      const syncModule = await import('../lib/syncManager');
+      SyncManager = syncModule.SyncManager;
+      SyncData = syncModule.SyncData;
+      return true;
+    } catch (error) {
+      console.warn('无法加载SyncManager，可能不在Electron环境中:', error);
+      return false;
+    }
+  }
+  return false;
+};
 
 export interface SyncStatus {
   enabled: boolean;
@@ -14,8 +53,8 @@ export interface SyncStatus {
 }
 
 export interface SyncConflict {
-  localData: SyncData;
-  remoteData: SyncData;
+  localData: SyncDataType;
+  remoteData: SyncDataType;
   timestamp: string;
 }
 
@@ -30,28 +69,45 @@ export const useDataSync = () => {
   });
   
   const [pendingConflict, setPendingConflict] = useState<SyncConflict | null>(null);
+  const [syncManager, setSyncManager] = useState<any>(null);
+  const [isElectronEnv, setIsElectronEnv] = useState(false);
   const { prompts, categories, settings, refreshData } = usePrompts();
   const { toast } = useToast();
-  const syncManager = SyncManager.getInstance();
 
   // 初始化同步管理器
   useEffect(() => {
     const initializeSync = async () => {
       try {
-        await syncManager.initialize();
+        // 检查环境并尝试加载SyncManager
+        const electronCheck = isElectron();
+        setIsElectronEnv(electronCheck);
         
-        // 更新同步状态
-        const status = syncManager.getSyncStatus();
-        setSyncStatus(prev => ({
-          ...prev,
-          enabled: status.enabled,
-          connected: true,
-          lastSync: status.lastSync,
-          hasConflicts: status.hasConflicts
-        }));
+        if (electronCheck) {
+          const loaded = await loadSyncManager();
+          if (loaded && SyncManager) {
+            const manager = SyncManager.getInstance();
+            setSyncManager(manager);
+            
+            await manager.initialize();
+            
+            // 更新同步状态
+            const status = manager.getSyncStatus();
+            setSyncStatus(prev => ({
+              ...prev,
+              enabled: status.enabled,
+              connected: true,
+              lastSync: status.lastSync,
+              hasConflicts: status.hasConflicts
+            }));
 
-        // 设置事件监听器
-        setupEventListeners();
+            // 设置事件监听器
+            setupEventListeners(manager);
+          } else {
+            console.log('SyncManager不可用，跳过同步功能');
+          }
+        } else {
+          console.log('非Electron环境，同步功能不可用');
+        }
         
       } catch (error) {
         console.error('同步初始化失败:', error);
@@ -65,20 +121,24 @@ export const useDataSync = () => {
     initializeSync();
 
     return () => {
-      syncManager.removeAllListeners();
+      if (syncManager) {
+        syncManager.removeAllListeners();
+      }
     };
   }, []);
 
   // 设置事件监听器
-  const setupEventListeners = useCallback(() => {
+  const setupEventListeners = useCallback((manager: any) => {
+    if (!manager) return;
+    
     // 数据变更事件
-    syncManager.on('dataChanged', async (syncData: SyncData) => {
+    manager.on('dataChanged', async (syncData: any) => {
       try {
         setSyncStatus(prev => ({ ...prev, syncing: true }));
         
         // 检测冲突
         const currentData = await createCurrentSyncData();
-        const hasConflict = await syncManager.detectConflict(currentData, syncData);
+        const hasConflict = await manager.detectConflict(currentData, syncData);
         
         if (hasConflict) {
           // 显示冲突解决界面
@@ -122,7 +182,7 @@ export const useDataSync = () => {
     });
 
     // 同步完成事件
-    syncManager.on('dataSynced', () => {
+    manager.on('dataSynced', () => {
       setSyncStatus(prev => ({
         ...prev,
         lastSync: new Date().toISOString(),
@@ -132,7 +192,7 @@ export const useDataSync = () => {
     });
 
     // 冲突检测事件
-    syncManager.on('conflictDetected', ({ localData, remoteData }: { localData: SyncData, remoteData: SyncData }) => {
+    manager.on('conflictDetected', ({ localData, remoteData }: { localData: any, remoteData: any }) => {
       setPendingConflict({
         localData,
         remoteData,
@@ -143,7 +203,7 @@ export const useDataSync = () => {
     });
 
     // 错误事件
-    syncManager.on('error', (error: Error) => {
+    manager.on('error', (error: Error) => {
       setSyncStatus(prev => ({
         ...prev,
         syncing: false,
@@ -158,7 +218,7 @@ export const useDataSync = () => {
     });
 
     // 设置变更事件
-    syncManager.on('settingsChanged', (settings: any) => {
+    manager.on('settingsChanged', (settings: any) => {
       setSyncStatus(prev => ({
         ...prev,
         enabled: settings.enabled
@@ -167,7 +227,7 @@ export const useDataSync = () => {
   }, [toast]);
 
   // 创建当前数据的同步格式
-  const createCurrentSyncData = useCallback(async (): Promise<SyncData> => {
+  const createCurrentSyncData = useCallback(async (): Promise<SyncDataType> => {
     return {
       version: '1.0.0',
       lastModified: new Date().toISOString(),
@@ -182,7 +242,7 @@ export const useDataSync = () => {
   }, [prompts, categories, settings]);
 
   // 应用远程数据
-  const applyRemoteData = useCallback(async (syncData: SyncData) => {
+  const applyRemoteData = useCallback(async (syncData: SyncDataType) => {
     // 这里需要调用数据更新方法
     // 由于 usePrompts hook 可能没有直接的更新方法，
     // 我们需要通过其他方式来更新数据
@@ -191,6 +251,15 @@ export const useDataSync = () => {
 
   // 手动同步
   const manualSync = useCallback(async () => {
+    if (!syncManager || !isElectronEnv) {
+      toast({
+        title: "同步功能不可用",
+        description: "同步功能仅在Electron环境中可用",
+        variant: "destructive"
+      });
+      return;
+    }
+
     try {
       setSyncStatus(prev => ({ ...prev, syncing: true, error: null }));
       
@@ -216,11 +285,11 @@ export const useDataSync = () => {
         variant: "destructive"
       });
     }
-  }, [prompts, categories, settings, syncManager, toast]);
+  }, [prompts, categories, settings, syncManager, isElectronEnv, toast]);
 
   // 解决冲突
   const resolveConflict = useCallback(async (resolution: 'local' | 'remote' | 'merge') => {
-    if (!pendingConflict) return;
+    if (!pendingConflict || !syncManager || !isElectronEnv) return;
 
     try {
       setSyncStatus(prev => ({ ...prev, syncing: true }));
@@ -258,22 +327,24 @@ export const useDataSync = () => {
         error: error instanceof Error ? error.message : '解决冲突失败'
       }));
     }
-  }, [pendingConflict, syncManager, applyRemoteData, toast]);
+  }, [pendingConflict, syncManager, isElectronEnv, applyRemoteData, toast]);
 
   // 启用/禁用同步
   const toggleSync = useCallback((enabled: boolean) => {
+    if (!syncManager || !isElectronEnv) return;
     syncManager.updateSyncSettings({ enabled });
     setSyncStatus(prev => ({ ...prev, enabled }));
-  }, [syncManager]);
+  }, [syncManager, isElectronEnv]);
 
   // 更新同步设置
   const updateSyncSettings = useCallback((settings: any) => {
+    if (!syncManager || !isElectronEnv) return;
     syncManager.updateSyncSettings(settings);
-  }, [syncManager]);
+  }, [syncManager, isElectronEnv]);
 
   // 自动同步数据变更
   useEffect(() => {
-    if (syncStatus.enabled && !syncStatus.syncing && prompts && categories && settings) {
+    if (syncStatus.enabled && !syncStatus.syncing && prompts && categories && settings && syncManager && isElectronEnv) {
       const syncData = async () => {
         try {
           await syncManager.writeSyncData(prompts, categories, settings);
@@ -286,7 +357,7 @@ export const useDataSync = () => {
       const timeoutId = setTimeout(syncData, 1000);
       return () => clearTimeout(timeoutId);
     }
-  }, [prompts, categories, settings, syncStatus.enabled, syncStatus.syncing, syncManager]);
+  }, [prompts, categories, settings, syncStatus.enabled, syncStatus.syncing, syncManager, isElectronEnv]);
 
   return {
     syncStatus,

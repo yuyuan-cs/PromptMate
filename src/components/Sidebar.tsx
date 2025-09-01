@@ -930,7 +930,7 @@ export function Sidebar({ className }: { className?: string }) {
               className="w-full"
             >
               <Icons.fileJson className="mr-2 h-4 w-4" />
-              {t('common.dataManagement')}
+              {t('dataManagement.title')}
             </Button>
             <Button 
               variant={settingsPanel === "ai" ? "default" : "outline"} 

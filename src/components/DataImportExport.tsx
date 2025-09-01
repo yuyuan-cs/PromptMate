@@ -226,7 +226,7 @@ export function DataImportExport({
           className="flex-1"
         >
           <Icons.refresh className="mr-2 h-4 w-4" />
-          {t('dataManagement.sync')}
+          {t('dataManagement.sync.title')}
         </Button>
       </div>
       
@@ -329,9 +329,9 @@ export function DataImportExport({
         <div className="space-y-4">
           <Alert>
             <Icons.info className="h-4 w-4" />
-            <AlertTitle>{t('dataManagement.sync')}</AlertTitle>
+            <AlertTitle>{t('dataManagement.sync.title')}</AlertTitle>
             <AlertDescription>
-              {t('dataManagement.syncDescription')}
+              {t('dataManagement.sync.description')}
             </AlertDescription>
           </Alert>
           
@@ -340,9 +340,9 @@ export function DataImportExport({
             <div className="flex items-center space-x-3">
               <SyncStatusIndicator />
               <div>
-                <div className="font-medium">{t('dataManagement.syncStatus')}</div>
+                <div className="font-medium">{t('dataManagement.sync.syncStatus')}</div>
                 <div className="text-sm text-muted-foreground">
-                  {syncStatus.enabled ? t('dataManagement.syncEnabled') : t('dataManagement.syncDisabled')}
+                  {syncStatus.enabled ? t('dataManagement.sync.syncEnabled') : t('dataManagement.sync.syncDisabled')}
                 </div>
               </div>
             </div>
@@ -350,7 +350,7 @@ export function DataImportExport({
               variant="outline"
               onClick={() => toggleSync(!syncStatus.enabled)}
             >
-              {syncStatus.enabled ? t('dataManagement.disableSync') : t('dataManagement.enableSync')}
+              {syncStatus.enabled ? t('dataManagement.sync.disableSync') : t('dataManagement.sync.enableSync')}
             </Button>
           </div>
           
@@ -362,7 +362,7 @@ export function DataImportExport({
               className="w-full"
             >
               <Icons.refresh className={`mr-2 h-4 w-4 ${syncStatus.syncing ? 'animate-spin' : ''}`} />
-              {syncStatus.syncing ? t('dataManagement.syncing') : t('dataManagement.manualSync')}
+              {syncStatus.syncing ? t('dataManagement.sync.syncing') : t('dataManagement.sync.manualSync')}
             </Button>
             
             {syncStatus.hasConflicts && (
