@@ -75,19 +75,6 @@
     "close": "Close",
     "newprompt": "New Prompt",
     "appearance": "Appearance",
-    "dataManagement": {
-      "sync": "Data Sync",
-      "syncDescription": "Synchronize data with browser extension to keep desktop and extension data consistent",
-      "syncStatus": "Sync Status",
-      "syncEnabled": "Sync Enabled",
-      "syncDisabled": "Sync Disabled",
-      "enableSync": "Enable Sync",
-      "disableSync": "Disable Sync",
-      "manualSync": "Manual Sync",
-      "syncing": "Syncing...",
-      "resolveConflicts": "Resolve Conflicts",
-      "lastSync": "Last Sync"
-    },
     "aiSettings": "AI Settings",
     "appSettings": "App Settings",
     "customizeAppearance": "Customize app appearance and behavior",
@@ -247,16 +234,6 @@
     "language": "Language",
     "theme": "Theme",
     "default_theme": "Default Theme",
-    "custom_theme": {
-      "title": "Custom Theme",
-      "description": "Choose your favorite colors to create a personalized theme",
-      "light": "Light",
-      "dark": "Dark",
-      "auto": "Follow System",
-      "create": "Create Custom Color Theme",
-      "edit": "Edit Theme",
-      "delete": "Delete Theme"
-    },
     "fontSize": "Font Size",
     "autoSave": "Auto Save",
     "backup": "Backup",
@@ -274,58 +251,115 @@
     "saveSettings": "Save Settings",
     "settingsSaved": "Settings saved"
   },
+  "custom_theme": {
+    "title": "Custom Theme",
+    "description": "Choose your favorite colors to create a personalized theme",
+    "auto": "Follow System",
+    "create": "Create Custom Color Theme",
+    "edit": "Edit Theme",
+    "delete": "Delete Theme",
+    "light": {
+        "name": "Default Light",
+        "description": "Standard light theme with a bright and clean design"
+      },
+      "dark": {
+        "name": "Default Dark",
+        "description": "Standard dark theme to reduce eye strain"
+      },
+      "blue": {
+        "name": "Blue Theme",
+        "description": "A professional and stable blue-toned interface"
+      },
+      "purple": {
+        "name": "Purple Theme",
+        "description": "Creative purple tones, suitable for creative work"
+      },
+      "green": {
+        "name": "Green Theme",
+        "description": "Natural green theme, comfortable for the eyes"
+      },
+      "orange": {
+        "name": "Orange Theme",
+        "description": "Vibrant orange theme, full of energy"
+      },
+      "red": {
+        "name": "Red Theme",
+        "description": "Passionate red theme, full of vitality"
+      },
+      "midnight": {
+        "name": "Midnight Blue",
+        "description": "A deep and elegant dark theme"
+      },
+      "coffee": {
+        "name": "Coffee",
+        "description": "A warm and comfortable coffee tone"
+      },
+      "custom": {
+        "name": "Custom Theme",
+        "description": "Customize your exclusive theme to your liking"
+      }
+    },
   "font": {
     "selectFont": "Select Font"
   },
-  "dataManagement":{
-    "title":"Data Management",
-    "exportFile":"Export Data",
-    "importFile":"Import Data",
-    "exportData":"Export Data",
+  "dataManagement": {
+    "title": "Data Management",
+    "exportFile": "Export Data",
+    "importFile": "Import Data",
+    "exportData": "Export Data",
     "exportDataDescription": "Download as JSON file",
     "exportDataDescription2": "Exported data (can be copied)",
     "exportPrompts": "Export Prompts Only",
     "importData": "Import Data",
-    "importDataDescription":"Import JSON file",
-    "desktopSync":"Desktop Sync",
+    "importDataDescription": "Import JSON file",
+    "desktopSync": "Desktop Sync",
     "desktopSyncDescription": "Sync data with desktop app",
     "reset": "Reset to Default Data",
     "file": "Import from File",
     "confirmImport": "Confirm Import",
     "confirmReset": "Confirm Reset",
     "sync": {
-      "title":"Sync Status",
-      "description":"Sync data with desktop app",
-      "syncNow":"Sync Now",
-      "syncing":"Syncing...",
-      "lastSync":"Last Sync",
-      "never":"Never",
-      "desktopSync":"Desktop Sync",
+      "title": "Data Sync",
+      "description": "Sync data with desktop app",
+      "syncNow": "Sync Now",
+      "syncing": "Syncing...",
+      "lastSync": "Last Sync",
+      "never": "Never",
+      "desktopSync": "Desktop Sync",
+      "sync": "Data Sync",
+      "syncDescription": "Synchronize data with browser extension to keep desktop and extension data consistent",
+      "syncStatus": "Sync Status",
+      "syncEnabled": "Sync Enabled",
+      "syncDisabled": "Sync Disabled",
+      "enableSync": "Enable Sync",
+      "disableSync": "Disable Sync",
+      "manualSync": "Manual Sync",
+      "resolveConflicts": "Resolve Conflicts",
       "desktopSyncDescription": "Sync data with desktop app"
     },
-    "message": {
-      "loading": "Data import/export component mounted",
-      "log2": "Data management tab switched",
-      "log3": "Data is ready",
-      "log4": "You can copy the data or download as JSON file",
-      "alertDescription": "Importing data will overwrite all current prompts and categories. Please ensure you have backed up important data.",
-      "resetWarning": "This operation will delete all custom prompts and categories and restore to default state. This operation cannot be undone.",
-      "exported": "Prompts exported",
-      "exportedFile": "Prompts successfully exported as JSON file",
-      "importFailed": "Import failed",
-      "importFailedData": "Please enter JSON data to import first",
-      "importSuccess": "Import successful",
-      "importSuccessData": "Data imported successfully",
-      "importFailedError": "Error occurred during import",
-      "importFile": "File loaded",
-      "importFileDesc": "Please click import button to complete import",
-      "importFileError": "Failed to read file",
-      "importFileErrorDesc": "Unable to read selected file",
-      "resetSuccess": "Reset successful",
-      "resetSuccessData": "All data has been reset to default values",
-      "exchangeTag": "Switch to export tab",
-      "pasteData": "Paste JSON data to import:",
-      "pasteDataDesc": "Paste JSON format prompt data..."
+  "message": {
+    "loading": "Data import/export component mounted",
+    "log2": "Data management tab switched",
+    "log3": "Data is ready",
+    "log4": "You can copy the data or download as JSON file",
+    "alertDescription": "Importing data will overwrite all current prompts and categories. Please ensure you have backed up important data.",
+    "resetWarning": "This operation will delete all custom prompts and categories and restore to default state. This operation cannot be undone.",
+    "exported": "Prompts exported",
+    "exportedFile": "Prompts successfully exported as JSON file",
+    "importFailed": "Import failed",
+    "importFailedData": "Please enter JSON data to import first",
+    "importSuccess": "Import successful",
+    "importSuccessData": "Data imported successfully",
+    "importFailedError": "Error occurred during import",
+    "importFile": "File loaded",
+    "importFileDesc": "Please click import button to complete import",
+    "importFileError": "Failed to read file",
+    "importFileErrorDesc": "Unable to read selected file",
+    "resetSuccess": "Reset successful",
+    "resetSuccessData": "All data has been reset to default values",
+    "exchangeTag": "Switch to export tab",
+    "pasteData": "Paste JSON data to import:",
+    "pasteDataDesc": "Paste JSON format prompt data..."
     }
   },
   "about":{

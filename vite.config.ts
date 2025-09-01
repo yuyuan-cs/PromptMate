@@ -18,6 +18,10 @@ export default defineConfig({
       "@": resolve(__dirname, "./src"),
     },
   },
+  define: {
+    // 定义环境变量来帮助条件编译
+    __ELECTRON__: 'false'
+  },
   build: {
     outDir: 'dist',
     emptyOutDir: true,
@@ -31,7 +35,26 @@ export default defineConfig({
       }
     },
     rollupOptions: {
+      external: [
+        // 将Node.js模块和Electron模块标记为外部依赖
+        'fs',
+        'path', 
+        'events',
+        'electron',
+        'chokidar',
+        'util',
+        'os',
+        'stream'
+      ],
       output: {
+        globals: {
+          // 为外部模块提供全局变量名
+          'fs': 'fs',
+          'path': 'path',
+          'events': 'events',
+          'electron': 'electron',
+          'chokidar': 'chokidar'
+        },
         assetFileNames: (assetInfo) => {
           const info = assetInfo.name?.split('.') || [];
           const ext = info[info.length - 1] || 'unknown';

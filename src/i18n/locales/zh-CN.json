@@ -75,19 +75,6 @@
     "close": "关闭",
     "newprompt": "新建提示词",
     "appearance": "外观设置",
-    "dataManagement": {
-      "sync": "数据同步",
-      "syncDescription": "与浏览器扩展进行数据同步，保持桌面端和扩展端数据一致",
-      "syncStatus": "同步状态",
-      "syncEnabled": "同步已启用",
-      "syncDisabled": "同步已禁用",
-      "enableSync": "启用同步",
-      "disableSync": "禁用同步",
-      "manualSync": "手动同步",
-      "syncing": "同步中...",
-      "resolveConflicts": "解决冲突",
-      "lastSync": "上次同步"
-    },
     "aiSettings": "AI设置",
     "appSettings": "应用设置",
     "customizeAppearance": "自定义应用外观和行为",
@@ -247,16 +234,6 @@
     "language": "语言",
     "theme": "主题",
     "default_theme": "默认主题",
-    "custom_theme": {
-      "title": "自定义主题",
-      "description": "选择您喜欢的颜色，创建个性化主题",
-      "light": "浅色",
-      "dark": "深色",
-      "auto": "跟随系统",
-      "create": "创建专属配色主题",
-      "edit": "编辑主题",
-      "delete": "删除主题"
-    },
     "fontSize": "字体大小",
     "autoSave": "自动保存",
     "backup": "备份",
@@ -274,63 +251,115 @@
     "saveSettings": "保存设置",
     "settingsSaved": "设置已保存"
   },
+  "custom_theme": {
+    "title": "自定义主题",
+    "description": "选择您喜欢的颜色，创建个性化主题",
+    "auto": "跟随系统",
+    "create": "创建专属配色主题",
+    "edit": "编辑主题",
+    "delete": "删除主题",
+    "light": {
+        "name": "默认浅色",
+        "description": "标准浅色主题，明亮简洁的设计"
+      },
+      "dark": {
+        "name": "默认深色",
+        "description": "标准深色主题，减少眼部疲劳"
+      },
+      "blue": {
+        "name": "蓝色主题",
+        "description": "专业稳重的蓝色调界面"
+      },
+      "purple": {
+        "name": "紫色主题",
+        "description": "创意紫色调，适合创意工作"
+      },
+      "green": {
+        "name": "绿色主题",
+        "description": "自然绿色主题，舒适护眼"
+      },
+      "orange": {
+        "name": "橙色主题",
+        "description": "活力橙色主题，充满能量"
+      },
+      "red": {
+        "name": "红色主题",
+        "description": "热情红色主题，充满活力"
+      },
+      "midnight": {
+        "name": "午夜蓝",
+        "description": "深邃优雅的暗色主题"
+      },
+      "coffee": {
+        "name": "咖啡色",
+        "description": "温暖舒适的咖啡色调"
+      },
+      "custom": {
+        "name": "自定义主题",
+        "description": "根据个人喜好定制专属主题"
+      }
+    },
   "font":{
     "selectFont":"选择字体"
   },
-  "dataManagement":{
-    "title":"数据管理",
-    "exportFile":"导出数据",
-    "importFile":"导入数据",
-    "exportData":"生成导出数据",
-    "exportDataDescription":"下载为JSON文件",
-    "exportDataDescription2":"导出的数据（可复制）",
-    "exportPrompts":"仅导出提示词",
-    "importData":"导入数据",
-    "importDataDescription":"导入JSON文件",
-    "desktopSync":"桌面端同步",
-    "desktopSyncDescription":"与桌面应用同步数据",
-    "reset":"重置为默认数据",
-    "file":"从文件中导入",
-    "confirmImport":"确认导入",
-    "confirmReset":"确认重置",
-    "sync":{
-      "title":"同步状态",
-      "description":"与桌面端同步数据",
-      "syncNow":"立即同步",
-      "syncing":"同步中...",
-      "lastSync":"上次同步",
-      "never":"从未",
-      "desktopSync":"桌面端同步",
-      "desktopSyncDescription":"与桌面应用同步数据"
+  "dataManagement": {
+    "title": "数据管理",
+    "exportFile": "导出数据",
+    "importFile": "导入数据",
+    "exportData": "生成导出数据",
+    "exportDataDescription": "下载为JSON文件",
+    "exportDataDescription2": "导出的数据（可复制）",
+    "exportPrompts": "仅导出提示词",
+    "importData": "导入数据",
+    "importDataDescription": "导入JSON文件",
+    "desktopSync": "桌面端同步",
+    "desktopSyncDescription": "与桌面应用同步数据",
+    "reset": "重置为默认数据",
+    "file": "从文件中导入",
+    "confirmImport": "确认导入",
+    "confirmReset": "确认重置",
+    "sync": {
+      "title": "数据同步",
+      "description": "与桌面端同步数据",
+      "syncNow": "立即同步",
+      "syncing": "同步中...",
+      "lastSync": "上次同步",
+      "never": "从未",
+      "desktopSync": "桌面端同步",
+      "sync": "数据同步",
+      "syncDescription": "与浏览器扩展进行数据同步，保持桌面端和扩展端数据一致",
+      "syncStatus": "同步状态",
+      "syncEnabled": "同步已启用",
+      "syncDisabled": "同步已禁用",
+      "enableSync": "启用同步",
+      "disableSync": "禁用同步",
+      "manualSync": "手动同步",
+      "resolveConflicts": "解决冲突",
+      "desktopSyncDescription": "与桌面应用同步数据"
     },
-    "message":{
-     "loading":"数据导入导出组件已挂载",
-     "log2":"数据管理标签页切换", 
-     "log3":"数据已准备就绪",
-     "log4":"您可以复制数据或下载为JSON文件",
-     "alertDescription":"导入数据将覆盖当前的所有提示词和分类。请确保您已备份重要数据。",
-     "resetWarning":"此操作将删除所有自定义提示词和分类，并恢复到默认状态。此操作无法撤销。"
-
-    },
-    "importExport":{
-      "exported":"提示词已导出",
-      "exportedFile":"提示词已成功导出为JSON文件",
-      "importFailed":"导入失败",
-      "importFailedData":"请先输入要导入的JSON数据",
-      "importSuccess":"导入成功",
-      "importSuccessData":"数据已成功导入",
-      "importFailedData":"无法导入数据，请检查JSON格式是否正确",
-      "importFailedError":"导入过程中出现错误",
-      "importFile":"文件已加载",
-      "importFileDesc":"请点击导入按钮完成导入",
-      "importFileError":"读取文件失败",
-      "importFileErrorDesc":"无法读取选择的文件",
-      "resetSuccess":"重置成功",
-      "resetSuccessData":"所有数据已重置为默认值",
-      "exchangeTag":"切换到导出标签",
-      "exchangeTagDesc":"切换到导出标签",
-      "pasteData":"粘贴要导入的JSON数据：",
-      "pasteDataDesc":"粘贴JSON格式的提示词数据..."
+    "message": {
+      "loading": "数据导入/导出组件已加载",
+      "log2": "已切换到数据管理标签页",
+      "log3": "数据已就绪",
+      "log4": "您可以复制数据或下载为JSON文件",
+      "alertDescription": "导入数据将覆盖所有当前的提示词和分类。请确保您已备份重要数据。",
+      "resetWarning": "此操作将删除所有自定义提示词和分类并恢复到默认状态。此操作无法撤销。",
+      "exported": "提示词已导出",
+      "exportedFile": "提示词已成功导出为JSON文件",
+      "importFailed": "导入失败",
+      "importFailedData": "请先输入要导入的JSON数据",
+      "importSuccess": "导入成功",
+      "importSuccessData": "数据导入成功",
+      "importFailedError": "导入过程中发生错误",
+      "importFile": "文件已加载",
+      "importFileDesc": "请点击导入按钮以完成导入",
+      "importFileError": "文件读取失败",
+      "importFileErrorDesc": "无法读取所选文件",
+      "resetSuccess": "重置成功",
+      "resetSuccessData": "所有数据已重置为默认值",
+      "exchangeTag": "切换到导出标签页",
+      "pasteData": "粘贴要导入的JSON数据：",
+      "pasteDataDesc": "粘贴JSON格式的提示词数据..."
     }
   },
   "about":{

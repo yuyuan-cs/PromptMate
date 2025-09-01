@@ -1,5 +1,6 @@
 // src/lib/themes.ts
 import { ThemeType, Settings } from "@/types";
+import { t } from "i18next";
 
 export interface ThemePreset {
   id: ThemeType;
@@ -23,8 +24,8 @@ export const themePresets: ThemePreset[] = [
     
   {
     id: "light",
-    name: "默认浅色",
-    description: "标准浅色主题，明亮简洁的设计",
+    name: t("custom_theme.light.name"), // "默认浅色"
+    description: t("custom_theme.light.description"), // "标准浅色主题，明亮简洁的设计"
     isDefault: true,
     preview: {
       background: "#ffffff",
@@ -75,8 +76,8 @@ export const themePresets: ThemePreset[] = [
   },
   {
     id: "dark",
-    name: "默认深色",
-    description: "标准深色主题，减少眼部疲劳",
+    name: t("custom_theme.dark.name"), // "默认深色"
+    description: t("custom_theme.dark.description"), // "标准深色主题，减少眼部疲劳"
     isDefault: true,
     preview: {
       background: "#0f172a",
@@ -127,8 +128,8 @@ export const themePresets: ThemePreset[] = [
   },
   {
     id: "blue",
-    name: "蓝色主题",
-    description: "专业稳重的蓝色调界面",
+    name: t("custom_theme.blue.name"), // "蓝色主题"
+    description: t("custom_theme.blue.description"), // "专业稳重的蓝色调界面"
     isDefault: false,
     preview: {
       background: "#f0f9ff",
@@ -165,8 +166,8 @@ export const themePresets: ThemePreset[] = [
   },
   {
     id: "purple",
-    name: "紫色主题",
-    description: "创意紫色调，适合创意工作",
+    name: t("custom_theme.purple.name"), // "紫色主题"
+    description: t("custom_theme.purple.description"), // "创意紫色调，适合创意工作"
     isDefault: false,
     preview: {
       background: "#faf5ff",
@@ -203,8 +204,8 @@ export const themePresets: ThemePreset[] = [
   },
   {
     id: "green",
-    name: "绿色主题",
-    description: "自然绿色主题，舒适护眼",
+    name: t("custom_theme.green.name"), // "绿色主题"
+    description: t("custom_theme.green.description"), // "自然绿色主题，舒适护眼"
     isDefault: false,
     preview: {
       background: "#f0fdf4",
@@ -241,8 +242,8 @@ export const themePresets: ThemePreset[] = [
   },
   {
     id: "orange",
-    name: "橙色主题",
-    description: "活力橙色主题，充满能量",
+    name: t("custom_theme.orange.name"), // "橙色主题"
+    description: t("custom_theme.orange.description"), // "活力橙色主题，充满能量"
     isDefault: false,
     preview: {
       background: "#fff7ed",
@@ -279,8 +280,8 @@ export const themePresets: ThemePreset[] = [
   },
   {
     id: "red",
-    name: "红色主题",
-    description: "热情红色主题，充满活力",
+    name: t("custom_theme.red.name"), // "红色主题"
+    description: t("custom_theme.red.description"), // "热情红色主题，充满活力"
     isDefault: false,
     preview: {
       background: "#fef2f2",
@@ -317,8 +318,8 @@ export const themePresets: ThemePreset[] = [
   },
   {
     id: "midnight",
-    name: "午夜蓝",
-    description: "深邃优雅的暗色主题",
+    name: t("custom_theme.midnight.name"), // "午夜蓝"
+    description: t("custom_theme.midnight.description"), // "深邃优雅的暗色主题"
     isDefault: false,
     preview: {
       background: "#030712",
@@ -353,8 +354,8 @@ export const themePresets: ThemePreset[] = [
   },
   {
     id: "coffee",
-    name: "咖啡色",
-    description: "温暖舒适的咖啡色调",
+    name: t("custom_theme.coffee.name"), // "咖啡色"
+    description: t("custom_theme.coffee.description"), // "温暖舒适的咖啡色调"
     isDefault: false,
     preview: {
       background: "#fdf8f6",
@@ -393,8 +394,8 @@ export const themePresets: ThemePreset[] = [
   // 自定义主题选项
   {
     id: "custom",
-    name: "自定义主题",
-    description: "根据个人喜好定制专属主题",
+    name: t("custom_theme.custom.name"), // "自定义主题"
+    description: t("custom_theme.custom.description"), // "根据个人喜好定制专属主题"
     isDefault: false,
     preview: {
       background: "linear-gradient(to bottom right, #ff7e5f, #feb47b)",
