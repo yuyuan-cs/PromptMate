@@ -204,6 +204,8 @@ class ReleaseManager {
       headers
     };
     
+    let finalUrl = url;
+    
     if (uploadData) {
       // 文件上传 - GitHub API v3 要求直接上传文件内容
       const fileContent = fs.readFileSync(uploadData.file);
@@ -216,14 +218,13 @@ class ReleaseManager {
       // 修改URL以包含文件名
       const urlObj = new URL(url);
       urlObj.searchParams.set('name', uploadData.name);
-      const uploadUrl = urlObj.toString();
+      finalUrl = urlObj.toString();
     } else if (data) {
       // JSON数据
       headers['Content-Type'] = 'application/json';
       options.body = JSON.stringify(data);
     }
     
-    const finalUrl = uploadData ? uploadUrl : url;
     const response = await fetch(finalUrl, options);
     
     if (!response.ok) {
