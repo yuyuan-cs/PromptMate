@@ -888,6 +888,38 @@ ipcMain.handle('check-for-updates', async () => {
   }
 });
 
+// 开始下载更新
+ipcMain.handle('download-update', async () => {
+  try {
+    log.info('开始下载更新...');
+    
+    // 先检查是否有可用更新
+    const updateResult = await checkForUpdatesEnhanced();
+    if (!updateResult.success || !updateResult.hasUpdate) {
+      return {
+        success: false,
+        error: '没有可用更新'
+      };
+    }
+    
+    // 启动下载
+    await autoUpdater.downloadUpdate();
+    log.info('更新下载已启动');
+    
+    return {
+      success: true,
+      message: '更新下载已启动',
+      version: updateResult.latestVersion
+    };
+  } catch (error) {
+    log.error('下载更新失败:', error);
+    return {
+      success: false,
+      error: `下载更新失败: ${error.message}`
+    };
+  }
+});
+
 // --- Auto Updater Event Listeners ---
 
 // Fired when an update is found

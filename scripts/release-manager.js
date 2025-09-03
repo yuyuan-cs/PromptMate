@@ -174,18 +174,40 @@ class ReleaseManager {
     
     for (const artifact of artifacts) {
       try {
-        const uploadUrl = `POST /repos/${GITHUB_REPO_OWNER}/${GITHUB_REPO_NAME}/releases/${releaseId}/assets`;
-        
-        await this.githubApiRequest(uploadUrl, null, {
-          name: artifact.name,
-          file: artifact.path
-        });
+        // GitHub 上传API需要使用uploads.github.com域名
+        await this.uploadSingleAsset(releaseId, artifact);
         
         console.log(`✅ 上传成功: ${artifact.name}`);
       } catch (error) {
         console.error(`❌ 上传失败 ${artifact.name}: ${error.message}`);
       }
     }
+  }
+
+  // 上传单个文件
+  async uploadSingleAsset(releaseId, artifact) {
+    const fileContent = fs.readFileSync(artifact.path);
+    
+    const uploadUrl = `https://uploads.github.com/repos/${GITHUB_REPO_OWNER}/${GITHUB_REPO_NAME}/releases/${releaseId}/assets?name=${encodeURIComponent(artifact.name)}`;
+    
+    const response = await fetch(uploadUrl, {
+      method: 'POST',
+      headers: {
+        'Authorization': `token ${GITHUB_TOKEN}`,
+        'Content-Type': 'application/octet-stream',
+        'Content-Length': fileContent.length,
+        'Accept': 'application/vnd.github.v3+json',
+        'User-Agent': 'PromptMate-Release-Manager'
+      },
+      body: fileContent
+    });
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`GitHub 上传API错误 (${response.status}): ${errorText}`);
+    }
+    
+    return await response.json();
   }
 
   // GitHub API请求

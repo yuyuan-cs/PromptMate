@@ -51,6 +51,8 @@ export function About() {
   const [updateAvailable, setUpdateAvailable] = useState(false);
   const [updateResult, setUpdateResult] = useState<UpdateResult | null>(null);
   const [lastCheckTime, setLastCheckTime] = useState<Date | null>(null);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [downloadProgress, setDownloadProgress] = useState<number | null>(null);
   const { t } = useTranslation();
   // 加载应用信息
   useEffect(() => {
@@ -186,6 +188,49 @@ export function About() {
       console.error('检查更新出错:', error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // 下载更新
+  const downloadUpdate = async () => {
+    // 检查是否在Electron环境中
+    if (!window.electronAPI) {
+      toast.error("下载更新功能仅在桌面版中可用", {
+        description: "请访问GitHub下载最新版本"
+      });
+      return;
+    }
+
+    // 检查API是否可用
+    if (typeof window.electronAPI.downloadUpdate !== 'function') {
+      toast.error("下载更新功能不可用", {
+        description: "请手动访问GitHub下载最新版本"
+      });
+      return;
+    }
+    
+    try {
+      setIsDownloading(true);
+      setDownloadProgress(0);
+      
+      const result = await window.electronAPI.downloadUpdate();
+      
+      if (result.success) {
+        toast.success("开始下载更新", {
+          description: `正在下载版本 ${result.version}，请稍候...`
+        });
+      } else {
+        toast.error("下载更新失败", {
+          description: result.error || "未知错误"
+        });
+      }
+    } catch (error) {
+      console.error('下载更新失败:', error);
+      toast.error("下载更新失败", {
+        description: error instanceof Error ? error.message : "未知错误"
+      });
+    } finally {
+      setIsDownloading(false);
     }
   };
 
@@ -373,17 +418,39 @@ export function About() {
                     </div>
                   )}
                   
-                  {updateResult.releaseInfo.html_url && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="mt-2"
-                      onClick={() => window.open(updateResult.releaseInfo.html_url, '_blank')}
-                    >
-                      <ExternalLink className="mr-2 h-4 w-4" />
-                      {t("about.viewReleaseDetails")}
-                    </Button>
-                  )}
+                  <div className="flex gap-2 mt-2">
+                    {updateResult.releaseInfo.html_url && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => window.open(updateResult.releaseInfo.html_url, '_blank')}
+                      >
+                        <ExternalLink className="mr-2 h-4 w-4" />
+                        {t("about.viewReleaseDetails")}
+                      </Button>
+                    )}
+                    
+                    {window.electronAPI && typeof window.electronAPI.downloadUpdate === 'function' && (
+                      <Button
+                        variant="default"
+                        size="sm"
+                        disabled={isDownloading}
+                        onClick={downloadUpdate}
+                      >
+                        {isDownloading ? (
+                          <>
+                            <span className="mr-2 h-4 w-4 animate-spin">⏳</span>
+                            {t("about.downloading")}
+                          </>
+                        ) : (
+                          <>
+                            <Download className="mr-2 h-4 w-4" />
+                            {t("about.downloadUpdate")}
+                          </>
+                        )}
+                      </Button>
+                    )}
+                  </div>
                 </div>
               )}
             </div>

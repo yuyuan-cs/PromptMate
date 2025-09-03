@@ -74,6 +74,12 @@ interface ElectronAPI {
     updateType?: 'major' | 'minor' | 'patch';
     error?: string;
   }>;
+  downloadUpdate: () => Promise<{
+    success: boolean;
+    message?: string;
+    version?: string;
+    error?: string;
+  }>;
   getAppInfo: () => Promise<{
     version: string;
     name: string;
