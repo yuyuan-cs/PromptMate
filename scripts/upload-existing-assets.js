@@ -85,9 +85,22 @@ class AssetUploader {
       }
       
       // 只上传最新版本的可执行文件和重要文件
+      const version = tagName.replace('v', '');
       const importantFiles = filesToUpload || [
-        `PromptMate-${tagName.replace('v', '')}-x64.exe`,
-        'latest.yml'
+        // Windows版本
+        `PromptMate-${version}-x64.exe`,
+        
+        // Mac版本
+        `PromptMate-${version}-x64.dmg`,
+        `PromptMate-${version}-arm64.dmg`,
+        `PromptMate-${version}-universal.dmg`,
+        `PromptMate-${version}-x64.zip`,
+        `PromptMate-${version}-arm64.zip`,
+        `PromptMate-${version}-universal.zip`,
+        
+        // 更新配置文件
+        'latest.yml',
+        'latest-mac.yml'
       ];
       
       const existingFiles = fs.readdirSync(releaseDir);
@@ -141,10 +154,18 @@ class AssetUploader {
 // 命令行使用
 async function main() {
   const args = process.argv.slice(2);
-  const tagName = args[0] || 'v1.1.4';
+  const tagName = args[0] || 'v1.1.8';
   const filesToUpload = args.slice(1);
   
   console.log('🚀 开始上传构建产物到GitHub Release...\n');
+  console.log(`📋 目标Release: ${tagName}`);
+  
+  if (filesToUpload.length > 0) {
+    console.log(`📝 指定文件: ${filesToUpload.join(', ')}`);
+  } else {
+    console.log('📦 将上传所有平台的构建产物 (Windows + macOS)');
+  }
+  console.log('');
   
   const uploader = new AssetUploader();
   await uploader.uploadToRelease(tagName, filesToUpload.length > 0 ? filesToUpload : null);
