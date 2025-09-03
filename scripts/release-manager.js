@@ -216,14 +216,15 @@ class ReleaseManager {
       // 修改URL以包含文件名
       const urlObj = new URL(url);
       urlObj.searchParams.set('name', uploadData.name);
-      url = urlObj.toString();
+      const uploadUrl = urlObj.toString();
     } else if (data) {
       // JSON数据
       headers['Content-Type'] = 'application/json';
       options.body = JSON.stringify(data);
     }
     
-    const response = await fetch(url, options);
+    const finalUrl = uploadData ? uploadUrl : url;
+    const response = await fetch(finalUrl, options);
     
     if (!response.ok) {
       const errorText = await response.text();
@@ -283,7 +284,14 @@ class ReleaseManager {
       execSync('git push origin --tags', { stdio: 'inherit' });
       console.log('✅ Git标签推送成功');
     } catch (error) {
-      throw new Error(`❌ Git标签推送失败: ${error.message}`);
+      // 如果推送失败，尝试强制推送
+      console.warn('⚠️  标签推送失败，尝试强制推送...');
+      try {
+        execSync('git push origin --tags --force', { stdio: 'inherit' });
+        console.log('✅ Git标签强制推送成功');
+      } catch (forceError) {
+        throw new Error(`❌ Git标签推送失败: ${forceError.message}`);
+      }
     }
   }
 
