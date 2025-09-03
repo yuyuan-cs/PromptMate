@@ -64,13 +64,17 @@ class ReleaseManager {
   }
 
   // 获取构建产物
-  getBuildArtifacts() {
+  getBuildArtifacts(version = null) {
     const releaseDir = path.join(__dirname, '../release');
     const artifacts = [];
     
     if (!fs.existsSync(releaseDir)) {
       throw new Error('❌ 构建产物目录不存在');
     }
+    
+    // 获取当前版本号
+    const currentVersion = version || this.packageJson.version;
+    console.log(`🔍 查找版本 ${currentVersion} 的构建产物...`);
     
     // 定义要排除的文件和目录
     const excludePatterns = [
@@ -89,6 +93,30 @@ class ReleaseManager {
       'Assets'
     ];
     
+    // 定义当前版本相关的文件模式
+    const currentVersionPatterns = [
+      `PromptMate-${currentVersion}-x64.exe`,
+      `PromptMate-${currentVersion}-arm64.exe`,
+      `PromptMate-${currentVersion}.exe`,
+      `PromptMate Setup ${currentVersion}.exe`,
+      `PromptMate-${currentVersion}.dmg`,
+      `PromptMate-${currentVersion}.pkg`,
+      `PromptMate-${currentVersion}.AppImage`,
+      `PromptMate-${currentVersion}.deb`,
+      `PromptMate-${currentVersion}.rpm`,
+      'latest.yml',
+      'latest-mac.yml',
+      'latest-linux.yml'
+    ];
+    
+    // 添加构建相关的最新文件（签名文件、配置文件等）
+    // 这些文件通常是每次构建都会更新的
+    const alwaysIncludePatterns = [
+      /^[A-Fa-f0-9]{32,64}$/, // 哈希签名文件
+      /^[A-Fa-f0-9]{32,64}\.pub$/, // 公钥文件
+      /^latest.*\.yml$/, // 更新配置文件
+    ];
+    
     const files = fs.readdirSync(releaseDir);
     files.forEach(file => {
       // 检查是否应该排除这个文件
@@ -105,6 +133,22 @@ class ReleaseManager {
         return;
       }
       
+      // 检查是否是当前版本的文件
+      const isCurrentVersion = currentVersionPatterns.some(pattern => {
+        return file === pattern;
+      });
+      
+      // 检查是否是构建相关的通用文件（签名文件等）
+      const isAlwaysInclude = alwaysIncludePatterns.some(pattern => {
+        return pattern.test(file);
+      });
+      
+      // 如果既不是当前版本的文件，也不是通用构建文件，跳过
+      if (!isCurrentVersion && !isAlwaysInclude) {
+        console.log(`⏭️  跳过旧版本文件: ${file}`);
+        return;
+      }
+      
       const filePath = path.join(releaseDir, file);
       const stats = fs.statSync(filePath);
       
@@ -118,10 +162,10 @@ class ReleaseManager {
     });
     
     if (artifacts.length === 0) {
-      throw new Error('❌ 未找到构建产物');
+      throw new Error('❌ 未找到当前版本的构建产物');
     }
     
-    console.log(`📦 找到 ${artifacts.length} 个构建产物:`);
+    console.log(`📦 找到 ${artifacts.length} 个当前版本构建产物:`);
     artifacts.forEach(artifact => {
       console.log(`   - ${artifact.name} (${this.formatFileSize(artifact.size)})`);
     });
@@ -333,7 +377,7 @@ class ReleaseManager {
       await this.buildApp(platform);
       
       // 4. 获取构建产物
-      const artifacts = this.getBuildArtifacts();
+      const artifacts = this.getBuildArtifacts(newVersion);
       
       // 5. 创建GitHub Release
       const release = await this.createGitHubRelease(newVersion, artifacts);
