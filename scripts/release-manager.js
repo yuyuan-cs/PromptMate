@@ -99,12 +99,15 @@ class ReleaseManager {
       `PromptMate-${currentVersion}-arm64.exe`,
       `PromptMate-${currentVersion}.exe`,
       `PromptMate Setup ${currentVersion}.exe`,
+<<<<<<< HEAD
       `PromptMate-${currentVersion}-x64.dmg`,
       `PromptMate-${currentVersion}-arm64.dmg`,
       `PromptMate-${currentVersion}-universal.dmg`,
       `PromptMate-${currentVersion}-x64.zip`,
       `PromptMate-${currentVersion}-arm64.zip`,
       `PromptMate-${currentVersion}-universal.zip`,
+=======
+>>>>>>> 66d599190e76cfdea224a14df188090c35406ed4
       `PromptMate-${currentVersion}.dmg`,
       `PromptMate-${currentVersion}.pkg`,
       `PromptMate-${currentVersion}.AppImage`,
