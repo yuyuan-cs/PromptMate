@@ -388,12 +388,33 @@ export const exportAllData = (): string => {
       prompts: loadPrompts(),
       categories: loadCategories(),
       settings: loadSettings(),
+      userPreferences: loadUserPreferences(),
       exportDate: new Date().toISOString()
     };
     return JSON.stringify(data, null, 2);
   } catch (error) {
     console.error("导出数据时出错:", error);
     return "";
+  }
+};
+
+// 加载用户偏好设置
+const loadUserPreferences = () => {
+  try {
+    const PREFERENCES_STORAGE_KEY = 'promptmate-user-preferences';
+    
+    if (typeof chrome !== 'undefined' && chrome.storage) {
+      // 这里是同步调用，在实际应用中可能需要异步处理
+      // 但为了保持导出函数的同步特性，我们使用localStorage作为fallback
+      const saved = localStorage.getItem(PREFERENCES_STORAGE_KEY);
+      return saved ? JSON.parse(saved) : null;
+    } else {
+      const saved = localStorage.getItem(PREFERENCES_STORAGE_KEY);
+      return saved ? JSON.parse(saved) : null;
+    }
+  } catch (error) {
+    console.error("加载用户偏好设置失败:", error);
+    return null;
   }
 };
 
@@ -415,11 +436,32 @@ export const importAllData = (jsonData: string): boolean => {
     if (data.prompts) savePrompts(data.prompts);
     if (data.categories) saveCategories(data.categories);
     if (data.settings) saveSettings(data.settings);
+    if (data.userPreferences) saveUserPreferences(data.userPreferences);
     
     return true;
   } catch (error) {
     console.error("导入数据时出错:", error);
     return false;
+  }
+};
+
+// 保存用户偏好设置
+const saveUserPreferences = (preferences: any) => {
+  try {
+    const PREFERENCES_STORAGE_KEY = 'promptmate-user-preferences';
+    
+    if (typeof chrome !== 'undefined' && chrome.storage) {
+      // 异步保存，但在同步函数中使用localStorage作为fallback
+      chrome.storage.local.set({
+        [PREFERENCES_STORAGE_KEY]: preferences
+      }).catch(console.error);
+      // 同时保存到localStorage确保立即生效
+      localStorage.setItem(PREFERENCES_STORAGE_KEY, JSON.stringify(preferences));
+    } else {
+      localStorage.setItem(PREFERENCES_STORAGE_KEY, JSON.stringify(preferences));
+    }
+  } catch (error) {
+    console.error("保存用户偏好设置失败:", error);
   }
 };
 

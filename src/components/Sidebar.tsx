@@ -41,6 +41,8 @@ import { useAppView } from "@/hooks/useAppView";
 import { useTranslation } from 'react-i18next';
 import { LanguageSelector } from "@/components/ui/LanguageSelector";
 import { useSidebarAlert } from "@/hooks/useSidebarAlert";
+import { useUserPreferences } from "@/hooks/useUserPreferences";
+import { PreferencesPanel } from "./PreferencesPanel";
 
 // 侧边栏显示模式类型
 type SidebarMode = "expanded" | "collapsed";
@@ -71,6 +73,7 @@ export function Sidebar({ className }: { className?: string }) {
   } = usePrompts();
   
   const { settings, toggleTheme, updateSettings, availableFonts } = useSettings();
+  const { preferences, updatePreference, loading: preferencesLoading } = useUserPreferences();
   const { toast } = useToast();
   const { currentView, setCurrentView } = useAppView();
   const isDev = import.meta.env.DEV;
@@ -81,10 +84,12 @@ export function Sidebar({ className }: { className?: string }) {
 
   const [showDataImportExport, setShowDataImportExport] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
-  const [sidebarWidth, setSidebarWidth] = useState(180); // 默认180px
+  const [sidebarWidth, setSidebarWidth] = useState(preferences.ui.sidebarWidth); 
   const [isDragging, setIsDragging] = useState(false);
-  const [sidebarMode, setSidebarMode] = useState<SidebarMode>("expanded");
-  const [settingsPanel, setSettingsPanel] = useState<"appearance" | "data" | "ai" | "about">("appearance");
+  const [sidebarMode, setSidebarMode] = useState<SidebarMode>(
+    preferences.ui.sidebarExpanded ? "expanded" : "collapsed"
+  );
+  const [settingsPanel, setSettingsPanel] = useState<"appearance" | "data" | "ai" | "about" | "preferences">("appearance");
   const [showCategoryManager, setShowCategoryManager] = useState(false);
   const [editingCategory, setEditingCategory] = useState<string | null>(null);
   const [editingName, setEditingName] = useState("");
@@ -109,6 +114,14 @@ export function Sidebar({ className }: { className?: string }) {
       return () => clearTimeout(timer);
     }
   }, [showSettings]);
+
+  // 同步用户偏好设置的变化
+  useEffect(() => {
+    if (!preferencesLoading) {
+      setSidebarWidth(preferences.ui.sidebarWidth);
+      setSidebarMode(preferences.ui.sidebarExpanded ? "expanded" : "collapsed");
+    }
+  }, [preferences.ui.sidebarWidth, preferences.ui.sidebarExpanded, preferencesLoading]);
   
   const draggingRef = useRef<boolean>(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
@@ -244,8 +257,12 @@ export function Sidebar({ className }: { className?: string }) {
     // 如果宽度小于100px，自动切换到折叠模式
     if (newWidth < 100 && sidebarMode === "expanded") {
       setSidebarMode("collapsed");
+      // 保存折叠状态到用户偏好
+      updatePreference('ui', { sidebarExpanded: false });
     } else if (newWidth >= 100 && sidebarMode === "collapsed") {
       setSidebarMode("expanded");
+      // 保存展开状态到用户偏好
+      updatePreference('ui', { sidebarExpanded: true });
     }
     
     setSidebarWidth(newWidth);
@@ -255,6 +272,10 @@ export function Sidebar({ className }: { className?: string }) {
   const handleMouseUp = () => {
     draggingRef.current = false;
     setIsDragging(false);
+    
+    // 保存最终宽度到用户偏好
+    updatePreference('ui', { sidebarWidth });
+    
     document.removeEventListener('mousemove', handleMouseMove);
     document.removeEventListener('mouseup', handleMouseUp);
   };
@@ -289,11 +310,19 @@ export function Sidebar({ className }: { className?: string }) {
     setSidebarMode(newMode);
     
     // 根据模式自动调整宽度
+    let newWidth;
     if (newMode === "collapsed") {
-      setSidebarWidth(50);
+      newWidth = 50;
     } else {
-      setSidebarWidth(180);
+      newWidth = preferences.ui.sidebarWidth > 100 ? preferences.ui.sidebarWidth : 180;
     }
+    setSidebarWidth(newWidth);
+    
+    // 保存到用户偏好
+    updatePreference('ui', { 
+      sidebarExpanded: newMode === "expanded",
+      sidebarWidth: newWidth
+    });
     
     // 重置所有tooltip的状态，防止收起侧边栏时所有tooltip都显示
   };
@@ -370,7 +399,28 @@ export function Sidebar({ className }: { className?: string }) {
       theme: 'custom', 
       customTheme: tempCustomTheme 
     });
+    // 同时保存到用户偏好
+    updatePreference('ui', { theme: 'system' }); // 自定义主题暂时映射为system
     setShowThemeCustomizer(false);
+  };
+
+  // 主题切换的包装函数
+  const handleThemeToggle = () => {
+    const currentTheme = settings.theme;
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    
+    // 更新设置
+    toggleTheme();
+    
+    // 同时保存到用户偏好
+    updatePreference('ui', { theme: newTheme });
+  };
+
+  // 主题选择的包装函数
+  const handleThemeSelect = (theme: any) => {
+    updateSettings({ theme: theme.id as any });
+    // 同时保存到用户偏好
+    updatePreference('ui', { theme: theme.id === 'system' ? 'system' : theme.id === 'dark' ? 'dark' : 'light' });
   };
 
   // 拖拽状态
@@ -835,7 +885,7 @@ export function Sidebar({ className }: { className?: string }) {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={toggleTheme}
+                onClick={handleThemeToggle}
                 className={cn(
                   "rounded-full h-8 w-8",
                   isCollapsed ? "mx-auto" : ""
@@ -915,7 +965,7 @@ export function Sidebar({ className }: { className?: string }) {
           </DialogHeader>
           
           {/* 设置导航按钮 */}
-          <div className="grid grid-cols-4 gap-2 mb-4">
+          <div className="grid grid-cols-5 gap-2 mb-4">
             <Button 
               variant={settingsPanel === "appearance" ? "default" : "outline"} 
               onClick={() => setSettingsPanel("appearance")}
@@ -924,6 +974,14 @@ export function Sidebar({ className }: { className?: string }) {
               <Icons.palette className="mr-2 h-4 w-4" />
               {t('common.appearance')}
             </Button>
+            {/* <Button 
+              variant={settingsPanel === "preferences" ? "default" : "outline"} 
+              onClick={() => setSettingsPanel("preferences")}
+              className="w-full"
+            >
+              <Icons.settings className="mr-2 h-4 w-4" />
+              {t('preferences.title')}
+            </Button> */}
             <Button 
               variant={settingsPanel === "data" ? "default" : "outline"} 
               onClick={() => setSettingsPanel("data")}
@@ -985,7 +1043,7 @@ export function Sidebar({ className }: { className?: string }) {
                             key={theme.id}
                             theme={theme}
                             selected={settings.theme === theme.id}
-                            onClick={() => updateSettings({ theme: theme.id as ThemeType })}
+                            onClick={() => handleThemeSelect(theme)}
                           />
                         ))}
                     </div>
@@ -993,7 +1051,7 @@ export function Sidebar({ className }: { className?: string }) {
                   
                   {/* 自定义主题部分 */}
                   <div>
-                    <h3 className="text-sm font-medium mb-2">{t('settings.custom_theme.title')}</h3>
+                    <h3 className="text-sm font-medium mb-2">{t('custom_theme.title')}</h3>
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-6 px-2">
                       {themePresets
                         .filter(theme => !theme.isDefault)
@@ -1002,7 +1060,7 @@ export function Sidebar({ className }: { className?: string }) {
                             key={theme.id}
                             theme={theme}
                             selected={settings.theme === theme.id}
-                            onClick={() => updateSettings({ theme: theme.id as ThemeType })}
+                            onClick={() => handleThemeSelect(theme)}
                           />
                         ))}
                       
@@ -1014,8 +1072,8 @@ export function Sidebar({ className }: { className?: string }) {
                         <div className="w-12 h-12 rounded-full flex items-center justify-center bg-muted">
                           <Icons.palette className="h-6 w-6 text-primary" />
                         </div>
-                        <span className="mt-2 text-sm font-medium">{t('settings.custom_theme.title')}</span>
-                        <span className="text-xs text-muted-foreground">{t('settings.custom_theme.create')}</span>
+                        <span className="mt-2 text-sm font-medium">{t('custom_theme.title')}</span>
+                        <span className="text-xs text-muted-foreground">{t('custom_theme.create')}</span>
                       </div>
                     </div>
                   </div>
@@ -1058,6 +1116,13 @@ export function Sidebar({ className }: { className?: string }) {
             </ScrollArea>
           )}
 
+          {/* 用户偏好设置面板 */}
+          {settingsPanel === "preferences" && (
+            <ScrollArea className="h-[60vh] pr-4">
+              <PreferencesPanel />
+            </ScrollArea>
+          )}
+
           {/* 关于面板 */}
           {settingsPanel === "about" && (
             <ScrollArea className="h-[60vh] pr-4">
@@ -1077,9 +1142,9 @@ export function Sidebar({ className }: { className?: string }) {
       <Dialog open={showThemeCustomizer} onOpenChange={setShowThemeCustomizer}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle>{t('common.custom_theme.title')}</DialogTitle>
+            <DialogTitle>{t('custom_theme.title')}</DialogTitle>
             <DialogDescription>
-              {t('common.custom_theme.description')}
+              {t('custom_theme.description')}
             </DialogDescription>
           </DialogHeader>
           <ThemeCustomizer
