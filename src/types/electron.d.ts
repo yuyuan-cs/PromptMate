@@ -78,6 +78,8 @@ interface ElectronAPI {
     success: boolean;
     message?: string;
     version?: string;
+    downloadUrl?: string;
+    fileName?: string;
     error?: string;
   }>;
   getAppInfo: () => Promise<{
