@@ -37,12 +37,10 @@ export const PromptPreview: React.FC<PromptPreviewProps> = ({
   const safeVariableValues = variableValues || {};
 
   return (
-    <div className={`space-y-4 ${className}`}>
-      
-
+    <div className={`h-full flex flex-col overflow-hidden ${className}`}>
       {/* 变量填写表单 */}
       {showVariableForm && (
-        <div className="bg-muted/30 rounded-md p-4 space-y-4">
+        <div className="flex-shrink-0 bg-muted/30 rounded-md p-4 space-y-4 mb-4 w-full min-w-0">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-medium">变量填写</h3>
             <div className="text-xs text-muted-foreground">
@@ -50,16 +48,18 @@ export const PromptPreview: React.FC<PromptPreviewProps> = ({
             </div>
           </div>
           
-          <VariableForm
-            content={prompt.content}
-            onVariableChange={onVariableChange}
-            onPreviewChange={onPreviewChange}
-          />
+          <div className="overflow-y-auto w-full">
+            <VariableForm
+              content={prompt.content}
+              onVariableChange={onVariableChange}
+              onPreviewChange={onPreviewChange}
+              className="w-full min-w-0"
+            />
+          </div>
         </div>
       )}
-      
       {/* 内容预览区域 */}
-      <div className="bg-muted/30 rounded-md p-4 space-y-4">
+      <div className="flex-1 bg-muted/30 rounded-md p-4 space-y-4 overflow-hidden">
         <div className="flex items-center justify-between">
           
           <h3 className="text-sm font-medium">
@@ -100,7 +100,7 @@ export const PromptPreview: React.FC<PromptPreviewProps> = ({
       
       {/* 图片预览区域 */}
       {prompt.images && prompt.images.length > 0 && (
-        <div className="space-y-3">
+        <div className="flex-shrink-0 space-y-3 mt-4">
           <h3 className="text-sm font-medium">参考图片</h3>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
             {prompt.images.map((image, index) => (
@@ -132,7 +132,7 @@ export const PromptPreview: React.FC<PromptPreviewProps> = ({
       
       {/* 标签显示 */}
       {prompt.tags && prompt.tags.length > 0 && (
-        <div className="flex flex-wrap gap-2">
+        <div className="flex-shrink-0 flex flex-wrap gap-2 mt-4">
           {prompt.tags.map((tag) => (
             <div
               key={tag}

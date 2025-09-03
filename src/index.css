@@ -54,7 +54,7 @@
 
     --border: 220 13% 91%;
     --input: 220 13% 91%;
-    --ring: 224 71.4% 4.1%;
+    --ring: 224 71.4% 84.2%;
 
     --radius: 0.75rem;
 
@@ -149,7 +149,7 @@
   }
   
   input:focus {
-    @apply ring-1 ring-ring/30 ring-offset-0 !important;
+    @apply ring-ring/30;
   }
   
   /* 侧边栏动态宽度 */
@@ -226,12 +226,15 @@
   /* 提示卡片悬停样式 */
   .prompt-card:hover {
     transform: translateY(-2px) scale(1.01);
+    @apply ring-ring/30;
     box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
   }
 
   /* 提示卡片选中样式 */
   .prompt-card.selected {
+    border: 2px solid var(--ring) !important;
     transform: translateY(-2px) scale(1.01);
+    @apply ring-ring/30;
     box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.08);
   }
 
@@ -244,14 +247,14 @@
   /* 提示卡片进入动画 */
   .prompt-detail-enter-active {
     opacity: 1;
-    transform: scale(1);
+    transform: scale(0.95);
     transition: opacity 200ms, transform 200ms;
   }
 
   /* 提示卡片退出动画 */
   .prompt-detail-exit {
     opacity: 1;
-    transform: scale(1);
+    transform: scale(1.10);
   }
 
   /* 提示卡片退出动画 */

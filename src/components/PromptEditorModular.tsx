@@ -263,7 +263,7 @@ export function PromptEditorModular() {
       {/* 主要内容区域 */}
       <div className="flex-1 overflow-hidden">
         <ScrollArea className="h-full">
-          <div className="p-6">
+          <div className="p-6 h-full">
             {state.isEditing ? (
               <PromptEditForm
                 state={state}
@@ -289,6 +289,7 @@ export function PromptEditorModular() {
                   // 这里可以添加预览内容变化的处理逻辑
                   console.log('Preview content changed:', content);
                 }}
+                className="h-full"
               />
             )}
           </div>
