@@ -72,7 +72,45 @@ const currentVersionPatterns = [
 2. **测试覆盖**：在不同平台上测试发布流程
 3. **日志优化**：增加更详细的日志输出，便于调试类似问题
 
+## 相关修复
+
+### 发布脚本修复
+在 `scripts/release-manager.js` 中添加了完整的Mac文件模式匹配：
+```javascript
+const currentVersionPatterns = [
+  // Windows版本
+  `PromptMate-${currentVersion}-x64.exe`,
+  
+  // Mac版本 - 修复后
+  `PromptMate-${currentVersion}-x64.dmg`,
+  `PromptMate-${currentVersion}-arm64.dmg`,
+  `PromptMate-${currentVersion}-universal.dmg`,
+  `PromptMate-${currentVersion}-x64.zip`,
+  `PromptMate-${currentVersion}-arm64.zip`,
+  `PromptMate-${currentVersion}-universal.zip`,
+  // ...
+];
+```
+
+### 上传脚本修复
+同时修复了 `scripts/upload-existing-assets.js` 中的相同问题：
+```javascript
+const importantFiles = [
+  // Windows版本
+  `PromptMate-${version}-x64.exe`,
+  
+  // Mac版本
+  `PromptMate-${version}-x64.dmg`,
+  `PromptMate-${version}-arm64.dmg`,
+  `PromptMate-${version}-universal.dmg`,
+  `PromptMate-${version}-x64.zip`,
+  `PromptMate-${version}-arm64.zip`,
+  `PromptMate-${version}-universal.zip`,
+];
+```
+
 ## 相关文件
-- `scripts/release-manager.js` - 发布管理脚本
+- `scripts/release-manager.js` - 发布管理脚本 ✅ 已修复
+- `scripts/upload-existing-assets.js` - 构建产物上传脚本 ✅ 已修复
 - `package.json` - 构建配置
 - `@docs/环境变量配置说明.md` - GITHUB_TOKEN配置说明
