@@ -216,9 +216,15 @@ export function About() {
       const result = await window.electronAPI.downloadUpdate();
       
       if (result.success) {
-        toast.success("开始下载更新", {
-          description: `正在下载版本 ${result.version}，请稍候...`
-        });
+        if (result.downloadUrl) {
+          toast.success("已打开下载链接", {
+            description: `版本 ${result.version} 的下载已在浏览器中打开`
+          });
+        } else {
+          toast.success("开始下载更新", {
+            description: `正在下载版本 ${result.version}，请稍候...`
+          });
+        }
       } else {
         toast.error("下载更新失败", {
           description: result.error || "未知错误"

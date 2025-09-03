@@ -902,14 +902,63 @@ ipcMain.handle('download-update', async () => {
       };
     }
     
-    // 启动下载
-    await autoUpdater.downloadUpdate();
-    log.info('更新下载已启动');
+    // 找到对应平台的下载链接
+    const platform = process.platform;
+    const arch = process.arch;
+    const assets = updateResult.releaseInfo.assets;
+    
+    let downloadUrl = null;
+    let fileName = null;
+    
+    if (platform === 'win32') {
+      // Windows平台
+      const winAsset = assets.find(asset => 
+        asset.name.includes(`${updateResult.latestVersion}-x64.exe`) ||
+        asset.name.includes(`${updateResult.latestVersion}.exe`)
+      );
+      if (winAsset) {
+        downloadUrl = winAsset.browser_download_url;
+        fileName = winAsset.name;
+      }
+    } else if (platform === 'darwin') {
+      // macOS平台
+      const macAsset = assets.find(asset => 
+        asset.name.includes(`${updateResult.latestVersion}.dmg`)
+      );
+      if (macAsset) {
+        downloadUrl = macAsset.browser_download_url;
+        fileName = macAsset.name;
+      }
+    } else if (platform === 'linux') {
+      // Linux平台
+      const linuxAsset = assets.find(asset => 
+        asset.name.includes(`${updateResult.latestVersion}.AppImage`) ||
+        asset.name.includes(`${updateResult.latestVersion}.deb`)
+      );
+      if (linuxAsset) {
+        downloadUrl = linuxAsset.browser_download_url;
+        fileName = linuxAsset.name;
+      }
+    }
+    
+    if (!downloadUrl) {
+      return {
+        success: false,
+        error: `未找到适用于 ${platform} ${arch} 的安装包`
+      };
+    }
+    
+    // 打开下载链接
+    log.info(`打开下载链接: ${downloadUrl}`);
+    const { shell } = require('electron');
+    await shell.openExternal(downloadUrl);
     
     return {
       success: true,
-      message: '更新下载已启动',
-      version: updateResult.latestVersion
+      message: '已打开下载链接',
+      version: updateResult.latestVersion,
+      downloadUrl: downloadUrl,
+      fileName: fileName
     };
   } catch (error) {
     log.error('下载更新失败:', error);
