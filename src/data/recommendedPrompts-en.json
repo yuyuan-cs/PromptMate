@@ -1,0 +1,142 @@
+[
+    {
+      "id": "1",
+      "title": "Image Generation Prompt",
+      "content": "I need a picture in the style of [Topic], with the following characteristics: [Describe specific features]. The color tone should be [Color Tone], and the atmosphere should give a feeling of [Emotion/Atmosphere]. The picture should include [Specific Elements], and the background is [Background Description]. The style of the picture should refer to [Artist/Style], and the texture should be [Texture Description].",
+      "category": "creative",
+      "tags": ["Image Generation", "AI Painting", "Creative"],
+      "sFavorite": false,
+      "createdAt": "2025-09-05T00:00:00.000Z",
+      "updatedAt": "2025-09-05T00:00:00.000Z"
+    },
+    {
+      "id": "2",
+      "title": "Content Summary Assistant",
+      "content": "Please help me summarize the main points of the following content in concise and clear language, and sort them by importance:\n\n[Paste the content to be summarized]\n\nPlease extract 3-5 key information points and explain why they are important.",
+      "category": "productivity",
+      "tags": ["Summary", "Learning", "Efficiency"],
+      "sFavorite": false,
+      "createdAt": "2025-09-05T00:00:00.000Z",
+      "updatedAt": "2025-09-05T00:00:00.000Z"
+    },  
+    {
+      "id": "3",
+      "title": "Code Optimization Suggestions",
+      "content": "Please help me optimize the following [Programming Language] code, focusing on performance, readability, and best practices. If you find any potential bugs or security vulnerabilities, please point them out:\n\n```[Language]\n[Code Content]\n```\n\nPlease provide the optimized code and explain the changes you made and the reasons for them.",
+      "category": "development",
+      "tags": ["Programming", "Code", "Optimization"],
+      "sFavorite": false,
+      "createdAt": "2025-09-05T00:00:00.000Z",
+      "updatedAt": "2025-09-05T00:00:00.000Z"
+    },
+    {
+      "id": "4",
+      "title": "Learning Plan Generator",
+      "content": "I want to learn [Topic/Skill]. My current level is [Beginner/Intermediate/Advanced]. I can dedicate [Number of Hours] hours per week to studying and hope to reach [Target Level] within [Time Period]. Please create a detailed learning plan for me, including recommended learning resources, milestone goals, and progress checkpoints.",
+      "category": "education",
+      "tags": ["Learning", "Planning", "Education"],
+      "sFavorite": false,
+      "createdAt": "2025-09-05T00:00:00.000Z",
+      "updatedAt": "2025-09-05T00:00:00.000Z"
+    },
+    {
+      "id": "5",
+      "title": "Professional Email Template",
+      "content": "Please help me draft a professional email about [Topic]. The purpose of the email is [Purpose], and the recipient is [Recipient's Identity/Relationship]. The tone should be [Formal/Semi-formal/Friendly], and it should include the following points:\n\n1. [Point 1]\n2. [Point 2]\n3. [Point 3]\n\nPlease ensure the email is concise, professional, and polite, and provide appropriate suggestions for follow-up actions at the end.",
+      "category": "business",
+      "tags": ["Email", "Business", "Communication"],
+      "sFavorite": false,
+      "createdAt": "2025-09-05T00:00:00.000Z",
+      "updatedAt": "2025-09-05T00:00:00.000Z"
+    },
+    {
+      "id": "6",
+      "title": "Brainstorming Ideas",
+      "content": "I need creative ideas about [Topic]. Please provide 10 different innovative ideas, each of which should be unique and specific. Please consider different angles, such as [Angle 1], [Angle 2], and [Angle 3]. For each idea, provide a brief description and possible implementation methods.",
+      "category": "creative",
+      "tags": ["Creative", "Brainstorming", "Idea Generation"],
+      "sFavorite": false,
+      "createdAt": "2025-09-05T00:00:00.000Z",
+      "updatedAt": "2025-09-05T00:00:00.000Z"
+    },
+    {
+      "id": "7",
+      "title": "Article Rewriting",
+      "content": "Please help me rewrite the following article to make it more [Concise/Professional/Vivid/Formal/Easy to Understand], while keeping the original meaning unchanged:\n\n[Original Content]\n\nWhen rewriting, please pay attention to:\n1. Keeping key information complete\n2. Improving sentence structure and fluency\n3. Ensuring a consistent tone\n4. Strengthening the central idea of the article",
+      "category": "productivity",
+      "tags": ["Writing", "Editing", "Rewriting"],
+      "sFavorite": false,
+      "createdAt": "2025-09-05T00:00:00.000Z",
+      "updatedAt": "2025-09-05T00:00:00.000Z"
+    },
+    {
+      "id": "8",
+      "title": "SQL Query Builder",
+      "content": "Please help me build an SQL query that meets the following requirements:\n\nDatabase Structure:\n[Describe the table structure, including table names, field names, and relationships]\n\nFunctionality to be implemented:\n[Describe the query requirements, e.g., finding data that meets specific conditions, joining multiple tables, calculating aggregate values, etc.]\n\nPlease provide the optimized SQL query statement and explain how the query works and the performance considerations.",
+      "category": "development",
+      "tags": ["SQL", "Database", "Query"],
+      "sFavorite": false,
+      "createdAt": "2025-09-05T00:00:00.000Z",
+      "updatedAt": "2025-09-05T00:00:00.000Z"
+    },
+    {
+      "id": "9",
+      "title": "Product Description Generator",
+      "content": "Please create a compelling product description for the following product:\n\nProduct Name: [Name]\nProduct Type: [Type]\nTarget Audience: [Audience]\nMain Features:\n1. [Feature 1]\n2. [Feature 2]\n3. [Feature 3]\nPrice Range: [Price]\n\nPlease create a 300-500 word product description that highlights its unique selling points, uses engaging language, and includes emotional appeals to the target audience.",
+      "category": "business",
+      "tags": ["Marketing", "Product", "Copywriting"],
+      "sFavorite": false,
+      "createdAt": "2025-09-05T00:00:00.000Z",
+      "updatedAt": "2025-09-05T00:00:00.000Z"
+    },
+    {
+      "id": "10",
+      "title": "Speech Writing",
+      "content": "Please help me write a speech on [Topic]. The speech should be approximately [Duration] minutes long, and the target audience is [Audience Description]. The purpose of the speech is [Purpose]. The speech should include the following points:\n\n1. [Point 1]\n2. [Point 2]\n3. [Point 3]\n\nPlease use a [Formal/Motivational/Educational/Humorous] tone, and include an engaging opening and a strong conclusion. If possible, add relevant stories, statistics, or quotes to reinforce the main points.",
+      "category": "business",
+      "tags": ["Speech", "Communication", "Public Speaking"],
+      "sFavorite": false,
+      "createdAt": "2025-09-05T00:00:00.000Z",
+      "updatedAt": "2025-09-05T00:00:00.000Z"
+    },
+    {
+      "id": "11",
+      "title": "API Interface Design",
+      "content": "Please help me design a RESTful API for [Function Description].\n\nRequirements:\n1. [Requirement 1]\n2. [Requirement 2]\n3. [Requirement 3]\n\nTechnology Stack: [Technology Stack]\nTarget Users: [User Type]\n\nPlease provide:\n1. A list of main endpoints and their purposes\n2. Request/response format examples (JSON)\n3. Suggestions for authentication methods\n4. Error handling strategy\n5. API versioning recommendations",
+      "category": "development",
+      "tags": ["API", "Backend", "Design"],
+      "sFavorite": false,
+      "createdAt": "2025-09-05T00:00:00.000Z",
+      "updatedAt": "2025-09-05T00:00:00.000Z"
+    },
+    {
+      "id": "12",
+      "title": "Academic Paper Summary",
+      "content": "Please help me write an academic paper abstract for the following research content. The research field is [Field], and the main finding is [Finding].\n\nResearch Methods:\n[Method Description]\n\nMain Results:\n[Result Description]\n\nPlease write an abstract of about 250 words in standard academic format, including the research background, methods, results, and conclusion. Use appropriate academic terminology and maintain an objective and professional tone.",
+      "category": "education",
+      "tags": ["Academic", "Research", "Abstract"],
+      "sFavorite": false,
+      "createdAt": "2025-09-05T00:00:00.000Z",
+      "updatedAt": "2025-09-05T00:00:00.000Z"
+    },
+    {
+      "id": "13",
+      "title": "Workflow Documentation",
+      "content": "Please help me create a detailed workflow document for [Process Name]. This process involves [Role/Department] and its purpose is [Purpose].\n\nThe process should include the following stages:\n1. [Stage 1]\n2. [Stage 2]\n3. [Stage 3]\n\nFor each stage, please describe in detail:\n- Person in charge\n- Required inputs\n- Specific steps\n- Expected outputs\n- Quality checkpoints\n- Potential problems and solutions",
+      "category": "productivity",
+      "tags": ["Process", "Documentation", "Organization"],
+      "sFavorite": false,
+      "createdAt": "2025-09-05T00:00:00.000Z",
+      "updatedAt": "2025-09-05T00:00:00.000Z"
+    },
+    {
+      "id": "14",
+      "title": "Technical Interview Preparation",
+      "content": "I am about to have a technical interview for the [Job Title] position at [Company Name]. Please help me prepare for the technical questions that might be asked and the best answers.\n\nMy skill background:\n[List skills and experience]\n\nTechnical areas the interview might cover:\n[List technical areas]\n\nPlease provide:\n1. The 10 most likely technical questions to be asked\n2. Detailed thought processes for answering each question\n3. Relevant questions I can ask to show my interest and depth of knowledge\n4. Advice on how to prepare for a coding test or technical demonstration",
+      "category": "development",
+      "tags": ["Interview", "Career", "Preparation"],
+      "sFavorite": false,
+      "createdAt": "2025-09-05T00:00:00.000Z",
+      "updatedAt": "2025-09-05T00:00:00.000Z"
+    }
+]

@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Plus, Star, Search, X, Copy, Edit, Trash, MoreVertical, Menu } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useState, useEffect, memo, useCallback, useRef } from "react";
-import { Prompt, Category, PromptImage } from "@/types";
+import { Prompt, Category, PromptImage, PromptVersion } from "@/types";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -46,6 +46,9 @@ import {
   ContextMenuTrigger
 } from "@/components/ui/context-menu";
 import ReactMarkdown from 'react-markdown';
+import ErrorBoundary from "./ErrorBoundary";
+import { useTranslation } from "react-i18next";
+import { t } from "i18next";
 
 // 提示词详情查看对话框组件 (Memoized)
 const PromptDetailDialog = memo(function PromptDetailDialog({ 
@@ -58,7 +61,7 @@ const PromptDetailDialog = memo(function PromptDetailDialog({
   onOpenChange: (open: boolean) => void;
 }) {
   const { copyPromptContent, toggleFavorite } = usePrompts();
-
+  const { t } = useTranslation();
   if (!prompt) return null;
 
   return (
@@ -190,29 +193,7 @@ export const PromptList = memo(function PromptList({
   const [showDeletePromptDialog, setShowDeletePromptDialog] = useState(false);
   const [promptToEdit, setPromptToEdit] = useState<Prompt | null>(null);
   const [promptToDelete, setPromptToDelete] = useState<Prompt | null>(null);
-  const [newPromptTitle, setNewPromptTitle] = useState("");
-  const [newPromptContent, setNewPromptContent] = useState("");
-  const [newPromptCategory, setNewPromptCategory] = useState("general");
-  const [newPromptTags, setNewPromptTags] = useState("");
-  const [editPromptTitle, setEditPromptTitle] = useState("");
-  const [editPromptContent, setEditPromptContent] = useState("");
-  const [editPromptCategory, setEditPromptCategory] = useState("");
-  const [editPromptTags, setEditPromptTags] = useState("");
   const [localRefreshKey, setLocalRefreshKey] = useState(0);
-  const [detailPrompt, setDetailPrompt] = useState<Prompt | null>(null);
-  const [showDetailDialog, setShowDetailDialog] = useState(false);
-  
-  // 图片上传相关状态
-  const [newPromptImages, setNewPromptImages] = useState<PromptImage[]>([]);
-  const [selectedNewImageIndex, setSelectedNewImageIndex] = useState<number | null>(null);
-  const [newImageCaption, setNewImageCaption] = useState("");
-  const newFileInputRef = useRef<HTMLInputElement>(null);
-  
-  // 编辑对话框图片状态
-  const [editDialogImages, setEditDialogImages] = useState<PromptImage[]>([]);
-  const [selectedEditDialogImageIndex, setSelectedEditDialogImageIndex] = useState<number | null>(null);
-  const [editDialogImageCaption, setEditDialogImageCaption] = useState("");
-  const editDialogFileInputRef = useRef<HTMLInputElement>(null);
   
   // 标签管理相关状态
   const TAGS_DISPLAY_LIMIT = 10;
@@ -229,54 +210,26 @@ export const PromptList = memo(function PromptList({
   const [showComparisonDialog, setShowComparisonDialog] = useState(false);
   const [enhancementPrompt, setEnhancementPrompt] = useState<Prompt | null>(null);
 
-  // 创建提示词
-  const handleCreatePrompt = useCallback(() => {
-    if (!newPromptTitle.trim() || !newPromptContent.trim()) {
-      toast({
-        title: "错误",
-        description: "标题和内容不能为空",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    const tags = newPromptTags.split(",").map(tag => tag.trim()).filter(Boolean);
-    
-    addPrompt({
-      title: newPromptTitle,
-      content: newPromptContent,
-      category: newPromptCategory,
-      tags,
-      isFavorite: false,
-      images: newPromptImages.length > 0 ? newPromptImages : undefined,
-      version: 1
-    });
-    
-    toast({
-      title: "创建成功",
-      description: "新的提示词已创建",
-      variant: "success",
-    });
-    
-    // 重置表单
-    setNewPromptTitle("");
-    setNewPromptContent("");
-    setNewPromptTags("");
-    setNewPromptImages([]);
-    setSelectedNewImageIndex(null);
-    setNewImageCaption("");
+  // 简化的新建处理
+  const handleCreatePromptSuccess = useCallback(() => {
     setShowNewPromptDialog(false);
-  }, [newPromptTitle, newPromptContent, newPromptCategory, newPromptTags, newPromptImages, addPrompt, toast]);
-
-  // 处理查看提示词详情
-  const handleViewPromptDetail = useCallback((prompt: Prompt) => {
-    setDetailPrompt(prompt);
-    setShowDetailDialog(true);
+    setLocalRefreshKey(prev => prev + 1);
   }, []);
 
+  // 处理选择提示词（显示在右侧编辑面板）
+  const handleSelectPrompt = useCallback((prompt: Prompt) => {
+    // 如果点击的是当前已选中的提示词，则关闭预览面板
+    if (selectedPrompt && selectedPrompt.id === prompt.id) {
+      setSelectedPrompt(null);
+    } else {
+      // 否则选中新的提示词
+      setSelectedPrompt(prompt);
+    }
+  }, [selectedPrompt, setSelectedPrompt]);
+
   // 处理复制提示词
-  const handleCopyPrompt = useCallback((content: string) => {
-    copyPromptContent(content);
+  const handleCopyPrompt = useCallback((promptId: string) => {
+    copyPromptContent(promptId);
   }, [copyPromptContent]);
 
   // 处理收藏切换
@@ -325,18 +278,61 @@ export const PromptList = memo(function PromptList({
     }
   };
 
+  // 处理编辑提示词
+  const handleOpenEditDialog = useCallback((prompt: Prompt) => {
+    setPromptToEdit(prompt);
+    setShowEditPromptDialog(true);
+  }, []);
+
+  // 处理删除提示词
+  const handleOpenDeleteDialog = useCallback((prompt: Prompt) => {
+    setPromptToDelete(prompt);
+    setShowDeletePromptDialog(true);
+  }, []);
+
+  // 处理从推荐添加
+  const handleAddFromRecommended = useCallback((prompt: Prompt) => {
+    addFromRecommended(prompt);
+    toast({
+      title: "添加成功",
+      description: "提示词已添加到您的收藏",
+      variant: "success",
+    });
+  }, [addFromRecommended, toast]);
+
+  // 简化的编辑处理
+  const handleEditPromptSuccess = useCallback(() => {
+    setShowEditPromptDialog(false);
+    setPromptToEdit(null);
+    setLocalRefreshKey(prev => prev + 1);
+  }, []);
+
+  // 处理确认删除提示词
+  const handleConfirmDeletePrompt = useCallback(() => {
+    if (promptToDelete) {
+      deletePrompt(promptToDelete.id);
+      // toast({
+      //   title: "删除成功",
+      //   description: "提示词已删除",
+      //   variant: "success",
+      // });
+      setShowDeletePromptDialog(false);
+      setPromptToDelete(null);
+    }
+  }, [promptToDelete, deletePrompt, toast]);
+
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full card-container-transition">
       {/* 当前分类/模式指示器 */}
       <div className="bg-muted/30 px-4 py-2 text-sm flex items-center w-full sticky top-0 z-20 border-b border-border/40">
-        <span className="font-medium mr-2">当前查看:</span>
+        {/* <span className="font-medium mr-2">当前查看:</span> */}
         <ViewBadge 
           showRecommended={showRecommended}
           showFavorites={showFavorites}
           activeCategory={activeCategory}
           categories={categories}
         />
-        <span className="ml-auto text-muted-foreground">找到 {filteredPrompts.length} 个提示词</span>
+        <span className="ml-auto text-muted-foreground">{t('common.found')} {filteredPrompts.length} {t('common.prompts')}</span>
       </div>
 
       {/* 标签过滤器 */}
@@ -348,7 +344,7 @@ export const PromptList = memo(function PromptList({
               className="cursor-pointer text-xs px-2 py-0.5"
               onClick={(e) => handleTagClick(e, null)}
             >
-              全部
+              {t('common.all')}
             </Badge>
             {(showAllTags ? allTags : allTags.slice(0, TAGS_DISPLAY_LIMIT)).map(tag => (
               <ContextMenu key={tag}>
@@ -364,14 +360,14 @@ export const PromptList = memo(function PromptList({
                 <ContextMenuContent>
                   <ContextMenuItem onClick={() => handleTagClick(null, tag)}>
                     <Icons.fileText className="mr-2 h-4 w-4" />
-                    按此标签筛选
+                    t('common.filterByTag')
                   </ContextMenuItem>
                   <ContextMenuItem
                     onClick={() => handleDeleteTag(tag)}
                     className="text-destructive focus:text-destructive"
                   >
                     <Icons.trash className="mr-2 h-4 w-4" />
-                    删除此标签
+                    t('common.deleteTag')
                   </ContextMenuItem>
                 </ContextMenuContent>
               </ContextMenu>
@@ -386,12 +382,12 @@ export const PromptList = memo(function PromptList({
                 {showAllTags ? (
                   <>
                     <Icons.chevronUp className="h-3 w-3 mr-1" />
-                    收起
+                    {t('common.collapse')}
                   </>
                 ) : (
                   <>
                     <Icons.chevronDown className="h-3 w-3 mr-1" />
-                    查看更多 ({allTags.length - TAGS_DISPLAY_LIMIT})
+                    {t('common.viewMore')} ({allTags.length - TAGS_DISPLAY_LIMIT})
                   </>
                 )}
               </Button>
@@ -405,7 +401,7 @@ export const PromptList = memo(function PromptList({
         <div className="flex items-center px-4 py-2 bg-muted/50 w-full border-b">
           <Icons.search className="h-4 w-4 mr-2 text-muted-foreground" />
           <span className="text-sm">
-            当前搜索 "{searchTerm}" 的结果
+            t('common.searchResults') "{searchTerm}"
           </span>
         </div>
       )}
@@ -417,50 +413,55 @@ export const PromptList = memo(function PromptList({
             <div className="flex flex-col items-center justify-center h-full text-center">
               <div className="p-8 rounded-lg bg-muted/50 max-w-md">
                 <Icons.fileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-medium mb-2">没有找到提示词</h3>
+                <h3 className="text-lg font-medium mb-2">{t('common.noPromptFound')}</h3>
                 <p className="text-muted-foreground">
                   {searchTerm 
-                    ? "没有找到匹配的提示词，请尝试其他搜索词。"
+                    ? t('common.noMatchingPrompt')
                     : showRecommended 
                       ? "当前没有可用的推荐模板。"
                       : showFavorites
-                        ? "您还没有收藏任何提示词。"
+                        ? t('common.noFavoritePrompt')
                         : activeCategory
                           ? "此分类下暂无提示词。"
-                          : "点击新建提示词创建你的第一个提示词。"}
+                          : t('common.clickNewPrompt')}
                 </p>
                 {!searchTerm && !showRecommended && (
                   <Button 
                     className="mt-4"
                     onClick={() => {
-                      setNewPromptCategory(activeCategory || categories[0]?.id || "general");
                       setShowNewPromptDialog(true);
                     }}
                   >
                     <Icons.plus className="h-4 w-4 mr-2" />
-                    新建提示词
+                    {t('common.create_prompt.title')}
                   </Button>
                 )}
               </div>
             </div>
           ) : (
-            <div className={`grid grid-cols-1 ${isEditPanelOpen ? '' : 'md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3'} gap-4`}>
+            <div className={`grid gap-4 grid-layout-transition ${
+              isEditPanelOpen 
+                ? 'grid-cols-1 sm:grid-cols-1 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3' 
+                : 'grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5'
+            }`}>
               {filteredPrompts.map((prompt) => (
                 <Card 
                   key={prompt.id}
                   className={cn(
-                    "prompt-card cursor-pointer transition-all duration-200 ease-in-out rounded-md p-0.5 min-w-[280px]",
-                    "focus-visible:ring-1 focus-visible:ring-offset-0 focus-visible:shadow-lg",
+                    "prompt-card cursor-pointer p-0.5",
+                    "w-full max-w-none", // 确保卡片占满网格单元格
+                    "focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-offset-1",
+                    "border border-border/20 backdrop-blur-sm",
                     selectedPrompt?.id === prompt.id 
-                      ? "ring-0.2 ring-primary/20 shadow-xl border-primary/25 bg-primary/1"
-                      : "border border-transparent hover:border-primary/10 hover:shadow-lg"
+                    ? "selected"
+                    : "hover:border-primary/30 hover:shadow-md"
                   )}
-                  onClick={() => handleViewPromptDetail(prompt)}
+                  onClick={() => handleSelectPrompt(prompt)}
                   tabIndex={0}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
                       e.preventDefault();
-                      handleViewPromptDetail(prompt);
+                      handleSelectPrompt(prompt);
                     }
                   }}
                 >
@@ -474,9 +475,9 @@ export const PromptList = memo(function PromptList({
                           className="h-8 w-8"
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleCopyPrompt(prompt.content);
+                            handleCopyPrompt(prompt.id);
                           }}
-                          title="复制提示词"
+                          title={t('common.edit')}
                         >
                           <Icons.copy className="h-4 w-4" />
                         </Button>
@@ -496,16 +497,16 @@ export const PromptList = memo(function PromptList({
                             {!showRecommended && (
                               <DropdownMenuItem onClick={(e) => {
                                 e.stopPropagation();
-                                // handleOpenEditDialog(prompt);
+                                handleOpenEditDialog(prompt);
                               }}>
                                 <Icons.pencil className="mr-2 h-4 w-4" />
-                                编辑
+                                {t('common.edit')}
                               </DropdownMenuItem>
                             )}
                             <DropdownMenuItem onClick={(e) => {
                               e.stopPropagation();
                               if (showRecommended) {
-                                // handleAddFromRecommended(prompt);
+                                handleAddFromRecommended(prompt);
                               } else {
                                 handleToggleFavorite(e, prompt.id);
                               }
@@ -513,17 +514,17 @@ export const PromptList = memo(function PromptList({
                               {showRecommended ? (
                                 <>
                                   <Icons.plus className="mr-2 h-4 w-4" />
-                                  添加到我的提示词
+                                  {t('common.addmyPrompt')}
                                 </>
                               ) : prompt.isFavorite ? (
                                 <>
                                   <Icons.starOff className="mr-2 h-4 w-4" />
-                                  取消收藏
+                                  {t('common.removeFavorite')}
                                 </>
                               ) : (
                                 <>
                                   <Icons.star className="mr-2 h-4 w-4" />
-                                  收藏
+                                  {t('common.addFavorite')}
                                 </>
                               )}
                             </DropdownMenuItem>
@@ -536,7 +537,7 @@ export const PromptList = memo(function PromptList({
                                   setShowVersionDialog(true);
                                 }}>
                                   <Icons.history className="mr-2 h-4 w-4" />
-                                  版本管理
+                                  {t('common.versionManagement')}
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onClick={(e) => {
                                   e.stopPropagation();
@@ -544,7 +545,7 @@ export const PromptList = memo(function PromptList({
                                   setShowRatingDialog(true);
                                 }}>
                                   <Icons.star className="mr-2 h-4 w-4" />
-                                  评分管理
+                                  {t('common.ratingManagement')}
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onClick={(e) => {
                                   e.stopPropagation();
@@ -552,18 +553,18 @@ export const PromptList = memo(function PromptList({
                                   setShowComparisonDialog(true);
                                 }}>
                                   <Icons.gitCompare className="mr-2 h-4 w-4" />
-                                  模型对比
+                                  {t('common.modelComparison')}
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem 
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    // handleOpenDeleteDialog(prompt);
+                                    handleOpenDeleteDialog(prompt);
                                   }}
                                   className="text-destructive focus:text-destructive"
                                 >
                                   <Icons.trash className="mr-2 h-4 w-4" />
-                                  删除
+                                  {t('common.delete')}
                                 </DropdownMenuItem>
                               </>
                             )}
@@ -595,14 +596,14 @@ export const PromptList = memo(function PromptList({
                           <ContextMenuContent>
                             <ContextMenuItem onClick={() => handleTagClick(null, tag)}>
                               <Icons.fileText className="mr-2 h-4 w-4" />
-                              按此标签筛选
+                              {t('common.filterByTag')}
                             </ContextMenuItem>
                             <ContextMenuItem 
                               onClick={() => handleDeleteTag(tag)}
                               className="text-destructive focus:text-destructive"
                             >
                               <Icons.trash className="mr-2 h-4 w-4" />
-                              删除此标签
+                              {t('common.deleteTag')}
                             </ContextMenuItem>
                           </ContextMenuContent>
                         </ContextMenu>
@@ -620,7 +621,7 @@ export const PromptList = memo(function PromptList({
                         size="icon"
                         className="h-8 w-8 flex-shrink-0"
                         onClick={(e) => handleToggleFavorite(e, prompt.id)}
-                        title={prompt.isFavorite ? "取消收藏" : "收藏"}
+                        title={prompt.isFavorite ? t('common.removeFavorite') : t('common.addFavorite')}
                       >
                         {prompt.isFavorite ? (
                           <Icons.starFilled className="h-4 w-4 fill-yellow-400 text-yellow-400" />
@@ -637,24 +638,43 @@ export const PromptList = memo(function PromptList({
         </div>
       </ScrollArea>
 
-      {/* 提示词详情查看对话框 */}
-      <PromptDetailDialog 
-        prompt={detailPrompt} 
-        open={showDetailDialog} 
-        onOpenChange={setShowDetailDialog} 
-      />
+
 
       {/* 版本管理对话框 */}
       {enhancementPrompt && (
         <PromptVersionManager
           prompt={enhancementPrompt}
-          open={showVersionDialog}
-          onOpenChange={setShowVersionDialog}
-          onVersionRestore={(updatedPrompt) => {
+          isOpen={showVersionDialog}
+          onClose={() => setShowVersionDialog(false)}
+          onRestoreVersion={(version) => {
+            const updatedPrompt = {
+              ...enhancementPrompt,
+              title: version.title,
+              content: version.content,
+              description: version.description,
+              images: version.images,
+              version: (enhancementPrompt.version || 1) + 1
+            };
             updatePrompt(enhancementPrompt.id, updatedPrompt);
             setShowVersionDialog(false);
           }}
-          onVersionCreate={(updatedPrompt) => {
+          onCreateVersion={(changeNotes) => {
+            // 创建新版本的逻辑
+            const newVersion: PromptVersion = {
+              id: Date.now().toString(),
+              version: (enhancementPrompt.version || 1) + 1,
+              title: enhancementPrompt.title,
+              content: enhancementPrompt.content,
+              description: enhancementPrompt.description,
+              images: enhancementPrompt.images,
+              createdAt: new Date().toISOString(),
+              changeNotes: changeNotes || '手动创建版本'
+            };
+            const updatedPrompt = {
+              ...enhancementPrompt,
+              versions: [...(enhancementPrompt.versions || []), newVersion],
+              version: newVersion.version
+            };
             updatePrompt(enhancementPrompt.id, updatedPrompt);
           }}
         />
@@ -664,9 +684,14 @@ export const PromptList = memo(function PromptList({
       {enhancementPrompt && (
         <PromptRatingManager
           prompt={enhancementPrompt}
-          open={showRatingDialog}
-          onOpenChange={setShowRatingDialog}
-          onRatingUpdate={(updatedPrompt) => {
+          isOpen={showRatingDialog}
+          onClose={() => setShowRatingDialog(false)}
+          onSaveRating={(rating, notes) => {
+            const updatedPrompt = {
+              ...enhancementPrompt,
+              rating: rating,
+              ratingNotes: notes
+            };
             updatePrompt(enhancementPrompt.id, updatedPrompt);
             setShowRatingDialog(false);
           }}
@@ -677,10 +702,64 @@ export const PromptList = memo(function PromptList({
       {enhancementPrompt && (
         <PromptComparisonManager
           prompt={enhancementPrompt}
-          open={showComparisonDialog}
-          onOpenChange={setShowComparisonDialog}
+          isOpen={showComparisonDialog}
+          onClose={() => setShowComparisonDialog(false)}
+          onRunComparison={async (selectedModels, testInput) => {
+            // 这里应该调用AI服务进行对比
+            // 暂时返回空数组，实际实现需要调用AI服务
+            return [];
+          }}
+          onSaveComparison={(comparison) => {
+            // 保存对比结果的逻辑
+            console.log('保存对比结果:', comparison);
+          }}
+          existingComparisons={[]}
         />
       )}
+
+      {/* 编辑提示词对话框 */}
+      <CreatePromptDialog
+        open={showEditPromptDialog}
+        onOpenChange={setShowEditPromptDialog}
+        mode="edit"
+        prompt={promptToEdit}
+        options={{
+          onSuccess: handleEditPromptSuccess,
+          onCancel: () => setShowEditPromptDialog(false)
+        }}
+      />
+
+      {/* 删除提示词确认对话框 */}
+      <Dialog open={showDeletePromptDialog} onOpenChange={setShowDeletePromptDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('common.confirmDelete')}</DialogTitle>
+            <DialogDescription>
+              您确定要删除提示词 "{promptToDelete?.title}" 吗？此操作无法撤销。
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDeletePromptDialog(false)}>
+              {t('common.cancel')}
+            </Button>
+            <Button variant="destructive" onClick={handleConfirmDeletePrompt}>
+              {t('common.confirmDelete')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 新建提示词对话框 */}
+      <CreatePromptDialog
+        open={showNewPromptDialog}
+        onOpenChange={setShowNewPromptDialog}
+        mode="create"
+        options={{
+          defaultCategory: activeCategory || categories[0]?.id || "general",
+          onSuccess: handleCreatePromptSuccess,
+          onCancel: () => setShowNewPromptDialog(false)
+        }}
+      />
 
       {/* 自定义标签删除确认对话框 */}
       <TagDeleteDialog

@@ -1,4 +1,4 @@
-import { Prompt, Category, Settings } from "../types";
+import type { Prompt, Category, Settings } from "../types";
 
 // Default categories
 export const defaultCategories: Category[] = [

@@ -11,10 +11,14 @@
             "id": "b70aa7e9e0731c5e",
             "type": "leaf",
             "state": {
-              "type": "empty",
-              "state": {},
+              "type": "markdown",
+              "state": {
+                "file": "GitHub推送保护问题解决方案.md",
+                "mode": "source",
+                "source": false
+              },
               "icon": "lucide-file",
-              "title": "新标签页"
+              "title": "GitHub推送保护问题解决方案"
             }
           }
         ]
@@ -165,8 +169,13 @@
       "bases:创建新数据库": false
     }
   },
-  "active": "d5fe956a9e15c732",
+  "active": "b70aa7e9e0731c5e",
   "lastOpenFiles": [
+    "ErrorBoundary和导入路径修复.md",
+    "分类拖拽排序功能修复.md",
+    "数据库字段映射问题修复.md",
+    "SQLite-sqljs替换方案.md",
+    "UI界面优化说明.md",
     "环境变量配置说明.md",
     "关于功能完善说明.md",
     "新建提示词按钮修复方案/debugging_checklist.md",

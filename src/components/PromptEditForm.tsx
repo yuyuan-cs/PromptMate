@@ -160,8 +160,10 @@ export const PromptEditForm: React.FC<PromptEditFormProps> = ({
                 value={state.content}
                 onChange={(value) => onFieldChange('content', value)}
                 placeholder={t('prompteditform.promptContentPlaceholder')}
-                rows={8}
                 showVariables={false}
+                minHeight={120}
+                maxHeight={500}
+                enableResize={false}
               />
               {/* AI优化按钮 - 内联模式，位于输入框右下角 */}
               <div className="absolute bottom-2 right-2 z-10">

@@ -9,6 +9,7 @@
     "delete": "删除",
     "edit": "编辑",
     "create": "创建",
+    "saving": "保存中...",
     "search": "搜索",
     "loading": "加载中...",
     "error": "错误",
@@ -125,6 +126,9 @@
       "image":"图片",
       "imageCaption":"图片说明",
       "imageCaptionPlaceholder":"为这张图片添加说明..."
+    },
+    "edit_prompt":{
+      "title":"编辑提示词"
     },
     "switchToLight": "切换到浅色模式",
     "switchToDark": "切换到深色模式",

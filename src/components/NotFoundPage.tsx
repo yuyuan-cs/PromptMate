@@ -40,7 +40,7 @@ const NotFoundPage: React.FC<NotFoundPageProps> = ({
       url: window.location.href,
       userAgent: navigator.userAgent,
       error: error || 'Page not found',
-      appVersion: process.env.REACT_APP_VERSION || 'unknown',
+      appVersion: import.meta.env.VITE_APP_VERSION || 'unknown',
     };
 
     // 创建 GitHub issue URL

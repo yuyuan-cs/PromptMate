@@ -5,6 +5,7 @@ import rehypeRaw from 'rehype-raw';
 import { extractVariables, VariableInfo } from '@/lib/variableUtils';
 import { cn } from '@/lib/utils';
 import { useTranslation } from 'react-i18next';
+import { DynamicTextarea } from '@/components/ui/dynamic-textarea';
 
 interface VariableHighlighterProps {
   content: string;
@@ -110,6 +111,9 @@ interface VariableTextAreaProps {
   rows?: number;
   disabled?: boolean;
   showVariables?: boolean;
+  minHeight?: number; // 最小高度（像素）
+  maxHeight?: number; // 最大高度（像素）
+  enableResize?: boolean; // 是否允许手动调整大小
 }
 
 export const VariableTextArea: React.FC<VariableTextAreaProps> = ({
@@ -120,6 +124,9 @@ export const VariableTextArea: React.FC<VariableTextAreaProps> = ({
   rows = 4,
   disabled = false,
   showVariables = true,
+  minHeight = 120,
+  maxHeight = 400,
+  enableResize = false,
 }) => {
   const { t } = useTranslation();
   // 提取变量信息用于显示
@@ -127,20 +134,22 @@ export const VariableTextArea: React.FC<VariableTextAreaProps> = ({
   
   return (
     <div className="relative">
-      {/* 文本输入区域 */}
-      <textarea
+      {/* 文本输入区域 - 使用动态高度组件 */}
+      <DynamicTextarea
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         className={cn(
-          'w-full resize-none border rounded-md p-3',
+          'w-full border rounded-md p-3',
           'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent',
           'bg-background text-foreground',
           'placeholder:text-muted-foreground',
           'disabled:opacity-50 disabled:cursor-not-allowed',
           className
         )}
-        rows={rows}
+        minHeight={minHeight}
+        maxHeight={maxHeight}
+        enableResize={enableResize}
         disabled={disabled}
       />
       

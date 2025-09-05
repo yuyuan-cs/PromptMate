@@ -33,7 +33,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // 应用更新和信息
   checkForUpdates: () => ipcRenderer.invoke('check-for-updates'),
   downloadUpdate: () => ipcRenderer.invoke('download-update'),
-  getAppInfo: () => ipcRenderer.invoke('get-app-info')
+  getAppInfo: () => ipcRenderer.invoke('get-app-info'),
+  
+  // 数据库相关API
+  getDatabaseStatus: () => ipcRenderer.invoke('get-database-status'),
+  initializeDatabase: () => ipcRenderer.invoke('initialize-database'),
+  
+  // 通用IPC调用方法
+  invoke: (channel, ...args) => ipcRenderer.invoke(channel, ...args)
 }); 
 
 console.log('electronAPI exposed to renderer process');

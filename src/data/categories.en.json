@@ -1,0 +1,8 @@
+[
+  { "id": "general", "name": "General", "icon": "layout" },
+  { "id": "creative", "name": "Creative", "icon": "palette" },
+  { "id": "development", "name": "Development", "icon": "fileText" },
+  { "id": "business", "name": "Business", "icon": "file" },
+  { "id": "education", "name": "Education", "icon": "fileUp" },
+  { "id": "productivity", "name": "Productivity", "icon": "settings" }
+]

@@ -6,6 +6,11 @@ const log = require('electron-log');
 const https = require('https');
 const { spawn } = require('child_process');
 
+// SQLite数据库支持 (使用 sql.js)
+const { DatabaseServiceSqlJs } = require('./database-sqljs.cjs');
+let databaseService = null;
+let databaseInitialized = false;
+
 // 根据环境设置
 if (!process.env.NODE_ENV) {
   process.env.NODE_ENV = 'production';
@@ -397,6 +402,48 @@ let mainWindow = null;
 let tray = null;
 let watcherProcess = null;
 
+// 初始化SQLite数据库
+async function initializeDatabase() {
+  try {
+    log.info('正在初始化SQLite数据库...');
+    
+    // 创建数据库服务实例
+    databaseService = new DatabaseServiceSqlJs();
+    
+    // 初始化数据库
+    const result = await databaseService.initialize();
+    
+    if (result.success) {
+      databaseInitialized = true;
+      log.info('SQLite数据库初始化成功');
+      return { success: true };
+    } else {
+      throw new Error(result.error);
+    }
+  } catch (error) {
+    log.error('SQLite数据库初始化失败:', error);
+    databaseInitialized = false;
+    databaseService = null;
+    
+    // 不让数据库错误阻止应用启动
+    return { 
+      success: false, 
+      error: error.message,
+      fallback: 'localStorage' 
+    };
+  }
+}
+
+// 获取数据库状态
+function getDatabaseStatus() {
+  return {
+    initialized: databaseInitialized,
+    available: databaseService !== null,
+    fallbackMode: !databaseInitialized,
+    status: databaseService ? databaseService.getStatus() : null
+  };
+}
+
 // 监控进程管理
 function isWatcherRunning() {
   return !!(watcherProcess && !watcherProcess.killed);
@@ -643,8 +690,17 @@ function createWindow() {
 }
 
 // 初始化应用
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   createWindow();
+  
+  // 初始化数据库 (使用 sql.js)
+  const dbResult = await initializeDatabase();
+  if (dbResult.success) {
+    log.info('应用启动：SQLite数据库模式 (sql.js)');
+  } else {
+    log.warn('应用启动：localStorage回退模式 -', dbResult.error);
+  }
+  
   // 创建系统托盘
   createTray();
   // 根据设置启动同步监听
@@ -706,6 +762,11 @@ app.on('will-quit', () => {
   // 注销全局快捷键
   globalShortcut.unregisterAll();
   stopWatcher();
+  
+  // 关闭数据库连接
+  if (databaseService) {
+    databaseService.close();
+  }
 });
 
 // 应用退出处理
@@ -887,6 +948,137 @@ ipcMain.handle('import-data', async (_, { filePath }) => {
     return { success: true };
   } catch (error) {
     console.error('导入数据出错:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+// 添加数据库状态相关IPC
+ipcMain.handle('get-database-status', () => {
+  return getDatabaseStatus();
+});
+
+ipcMain.handle('initialize-database', async () => {
+  if (databaseInitialized) {
+    return { success: true, message: '数据库已初始化' };
+  }
+  return await initializeDatabase();
+});
+
+// 数据库操作IPC处理程序
+ipcMain.handle('db-get-all-prompts', async () => {
+  try {
+    if (!databaseService) throw new Error('数据库服务未初始化');
+    return { success: true, data: databaseService.getAllPrompts() };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('db-get-prompt-by-id', async (_, id) => {
+  try {
+    if (!databaseService) throw new Error('数据库服务未初始化');
+    return { success: true, data: databaseService.getPromptById(id) };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('db-create-prompt', async (_, prompt) => {
+  try {
+    if (!databaseService) throw new Error('数据库服务未初始化');
+    return { success: true, data: databaseService.createPrompt(prompt) };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('db-update-prompt', async (_, id, updates) => {
+  try {
+    if (!databaseService) throw new Error('数据库服务未初始化');
+    return { success: true, data: databaseService.updatePrompt(id, updates) };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('db-delete-prompt', async (_, id) => {
+  try {
+    if (!databaseService) throw new Error('数据库服务未初始化');
+    return { success: true, data: databaseService.deletePrompt(id) };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('db-get-all-categories', async () => {
+  try {
+    if (!databaseService) throw new Error('数据库服务未初始化');
+    return { success: true, data: databaseService.getAllCategories() };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('db-create-category', async (_, category) => {
+  try {
+    if (!databaseService) throw new Error('数据库服务未初始化');
+    return { success: true, data: databaseService.createCategory(category) };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('db-get-all-tags', async () => {
+  try {
+    if (!databaseService) throw new Error('数据库服务未初始化');
+    return { success: true, data: databaseService.getAllTags() };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('db-get-tags-by-category', async (_, categoryId) => {
+  try {
+    if (!databaseService) throw new Error('数据库服务未初始化');
+    return { success: true, data: databaseService.getTagsByCategory(categoryId) };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('db-get-all-settings', async () => {
+  try {
+    if (!databaseService) throw new Error('数据库服务未初始化');
+    return { success: true, data: databaseService.getAllSettings() };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('db-set-setting', async (_, key, value) => {
+  try {
+    if (!databaseService) throw new Error('数据库服务未初始化');
+    databaseService.setSetting(key, value);
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('db-migrate-from-localstorage', async (_, data) => {
+  try {
+    if (!databaseService) throw new Error('数据库服务未初始化');
+    return await databaseService.migrateFromLocalStorage(data);
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('db-get-migration-status', async () => {
+  try {
+    if (!databaseService) return { success: true, data: 'pending' };
+    return { success: true, data: databaseService.getMigrationStatus() };
+  } catch (error) {
     return { success: false, error: error.message };
   }
 });

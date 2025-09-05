@@ -45,6 +45,7 @@ export default defineConfig({
         'util',
         'os',
         'stream'
+        // sql.js 可以在渲染进程中使用，不需要排除
       ],
       output: {
         globals: {

@@ -21,7 +21,7 @@ i18n
   .init({
     resources,
     fallbackLng: 'zh-CN',
-    debug: process.env.NODE_ENV === 'development',
+    debug: import.meta.env.DEV, 
     
     interpolation: {
       escapeValue: false, // React已经默认转义了

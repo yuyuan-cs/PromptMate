@@ -1,6 +1,6 @@
 import { usePrompts } from "@/hooks/usePrompts";
 import { Button } from "@/components/ui/button";
-import { Plus, Star, Search, X, Copy, Edit, Trash, MoreVertical, Menu } from "lucide-react";
+import { Plus, Star, Search, X, Copy, Edit, Trash, MoreVertical, Menu, Ghost } from "lucide-react"; // Import Ghost
 import { Input } from "@/components/ui/input";
 import { useState, useEffect, memo, useCallback, useRef } from "react";
 import { Prompt, Category, PromptImage, PromptVersion } from "@/types";
@@ -49,6 +49,9 @@ import ReactMarkdown from 'react-markdown';
 import ErrorBoundary from "./ErrorBoundary";
 import { useTranslation } from "react-i18next";
 import { t } from "i18next";
+
+// Add Ghost to the Icons mapping for consistency
+// Icons.ghost = Ghost;
 
 // 提示词详情查看对话框组件 (Memoized)
 const PromptDetailDialog = memo(function PromptDetailDialog({ 
@@ -193,28 +196,7 @@ export const PromptList = memo(function PromptList({
   const [showDeletePromptDialog, setShowDeletePromptDialog] = useState(false);
   const [promptToEdit, setPromptToEdit] = useState<Prompt | null>(null);
   const [promptToDelete, setPromptToDelete] = useState<Prompt | null>(null);
-  const [newPromptTitle, setNewPromptTitle] = useState("");
-  const [newPromptContent, setNewPromptContent] = useState("");
-  const [newPromptCategory, setNewPromptCategory] = useState("general");
-  const [newPromptTags, setNewPromptTags] = useState("");
-  const [editPromptTitle, setEditPromptTitle] = useState("");
-  const [editPromptContent, setEditPromptContent] = useState("");
-  const [editPromptCategory, setEditPromptCategory] = useState("");
-  const [editPromptTags, setEditPromptTags] = useState("");
   const [localRefreshKey, setLocalRefreshKey] = useState(0);
-
-  
-  // 图片上传相关状态
-  const [newPromptImages, setNewPromptImages] = useState<PromptImage[]>([]);
-  const [selectedNewImageIndex, setSelectedNewImageIndex] = useState<number | null>(null);
-  const [newImageCaption, setNewImageCaption] = useState("");
-  const newFileInputRef = useRef<HTMLInputElement>(null);
-  
-  // 编辑对话框图片状态
-  const [editDialogImages, setEditDialogImages] = useState<PromptImage[]>([]);
-  const [selectedEditDialogImageIndex, setSelectedEditDialogImageIndex] = useState<number | null>(null);
-  const [editDialogImageCaption, setEditDialogImageCaption] = useState("");
-  const editDialogFileInputRef = useRef<HTMLInputElement>(null);
   
   // 标签管理相关状态
   const TAGS_DISPLAY_LIMIT = 10;
@@ -231,44 +213,11 @@ export const PromptList = memo(function PromptList({
   const [showComparisonDialog, setShowComparisonDialog] = useState(false);
   const [enhancementPrompt, setEnhancementPrompt] = useState<Prompt | null>(null);
 
-  // 创建提示词
-  const handleCreatePrompt = useCallback(() => {
-    if (!newPromptTitle.trim() || !newPromptContent.trim()) {
-      toast({
-        title: "错误",
-        description: "标题和内容不能为空",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    const tags = newPromptTags.split(",").map(tag => tag.trim()).filter(Boolean);
-    
-    addPrompt({
-      title: newPromptTitle,
-      content: newPromptContent,
-      category: newPromptCategory,
-      tags,
-      isFavorite: false,
-      images: newPromptImages.length > 0 ? newPromptImages : undefined,
-      version: 1
-    });
-    
-    toast({
-      title: "创建成功",
-      description: "新的提示词已创建",
-      variant: "success",
-    });
-    
-    // 重置表单
-    setNewPromptTitle("");
-    setNewPromptContent("");
-    setNewPromptTags("");
-    setNewPromptImages([]);
-    setSelectedNewImageIndex(null);
-    setNewImageCaption("");
+  // 简化的新建处理
+  const handleCreatePromptSuccess = useCallback(() => {
     setShowNewPromptDialog(false);
-  }, [newPromptTitle, newPromptContent, newPromptCategory, newPromptTags, newPromptImages, addPrompt, toast]);
+    setLocalRefreshKey(prev => prev + 1);
+  }, []);
 
   // 处理选择提示词（显示在右侧编辑面板）
   const handleSelectPrompt = useCallback((prompt: Prompt) => {
@@ -335,13 +284,6 @@ export const PromptList = memo(function PromptList({
   // 处理编辑提示词
   const handleOpenEditDialog = useCallback((prompt: Prompt) => {
     setPromptToEdit(prompt);
-    setEditPromptTitle(prompt.title);
-    setEditPromptContent(prompt.content);
-    setEditPromptCategory(prompt.category);
-    setEditPromptTags(prompt.tags.join(", "));
-    setEditDialogImages(prompt.images || []);
-    setSelectedEditDialogImageIndex(null);
-    setEditDialogImageCaption("");
     setShowEditPromptDialog(true);
   }, []);
 
@@ -361,42 +303,12 @@ export const PromptList = memo(function PromptList({
     });
   }, [addFromRecommended, toast]);
 
-  // 处理更新提示词
-  const handleUpdatePrompt = useCallback(() => {
-    if (!promptToEdit || !editPromptTitle.trim() || !editPromptContent.trim()) {
-      toast({
-        title: "错误",
-        description: "标题和内容不能为空",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    const tags = editPromptTags.split(",").map(tag => tag.trim()).filter(Boolean);
-    
-    updatePrompt(promptToEdit.id, {
-      title: editPromptTitle,
-      content: editPromptContent,
-      category: editPromptCategory,
-      tags,
-      images: editDialogImages.length > 0 ? editDialogImages : undefined,
-    });
-    
-    toast({
-      title: "更新成功",
-      description: "提示词已更新",
-      variant: "success",
-    });
-    
+  // 简化的编辑处理
+  const handleEditPromptSuccess = useCallback(() => {
     setShowEditPromptDialog(false);
     setPromptToEdit(null);
-    setEditPromptTitle("");
-    setEditPromptContent("");
-    setEditPromptTags("");
-    setEditDialogImages([]);
-    setSelectedEditDialogImageIndex(null);
-    setEditDialogImageCaption("");
-  }, [promptToEdit, editPromptTitle, editPromptContent, editPromptCategory, editPromptTags, editDialogImages, updatePrompt, toast]);
+    setLocalRefreshKey(prev => prev + 1);
+  }, []);
 
   // 处理确认删除提示词
   const handleConfirmDeletePrompt = useCallback(() => {
@@ -411,6 +323,45 @@ export const PromptList = memo(function PromptList({
       setPromptToDelete(null);
     }
   }, [promptToDelete, deletePrompt, toast]);
+  
+  // *** MODIFICATION START ***
+  // Helper to determine the content for the empty state view
+  const getEmptyStateContent = () => {
+    if (searchTerm) {
+      return {
+        icon: <Icons.search className="h-12 w-12 text-muted-foreground mx-auto mb-4" />,
+        title: t('common.noPromptFound'),
+        description: `${t('common.noMatchingPrompt')} "${searchTerm}"`,
+      };
+    }
+    if (showRecommended) {
+      return {
+        icon: <Icons.fileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />,
+        title: "暂无推荐",
+        description: "当前没有可用的推荐模板。",
+      };
+    }
+    if (showFavorites) {
+      return {
+        icon: <Icons.star className="h-12 w-12 text-muted-foreground mx-auto mb-4" />,
+        title: t('common.noFavoritePrompt'),
+        description: "您还没有收藏任何提示词，快去收藏一些吧！",
+      };
+    }
+    if (activeCategory) {
+      return {
+        icon: <Icons.ghost className="h-12 w-12 text-primary/60 mx-auto mb-4" />,
+        title: "这个分类有点孤单",
+        description: "快来添加第一个提示词，让这里热闹起来吧！",
+      };
+    }
+    return {
+      icon: <Icons.fileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />,
+      title: t('common.noPromptFound'),
+      description: t('common.clickNewPrompt'),
+    };
+  };
+  // *** MODIFICATION END ***
 
   return (
     <div className="flex flex-col h-full card-container-transition">
@@ -451,14 +402,14 @@ export const PromptList = memo(function PromptList({
                 <ContextMenuContent>
                   <ContextMenuItem onClick={() => handleTagClick(null, tag)}>
                     <Icons.fileText className="mr-2 h-4 w-4" />
-                    t('common.filterByTag')
+                    {t('common.filterByTag')}
                   </ContextMenuItem>
                   <ContextMenuItem
                     onClick={() => handleDeleteTag(tag)}
                     className="text-destructive focus:text-destructive"
                   >
                     <Icons.trash className="mr-2 h-4 w-4" />
-                    t('common.deleteTag')
+                    {t('common.deleteTag')}
                   </ContextMenuItem>
                 </ContextMenuContent>
               </ContextMenu>
@@ -492,7 +443,7 @@ export const PromptList = memo(function PromptList({
         <div className="flex items-center px-4 py-2 bg-muted/50 w-full border-b">
           <Icons.search className="h-4 w-4 mr-2 text-muted-foreground" />
           <span className="text-sm">
-            t('common.searchResults') "{searchTerm}"
+            {t('common.searchResults')} "{searchTerm}"
           </span>
         </div>
       )}
@@ -501,26 +452,18 @@ export const PromptList = memo(function PromptList({
       <ScrollArea className="flex-1">
         <div className="p-4">
           {filteredPrompts.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-center">
+            // *** MODIFICATION START ***
+            <div className="flex flex-col items-center justify-center h-full text-center pt-16">
               <div className="p-8 rounded-lg bg-muted/50 max-w-md">
-                <Icons.fileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-medium mb-2">{t('common.noPromptFound')}</h3>
+                {getEmptyStateContent().icon}
+                <h3 className="text-lg font-medium mb-2">{getEmptyStateContent().title}</h3>
                 <p className="text-muted-foreground">
-                  {searchTerm 
-                    ? t('common.noMatchingPrompt')
-                    : showRecommended 
-                      ? "当前没有可用的推荐模板。"
-                      : showFavorites
-                        ? t('common.noFavoritePrompt')
-                        : activeCategory
-                          ? "此分类下暂无提示词。"
-                          : t('common.clickNewPrompt')}
+                  {getEmptyStateContent().description}
                 </p>
                 {!searchTerm && !showRecommended && (
                   <Button 
                     className="mt-4"
                     onClick={() => {
-                      setNewPromptCategory(activeCategory || categories[0]?.id || "general");
                       setShowNewPromptDialog(true);
                     }}
                   >
@@ -530,6 +473,7 @@ export const PromptList = memo(function PromptList({
                 )}
               </div>
             </div>
+            // *** MODIFICATION END ***
           ) : (
             <div className={`grid gap-4 grid-layout-transition ${
               isEditPanelOpen 
@@ -810,69 +754,16 @@ export const PromptList = memo(function PromptList({
       )}
 
       {/* 编辑提示词对话框 */}
-      <Dialog open={showEditPromptDialog} onOpenChange={setShowEditPromptDialog}>
-        <DialogContent className="max-w-2xl max-h-[90vh]">
-          <DialogHeader>
-            <DialogTitle>{t('common.editPrompt')}</DialogTitle>
-            <DialogDescription>修改提示词的内容和属性</DialogDescription>
-          </DialogHeader>
-          <ScrollArea className="max-h-[60vh] pr-4">
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="edit-title">{t('common.title')}</Label>
-                <Input
-                  id="edit-title"
-                  value={editPromptTitle}
-                  onChange={(e) => setEditPromptTitle(e.target.value)}
-                  placeholder={t('common.inputPromptTitle')}
-                />
-              </div>
-              <div>
-                <Label htmlFor="edit-content">{t('common.content')}</Label>
-                <Textarea
-                  id="edit-content"
-                  value={editPromptContent}
-                  onChange={(e) => setEditPromptContent(e.target.value)}
-                  placeholder={t('common.inputPromptContent')}
-                  className="min-h-[200px]"
-                />
-              </div>
-              <div>
-                <Label htmlFor="edit-category">{t('common.category')}</Label>
-                <Select value={editPromptCategory} onValueChange={setEditPromptCategory}>
-                  <SelectTrigger>
-                    <SelectValue placeholder={t('common.selectCategory')} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.map((category) => (
-                      <SelectItem key={category.id} value={category.id}>
-                        {category.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="edit-tags">{t('common.tags')}</Label>
-                <Input
-                  id="edit-tags"
-                  value={editPromptTags}
-                  onChange={(e) => setEditPromptTags(e.target.value)}
-                  placeholder={t('common.inputTags')}
-                />
-              </div>
-            </div>
-          </ScrollArea>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowEditPromptDialog(false)}>
-              {t('common.cancel')}
-            </Button>
-            <Button onClick={handleUpdatePrompt}>
-              {t('common.save')}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <CreatePromptDialog
+        open={showEditPromptDialog}
+        onOpenChange={setShowEditPromptDialog}
+        mode="edit"
+        prompt={promptToEdit}
+        options={{
+          onSuccess: handleEditPromptSuccess,
+          onCancel: () => setShowEditPromptDialog(false)
+        }}
+      />
 
       {/* 删除提示词确认对话框 */}
       <Dialog open={showDeletePromptDialog} onOpenChange={setShowDeletePromptDialog}>
@@ -898,8 +789,11 @@ export const PromptList = memo(function PromptList({
       <CreatePromptDialog
         open={showNewPromptDialog}
         onOpenChange={setShowNewPromptDialog}
+        mode="create"
         options={{
-        defaultCategory: activeCategory || categories[0]?.id || "general"
+          defaultCategory: activeCategory || categories[0]?.id || "general",
+          onSuccess: handleCreatePromptSuccess,
+          onCancel: () => setShowNewPromptDialog(false)
         }}
       />
 

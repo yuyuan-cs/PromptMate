@@ -33,7 +33,7 @@ const logError = (error: Error, errorInfo: ErrorInfo, errorId: string) => {
     },
     userAgent: navigator.userAgent,
     url: window.location.href,
-    appVersion: process.env.REACT_APP_VERSION || 'unknown',
+    appVersion: import.meta.env.VITE_APP_VERSION || 'unknown',
   };
 
   // 保存到本地存储
