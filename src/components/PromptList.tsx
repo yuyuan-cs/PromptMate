@@ -525,7 +525,7 @@ export const PromptList = memo(function PromptList({
                     }}
                   >
                     <Icons.plus className="h-4 w-4 mr-2" />
-                    {t('common.newPrompt')}
+                    {t('common.create_prompt.title')}
                   </Button>
                 )}
               </div>
@@ -540,15 +540,13 @@ export const PromptList = memo(function PromptList({
                 <Card 
                   key={prompt.id}
                   className={cn(
-                    "prompt-card cursor-pointer rounded-md p-0.5",
+                    "prompt-card cursor-pointer p-0.5",
                     "w-full max-w-none", // 确保卡片占满网格单元格
-                    "focus-visible:ring-1 focus-visible:ring-offset-0 focus-visible:shadow-lg",
-                    // selectedPrompt?.id === prompt.id 
-                    //   ? "selected ring-1 ring-primary/30 bg-primary/5"
-                    //   : "border border-transparent hover:border-primary/20"
+                    "focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-offset-1",
+                    "border border-border/20 backdrop-blur-sm",
                     selectedPrompt?.id === prompt.id 
-                    ? "selected border-2 border-primary bg-primary/20"  // 蓝色主题
-                    : "border border-transparent hover:border-ring/20"
+                    ? "selected"
+                    : "hover:border-primary/30 hover:shadow-md"
                   )}
                   onClick={() => handleSelectPrompt(prompt)}
                   tabIndex={0}

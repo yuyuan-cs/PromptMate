@@ -104,6 +104,11 @@ npm run build
 # 打包成zip文件
 npm run pack
 
+# 自动化发布（推荐）
+npm run release          # 修复版本 (1.0.0 -> 1.0.1)
+npm run release:minor    # 小版本 (1.0.0 -> 1.1.0)
+npm run release:major    # 大版本 (1.0.0 -> 2.0.0)
+
 # 类型检查
 npm run type-check
 

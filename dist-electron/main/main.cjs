@@ -18,9 +18,19 @@ log.info('App starting...');
 // --- Auto Updater Setup ---
 autoUpdater.logger = log; // Pipe autoUpdater logs to electron-log
 autoUpdater.autoDownload = false; // Disable auto download, let user confirm
+autoUpdater.autoInstallOnAppQuit = true; // 应用退出时自动安装
+autoUpdater.autoRunAppAfterInstall = true; // 安装后自动运行
 
-// 禁用自动更新检查，避免错误
-autoUpdater.autoRunAppAfterInstall = false;
+// 配置更新服务器
+autoUpdater.setFeedURL({
+  provider: 'github',
+  owner: 'yy0691',
+  repo: 'PromptMate',
+  private: false,
+  requestHeaders: {
+    'User-Agent': 'PromptMate-Auto-Updater'
+  }
+});
 
 // GitHub API配置
 const GITHUB_API_BASE = 'https://api.github.com';
@@ -350,8 +360,29 @@ function getUpdateType(currentVersion, latestVersion) {
   }
 }
 
+// 获取自定义数据目录路径
+function getCustomDataPath() {
+  if (process.platform === 'win32') {
+    // Windows: 从注册表读取自定义数据目录
+    try {
+      const { execSync } = require('child_process');
+      const result = execSync('reg query "HKCU\\Software\\PromptMate" /v DataDirectory', { encoding: 'utf8', stdio: 'pipe' });
+      const match = result.match(/DataDirectory\s+REG_SZ\s+(.+)/);
+      if (match && match[1] && fs.existsSync(match[1].trim())) {
+        return match[1].trim();
+      }
+    } catch (error) {
+      // 如果读取失败，使用默认路径
+      console.log('未找到自定义数据路径，使用默认路径');
+    }
+  }
+  
+  // 默认使用 electron 的 userData 路径
+  return app.getPath('userData');
+}
+
 // 应用配置目录
-const userDataPath = app.getPath('userData');
+const userDataPath = getCustomDataPath();
 const configPath = path.join(userDataPath, 'config');
 const promptsPath = path.join(configPath, 'prompts.json');
 const settingsPath = path.join(configPath, 'settings.json');
@@ -974,19 +1005,80 @@ ipcMain.handle('download-update', async () => {
 // Fired when an update is found
 autoUpdater.on('update-available', (info) => {
   log.info('Update available:', info);
-  dialog.showMessageBox({
-    type: 'info',
-    title: '发现新版本',
-    message: `发现新版本 ${info.version}，是否现在下载？`, // Use info.version
-    buttons: ['是', '否']
-  }).then(result => {
-    if (result.response === 0) { // User clicked '是'
-      log.info('User agreed to download update.');
-      autoUpdater.downloadUpdate();
-    } else {
-      log.info('User declined update download.');
+  
+  // 智能更新策略：检查更新类型
+  const currentVersion = app.getVersion();
+  const updateType = getUpdateType(currentVersion, info.version);
+  
+  let message = '';
+  let autoDownload = false;
+  
+  switch (updateType) {
+    case 'major':
+      message = `发现重要更新 v${info.version}！包含新功能和重要改进。建议立即更新。`;
+      autoDownload = false; // 主要更新需要用户确认
+      break;
+    case 'minor':
+      message = `发现功能更新 v${info.version}！添加了新功能。`;
+      autoDownload = true; // 功能更新可以自动下载
+      break;
+    case 'patch':
+      message = `发现补丁更新 v${info.version}！修复了一些问题。`;
+      autoDownload = true; // 补丁更新自动下载
+      break;
+  }
+  
+  if (autoDownload) {
+    // 静默下载，不打扰用户
+    log.info('自动下载更新:', info.version);
+    autoUpdater.downloadUpdate();
+    
+    // 只在系统托盘显示通知
+    if (tray) {
+      tray.displayBalloon({
+        title: 'PromptMate 更新',
+        content: `正在下载 v${info.version}，将在下次启动时安装`,
+        icon: path.join(__dirname, '../../public/favicon.ico')
+      });
     }
-  });
+  } else {
+    // 检查是否为跳过的版本
+    const settings = getSettings();
+    if (settings.skippedVersions && settings.skippedVersions.includes(info.version)) {
+      log.info('用户已跳过版本:', info.version);
+      return;
+    }
+    
+    // 询问用户是否下载
+    dialog.showMessageBox(mainWindow, {
+      type: 'question',
+      buttons: ['立即更新', '稍后提醒', '跳过此版本'],
+      defaultId: 0,
+      title: 'PromptMate 更新',
+      message: message,
+      detail: '更新将在后台下载，并在下次启动时自动安装。'
+    }).then(result => {
+      if (result.response === 0) {
+        log.info('用户选择立即更新');
+        autoUpdater.downloadUpdate();
+      } else if (result.response === 1) {
+        log.info('用户选择稍后提醒');
+        // 30分钟后再次提醒
+        setTimeout(() => {
+          checkForUpdates();
+        }, 30 * 60 * 1000);
+      } else {
+        log.info('用户跳过此版本');
+        // 将此版本加入跳过列表
+        const settings = getSettings();
+        if (!settings.skippedVersions) {
+          settings.skippedVersions = [];
+        }
+        settings.skippedVersions.push(info.version);
+        saveSettings(settings);
+      }
+    });
+  }
 });
 
 // Fired when an update is not available
@@ -1008,19 +1100,48 @@ autoUpdater.on('download-progress', (progressObj) => {
 // Fired when an update has been downloaded
 autoUpdater.on('update-downloaded', (info) => {
   log.info('Update downloaded:', info);
-  dialog.showMessageBox({
-    type: 'info',
-    title: '更新已下载',
-    message: '新版本已下载完毕，是否立即重启应用以进行安装？',
-    buttons: ['立即重启', '稍后重启']
-  }).then(result => {
-    if (result.response === 0) { // User clicked '立即重启'
-      log.info('User agreed to restart and install update.');
-      autoUpdater.quitAndInstall();
-    } else {
-      log.info('User deferred update installation.');
+  
+  // 检查是否为自动下载的更新
+  const currentVersion = app.getVersion();
+  const updateType = getUpdateType(currentVersion, info.version);
+  const isAutoUpdate = updateType === 'minor' || updateType === 'patch';
+  
+  if (isAutoUpdate) {
+    // 自动下载的更新，只显示托盘通知
+    if (tray) {
+      tray.displayBalloon({
+        title: 'PromptMate 更新',
+        content: `v${info.version} 已下载完成，将在下次启动时自动安装`,
+        icon: path.join(__dirname, '../../public/favicon.ico')
+      });
     }
-  });
+    
+    // 设置标记，在应用退出时自动安装
+    app.once('before-quit', () => {
+      autoUpdater.quitAndInstall();
+    });
+  } else {
+    // 用户主动选择的更新，询问是否立即重启
+    dialog.showMessageBox(mainWindow, {
+      type: 'info',
+      title: '更新已下载',
+      message: `v${info.version} 已下载完成！`,
+      detail: '您可以选择立即重启安装，或稍后在关闭应用时自动安装。',
+      buttons: ['立即重启安装', '下次启动时安装'],
+      defaultId: 1
+    }).then(result => {
+      if (result.response === 0) {
+        log.info('用户选择立即重启安装');
+        autoUpdater.quitAndInstall();
+      } else {
+        log.info('用户选择下次启动时安装');
+        // 设置标记，在应用退出时自动安装
+        app.once('before-quit', () => {
+          autoUpdater.quitAndInstall();
+        });
+      }
+    });
+  }
 });
 
 // Fired when there is an error during the update process

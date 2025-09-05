@@ -56,6 +56,48 @@ export interface VariableHistory {
 }
 
 /**
+ * 检查位置是否在代码块内
+ */
+function isInCodeBlock(text: string, position: number): boolean {
+  // 查找所有类型的代码块
+  const patterns = [
+    /```[\s\S]*?```/g,           // 三重反引号代码块
+    /`[^`\n]*`/g,                // 单行内联代码
+    /<code[^>]*>[\s\S]*?<\/code>/gi, // HTML code 标签
+    /<pre[^>]*>[\s\S]*?<\/pre>/gi,   // HTML pre 标签
+  ];
+  
+  for (const regex of patterns) {
+    regex.lastIndex = 0; // 重置正则状态
+    let match;
+    while ((match = regex.exec(text)) !== null) {
+      if (position >= match.index && position < match.index + match[0].length) {
+        return true;
+      }
+    }
+  }
+  
+  return false;
+}
+
+/**
+ * 检查位置是否在HTML标签内
+ */
+function isInHtmlTag(text: string, position: number): boolean {
+  // 查找HTML标签
+  const htmlTagRegex = /<[^>]*>/g;
+  let match;
+  
+  while ((match = htmlTagRegex.exec(text)) !== null) {
+    if (position >= match.index && position < match.index + match[0].length) {
+      return true;
+    }
+  }
+  
+  return false;
+}
+
+/**
  * 从文本中提取所有变量占位符
  */
 export function extractVariables(text: string): VariableInfo[] {
@@ -65,12 +107,30 @@ export function extractVariables(text: string): VariableInfo[] {
     const patternType = ['curly', 'double_curly', 'bracket', 'dollar'][patternIndex];
     let match;
     
+    // 重置正则表达式状态
+    pattern.lastIndex = 0;
+    
     while ((match = pattern.exec(text)) !== null) {
       const variableName = match[1] || match[0];
       const originalText = match[0];
+      const matchPosition = match.index;
       
       // 跳过空变量名
       if (!variableName.trim()) continue;
+      
+      // 跳过代码块内的内容
+      if (isInCodeBlock(text, matchPosition)) continue;
+      
+      // 跳过HTML标签内的内容
+      if (isInHtmlTag(text, matchPosition)) continue;
+      
+      // 跳过看起来像文件路径或代码的内容
+      if (variableName.includes('/') || variableName.includes('\\') || variableName.includes('.')) {
+        // 允许常见的变量名模式
+        if (!/^[a-zA-Z_][a-zA-Z0-9_.-]*$/.test(variableName)) {
+          continue;
+        }
+      }
       
       variables.push({
         name: variableName.trim(),

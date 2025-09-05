@@ -158,7 +158,7 @@ export function Index({ sidebarOpen: propsSidebarOpen, setSidebarOpen: propSetSi
         // 使用 ResizablePanelGroup 实现可拖拽调节宽度
         <ResizablePanelGroup direction="horizontal" className="flex-1 min-h-0">
           {/* 左侧：提示词列表 */}
-          <ResizablePanel defaultSize={60} minSize={30} maxSize={70}>
+          <ResizablePanel defaultSize={45} minSize={25} maxSize={65}>
             <div className="h-full border-r">
               <ScrollArea className="h-full">
                 <ContentArea onToggleSidebar={toggleSidebar} />
@@ -170,7 +170,7 @@ export function Index({ sidebarOpen: propsSidebarOpen, setSidebarOpen: propSetSi
           <ResizableHandle withHandle />
           
           {/* 右侧：编辑面板 */}
-          <ResizablePanel defaultSize={40} minSize={30} maxSize={70}>
+          <ResizablePanel defaultSize={55} minSize={35} maxSize={75}>
             <div className="h-full bg-background shadow-lg animate-slide-in-panel">
               <PromptEditorModular />
             </div>

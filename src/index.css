@@ -220,22 +220,86 @@
   /* 提示卡片样式 */
   .prompt-card {
     @apply w-full;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 12px;
+    position: relative;
+    overflow: hidden;
+    transform-origin: center;
+    will-change: transform, box-shadow, border-color;
   }
+
+  /* 卡片列表进入动画 */
+  .prompt-card {
+    animation: cardFadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) backwards;
+  }
+
+  /* 卡片内容优化 */
+  .prompt-card .card-header {
+    transition: padding 0.2s ease;
+  }
+
+  .prompt-card:hover .card-header {
+    padding-bottom: 0.75rem;
+  }
+
+  @keyframes cardFadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(20px) scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  /* 为每个卡片添加错位延迟 */
+  .prompt-card:nth-child(1) { animation-delay: 0ms; }
+  .prompt-card:nth-child(2) { animation-delay: 50ms; }
+  .prompt-card:nth-child(3) { animation-delay: 100ms; }
+  .prompt-card:nth-child(4) { animation-delay: 150ms; }
+  .prompt-card:nth-child(5) { animation-delay: 200ms; }
+  .prompt-card:nth-child(6) { animation-delay: 250ms; }
+  .prompt-card:nth-child(7) { animation-delay: 300ms; }
+  .prompt-card:nth-child(8) { animation-delay: 350ms; }
+  .prompt-card:nth-child(9) { animation-delay: 400ms; }
+  .prompt-card:nth-child(10) { animation-delay: 450ms; }
 
   /* 提示卡片悬停样式 */
   .prompt-card:hover {
     transform: translateY(-2px) scale(1.01);
-    @apply ring-ring/30;
-    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    box-shadow: 
+      0 4px 12px -2px hsl(var(--shadow-sm)), 
+      0 2px 8px -1px hsl(var(--shadow-sm));
+    border-color: hsl(var(--primary) / 0.15);
   }
 
   /* 提示卡片选中样式 */
   .prompt-card.selected {
-    border: 2px solid var(--ring) !important;
+    border: 1px solid hsl(var(--primary) / 0.4) !important;
+    background: hsl(var(--primary) / 0.02);
     transform: translateY(-2px) scale(1.01);
-    @apply ring-ring/30;
-    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.08);
+    box-shadow: 
+      0 6px 20px -4px hsl(var(--primary) / 0.15), 
+      0 3px 12px -2px hsl(var(--primary) / 0.1),
+      0 0 0 1px hsl(var(--primary) / 0.05);
+  }
+
+  /* 深色模式优化 */
+  .dark .prompt-card:hover {
+    border-color: hsl(var(--primary) / 0.25);
+    box-shadow: 
+      0 4px 12px -2px rgba(0, 0, 0, 0.2), 
+      0 2px 8px -1px rgba(0, 0, 0, 0.1);
+  }
+
+  .dark .prompt-card.selected {
+    border: 1px solid hsl(var(--primary) / 0.5) !important;
+    background: hsl(var(--primary) / 0.04);
+    box-shadow: 
+      0 6px 20px -4px rgba(0, 0, 0, 0.3), 
+      0 3px 12px -2px hsl(var(--primary) / 0.2),
+      0 0 0 1px hsl(var(--primary) / 0.1);
   }
 
   /* 提示卡片进入动画 */
@@ -446,4 +510,38 @@
 
 .dark * {
   scrollbar-color: hsl(var(--border)) transparent;
+}
+
+/* 自定义滚动条样式 */
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--border)) transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background-color: hsl(var(--border));
+  border-radius: 4px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background-color: hsl(var(--border) / 0.8);
+}
+
+.scrollbar-thumb-border::-webkit-scrollbar-thumb {
+  background-color: hsl(var(--border));
+}
+
+.scrollbar-track-transparent::-webkit-scrollbar-track {
+  background: transparent;
 }

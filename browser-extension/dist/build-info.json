@@ -1,0 +1,98 @@
+{
+  "version": "1.0.1",
+  "buildTime": "2025-09-04T01:05:06.300Z",
+  "buildType": "production",
+  "platform": "browser-extension",
+  "files": [
+    {
+      "path": "background.js",
+      "size": 5462,
+      "modified": "2025-09-04T01:05:05.843Z"
+    },
+    {
+      "path": "content.js",
+      "size": 6146,
+      "modified": "2025-09-04T01:05:05.843Z"
+    },
+    {
+      "path": "icons/icon-128.png",
+      "size": 29248,
+      "modified": "2025-09-04T01:05:05.844Z"
+    },
+    {
+      "path": "icons/icon-16.png",
+      "size": 29248,
+      "modified": "2025-09-04T01:05:05.843Z"
+    },
+    {
+      "path": "icons/icon-32.png",
+      "size": 29248,
+      "modified": "2025-09-04T01:05:05.902Z"
+    },
+    {
+      "path": "icons/icon-48.png",
+      "size": 29248,
+      "modified": "2025-09-04T01:05:05.903Z"
+    },
+    {
+      "path": "manifest.json",
+      "size": 1591,
+      "modified": "2025-09-04T01:05:05.843Z"
+    },
+    {
+      "path": "options.html",
+      "size": 615,
+      "modified": "2025-09-04T01:05:05.903Z"
+    },
+    {
+      "path": "options.js",
+      "size": 187612,
+      "modified": "2025-09-04T01:05:05.842Z"
+    },
+    {
+      "path": "options.js.LICENSE.txt",
+      "size": 1145,
+      "modified": "2025-09-04T01:05:05.843Z"
+    },
+    {
+      "path": "popup.html",
+      "size": 558,
+      "modified": "2025-09-04T01:05:05.903Z"
+    },
+    {
+      "path": "popup.js",
+      "size": 140929,
+      "modified": "2025-09-04T01:05:05.842Z"
+    },
+    {
+      "path": "popup.js.LICENSE.txt",
+      "size": 971,
+      "modified": "2025-09-04T01:05:05.843Z"
+    },
+    {
+      "path": "sidepanel.html",
+      "size": 1117,
+      "modified": "2025-09-04T01:05:05.903Z"
+    },
+    {
+      "path": "sidepanel.js",
+      "size": 968388,
+      "modified": "2025-09-04T01:05:05.842Z"
+    },
+    {
+      "path": "sidepanel.js.LICENSE.txt",
+      "size": 1145,
+      "modified": "2025-09-04T01:05:05.844Z"
+    },
+    {
+      "path": "_locales/en/messages.json",
+      "size": 9606,
+      "modified": "2025-09-04T01:05:05.903Z"
+    },
+    {
+      "path": "_locales/zh_CN/messages.json",
+      "size": 9524,
+      "modified": "2025-09-04T01:05:05.906Z"
+    }
+  ]
+}

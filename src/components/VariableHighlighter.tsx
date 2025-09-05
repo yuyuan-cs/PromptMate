@@ -192,14 +192,27 @@ export const VariableDisplay: React.FC<VariableDisplayProps> = ({
     if (variables.length === 0) {
       return content;
     }
+    
     let result = '';
     let lastIndex = 0;
     const sortedVariables = [...variables].sort((a, b) => a.startIndex - b.startIndex);
-    sortedVariables.forEach(variable => {
+    
+    // 过滤掉重叠的变量，避免冲突
+    const filteredVariables = sortedVariables.filter((variable, index) => {
+      if (index === 0) return true;
+      const prevVariable = sortedVariables[index - 1];
+      return variable.startIndex >= prevVariable.endIndex;
+    });
+    
+    filteredVariables.forEach(variable => {
+      // 添加变量前的文本
       result += content.substring(lastIndex, variable.startIndex);
-      result += `<var data-name="${variable.name}">${variable.originalText}</var>`;
+      // 使用 data-variable-name 避免与HTML的 data-name 冲突
+      result += `<var data-variable-name="${encodeURIComponent(variable.name)}">${variable.originalText}</var>`;
       lastIndex = variable.endIndex;
     });
+    
+    // 添加最后的文本
     result += content.substring(lastIndex);
     return result;
   }, [content, variables]);
@@ -211,17 +224,19 @@ export const VariableDisplay: React.FC<VariableDisplayProps> = ({
           remarkPlugins={[remarkGfm]}
           rehypePlugins={[rehypeRaw]}
           components={{
-            var: ({ node }) => {
-              const name = node.properties?.dataName as string;
-              const originalText = node.children[0]?.type === 'text' ? node.children[0].value : '';
-              // --- 新增调试代码 ---
-  	console.log('--- Debugging <var> Node ---');
- 	 console.log('Received Node Object:', node);
-  	console.log('Node Properties:', node.properties);
-  	// --- 结束调试代码 ---
-
-            const variable = variables.find(v => v.name === name);
-
+            var: ({ node, ...props }) => {
+              // 从新的属性名获取变量名
+              const encodedName = node.properties?.dataVariableName as string;
+              const name = encodedName ? decodeURIComponent(encodedName) : 
+                          (node.properties?.dataName as string); // 向后兼容
+              
+              const originalText = node.children?.[0]?.type === 'text' ? 
+                                  node.children[0].value : 
+                                  (typeof node.children?.[0] === 'string' ? node.children[0] : '');
+              
+              if (!name) return <span>{originalText}</span>;
+              
+              const variable = variables.find(v => v.name === name);
               if (!variable) return <span>{originalText}</span>;
 
               return (

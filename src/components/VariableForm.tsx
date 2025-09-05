@@ -61,6 +61,7 @@ export const VariableForm: React.FC<VariableFormProps> = ({
   const [previewContent, setPreviewContent] = useState('');
   const [openPopovers, setOpenPopovers] = useState<{ [key: string]: boolean }>({});
   const [variableHistory, setVariableHistory] = useState<{ [key: string]: string[] }>({});
+  const [focusedField, setFocusedField] = useState<string | null>(null);
   
   // 生成变量表单数据
   const { variables, formFields } = generateVariableFormData(content);
@@ -212,7 +213,7 @@ export const VariableForm: React.FC<VariableFormProps> = ({
   }
   
   return (
-    <div className={cn("space-y-4 max-h-full overflow-hidden flex flex-col w-full min-w-0", className)}>
+    <div className={cn("space-y-2 max-h-full overflow-hidden flex flex-col w-full min-w-0", className)}>
       {/* 变量统计信息 */}
       <div className="flex-shrink-0">
         <Card>
@@ -269,21 +270,37 @@ export const VariableForm: React.FC<VariableFormProps> = ({
               </div>
             </div>
           </CardHeader>
-          <CardContent className="pt-0 space-y-4 flex-1 overflow-y-auto w-full">
+          <CardContent className="pt-1 space-y-4 flex-1 overflow-y-auto w-full">
             {formFields.map((field) => (
               <div key={field.name} className="relative">
                 {/* 输入框 */}
-                <div className="relative flex items-center gap-1 border border-border/30 rounded-md px-3 py-1.5 hover:border-border/20 focus-within:border-primary/30 focus-within:ring-1 focus-within:ring-primary/20 transition-all duration-200">
+                <div className="relative flex items-start gap-1 border border-border/30 rounded-md px-3 py-1 hover:border-border/20 focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/20 transition-all duration-200">
                   {/* 隐藏的镜像元素用于测量高度 */}
                   <div
                     aria-hidden
                     ref={setMirrorRef(field.name)}
                     className="invisible absolute z-[-1] top-0 left-0 w-full whitespace-pre-wrap break-all px-6 py-3 text-sm"
+                    style={{ paddingTop: '24px', paddingBottom: '12px' }}
                   >
                     {(variableValues[field.name] || '') + '\n'}
                   </div>
                   
-                  <div className="relative flex-1">
+                  <div className="relative flex-1 min-h-[44px]">
+                    {/* 融入边框的浮动标签 */}
+                    <Label
+                      htmlFor={field.name}
+                      className={cn(
+                        "absolute left-2 pointer-events-none transition-all duration-200 z-10",
+                        "px-1 bg-background",
+                        variableValues[field.name] || focusedField === field.name
+                          ? "top-[-6px] text-xs text-primary" 
+                          : "top-3 text-sm text-muted-foreground"
+                      )}
+                    >
+                      {field.label}
+                      {field.required && <span className="text-red-500 ml-1">*</span>}
+                    </Label>
+                    
                     <Textarea
                       id={field.name}
                       ref={setTextareaRef(field.name)}
@@ -297,34 +314,28 @@ export const VariableForm: React.FC<VariableFormProps> = ({
                         const el = e.currentTarget as HTMLTextAreaElement;
                         requestAnimationFrame(() => autoResize(el));
                       }}
-                      placeholder=" "
+                      onFocus={() => setFocusedField(field.name)}
+                      onBlur={() => setFocusedField(null)}
                       rows={1}
-                      style={{ overflow: 'hidden', resize: 'none', boxSizing: 'border-box', maxHeight: '120px' }}
+                      style={{ 
+                        overflow: variableValues[field.name] && variableValues[field.name].length > 100 ? 'auto' : 'hidden',
+                        resize: 'vertical', 
+                        boxSizing: 'border-box', 
+                        minHeight: '44px',
+                        maxHeight: '200px',
+                        paddingTop: '20px',
+                        paddingBottom: '8px'
+                      }}
                       className={cn(
-                        "w-full min-h-[44px] pt-6 pb-2 px-0 border-0 bg-transparent focus:ring-0 focus:outline-none transition-all duration-200 whitespace-pre-wrap break-all text-sm",
-                        "peer"
+                        "w-full px-0 border-0 bg-transparent focus:ring-0 focus:outline-none transition-all duration-200 whitespace-pre-wrap break-all text-sm",
+                        "placeholder:text-muted-foreground/60",
+                        "resize-y scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent"
                       )}
                     />
-                    
-                    {/* 浮动标签 */}
-                    <Label
-                      htmlFor={field.name}
-                      className={cn(
-                        "absolute left-0 transition-all duration-200 pointer-events-none text-muted-foreground",
-                        "peer-placeholder-shown:top-3 peer-placeholder-shown:text-sm peer-placeholder-shown:text-muted-foreground",
-                        "peer-focus:top-1 peer-focus:text-xs peer-focus:text-primary",
-                        variableValues[field.name] 
-                          ? "top-1 text-xs text-primary" 
-                          : "top-3 text-sm"
-                      )}
-                    >
-                      {field.label}
-                      {field.required && <span className="text-red-500 ml-1">*</span>}
-                    </Label>
                   </div>
                   
                   {/* 统一的下拉选择按钮 */}
-                  <div className="flex items-center gap-1 flex-shrink-0">
+                  <div className="flex items-start gap-1 flex-shrink-0 pt-[18px]">
                     <Popover
                       open={openPopovers[field.name]}
                       onOpenChange={(open) => 
@@ -462,16 +473,8 @@ export const VariableForm: React.FC<VariableFormProps> = ({
               <div className="bg-muted/30 rounded-md p-4 min-h-[100px] max-h-[200px] overflow-y-auto">
                 {previewContent ? (
                   <div className="space-y-3">
-                    {/* Markdown 渲染预览 */}
-                    <div className="markdown-body">
-                      <ReactMarkdown>{previewContent}</ReactMarkdown>
-                    </div>
-                    
                     {/* 变量高亮显示 */}
-                    <div className="pt-2 border-t border-border/30">
-                      <div className="text-xs text-muted-foreground mb-2">
-                        {t('variableForm.variableReplacement')}
-                      </div>
+                    <div className="pt-0">
                       <VariableDisplay
                         content={previewContent}
                         showVariableCount={false}

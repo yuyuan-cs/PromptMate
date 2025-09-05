@@ -1,12 +1,15 @@
 {
   "name": "promptmate-browser-extension",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "PromptMate浏览器扩展 - 将您的提示词库无缝集成到浏览器工作流中",
   "private": true,
   "scripts": {
     "dev": "webpack --mode development --watch",
     "build": "webpack --mode production",
     "pack": "npm run build && powershell Compress-Archive -Path dist/* -DestinationPath promptmate-extension.zip -Force",
+    "release": "node scripts/release.js",
+    "release:minor": "node scripts/release.js minor",
+    "release:major": "node scripts/release.js major",
     "clean": "rimraf dist",
     "lint": "eslint src/",
     "type-check": "tsc --noEmit"

@@ -60,7 +60,23 @@ export class SyncManager extends EventEmitter {
 
   // 获取同步数据文件路径
   private getSyncDataPath(): string {
-    const userDataPath = app.getPath('userData');
+    // 使用与主进程相同的逻辑获取自定义数据路径
+    let userDataPath = app.getPath('userData');
+    
+    if (process.platform === 'win32') {
+      try {
+        const { execSync } = require('child_process');
+        const result = execSync('reg query "HKCU\\Software\\PromptMate" /v DataDirectory', { encoding: 'utf8', stdio: 'pipe' });
+        const match = result.match(/DataDirectory\s+REG_SZ\s+(.+)/);
+        if (match && match[1] && require('fs').existsSync(match[1].trim())) {
+          userDataPath = match[1].trim();
+        }
+      } catch (error) {
+        // 如果读取失败，使用默认路径
+        console.log('未找到自定义数据路径，使用默认路径');
+      }
+    }
+    
     return join(userDataPath, 'sync-data.json');
   }
 

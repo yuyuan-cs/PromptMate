@@ -833,7 +833,7 @@ export function Sidebar({ className }: { className?: string }) {
                           </ContextMenuItem>
                           <ContextMenuItem onClick={() => handleContextMenuNewPrompt(category.id)}>
                             <Icons.plus className="h-4 w-4 mr-2" />
-                            {t('common.newprompt')}
+                            {t('common.create_prompt.title')}
                           </ContextMenuItem>
                           <ContextMenuItem 
                             className="text-destructive"
