@@ -48,28 +48,36 @@ export function useSidebarAlert() {
 
   const close = () => {
     setState(prev => ({ ...prev, open: false }));
-  }
+    // 清空回调，防止重复触发
+    callbacks.current = undefined;
+  };
 
   const handleConfirm = () => {
     const confirmCallback = callbacks.current?.onConfirm;
     close();
-    confirmCallback?.();
+    // 在关闭后延迟触发回调，防止状态冲突
+    setTimeout(() => confirmCallback?.(), 0);
   };
 
   const handleCancel = () => {
     const cancelCallback = callbacks.current?.onCancel;
     close();
-    cancelCallback?.();
+    // 在关闭后延迟触发回调，防止状态冲突
+    setTimeout(() => cancelCallback?.(), 0);
   };
 
   const AlertComponent: React.FC = () => {
     return (
-      <AlertDialog open={state.open} onOpenChange={(open) => {
-        if (!open) {
-          // If closing via overlay click or escape key, treat as cancel.
-          handleCancel();
-        }
-      }}>
+      <AlertDialog 
+        open={state.open} 
+        onOpenChange={(open) => {
+          // 只在未手动关闭时才触发取消操作
+          if (!open && state.open) {
+            // 使用直接关闭，不触发取消回调，防止闪烁
+            close();
+          }
+        }}
+      >
         <AlertDialogContent>
           {state.title && (
             <AlertDialogHeader>
@@ -82,11 +90,15 @@ export function useSidebarAlert() {
           )}
           <AlertDialogFooter>
             {state.mode === 'confirm' && (
-              <AlertDialogCancel onClick={handleCancel}>
+              <AlertDialogCancel 
+                onClick={handleCancel}
+              >
                 {state.cancelText || '取消'}
               </AlertDialogCancel>
             )}
-            <AlertDialogAction onClick={handleConfirm}>
+            <AlertDialogAction 
+              onClick={handleConfirm}
+            >
               {state.confirmText || '确定'}
             </AlertDialogAction>
           </AlertDialogFooter>

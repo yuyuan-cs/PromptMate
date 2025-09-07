@@ -369,18 +369,32 @@ export function Sidebar({ className }: { className?: string }) {
   // 添加删除处理函数
   const handleDelete = (categoryId: string) => {
     console.log(`[Sidebar] handleDelete called for categoryId: ${categoryId}`);
+    
+    // 找到要删除的分类
+    const categoryToDelete = categories.find(cat => cat.id === categoryId);
+    if (!categoryToDelete) {
+      console.warn(`[Sidebar] Category with id ${categoryId} not found`);
+      return;
+    }
+    
     // 确认删除
     showConfirm(
-      t("sidebar.message.deleteCategory"),
+      t("sidebar.message.deleteCategory").replace("{name}", categoryToDelete.name),
       t("common.confirmDelete"),
       () => {
         console.log(`[Sidebar] Confirmed deletion for categoryId: ${categoryId}`);
-        // 确认后执行删除
-        deleteCategory(categoryId);
-        console.log(t("sidebar.message.deleteCategorySuccess"));
-        // 如果删除的是当前选中的分类，切换到全部提示词
-        if (activeCategory === categoryId) {
-          handleAllPromptsClick();
+        try {
+          // 确认后执行删除
+          deleteCategory(categoryId);
+          console.log(t("sidebar.message.deleteCategorySuccess"));
+          
+          // 如果删除的是当前选中的分类，切换到全部提示词
+          if (activeCategory === categoryId) {
+            handleAllPromptsClick();
+          }
+        } catch (error) {
+          console.error(`[Sidebar] Error deleting category:`, error);
+          showAlert("删除失败，请重试", "错误");
         }
       },
       () => {
@@ -844,17 +858,29 @@ export function Sidebar({ className }: { className?: string }) {
                           </div>
                         </ContextMenuTrigger>
                         <ContextMenuContent>
-                          <ContextMenuItem onClick={() => handleEditCategory(category)}>
+                          <ContextMenuItem onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleEditCategory(category);
+                          }}>
                             <Icons.edit className="h-4 w-4 mr-2" />
                             {t('common.edit')}
                           </ContextMenuItem>
-                          <ContextMenuItem onClick={() => handleContextMenuNewPrompt(category.id)}>
+                          <ContextMenuItem onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleContextMenuNewPrompt(category.id);
+                          }}>
                             <Icons.plus className="h-4 w-4 mr-2" />
                             {t('common.create_prompt.title')}
                           </ContextMenuItem>
                           <ContextMenuItem 
                             className="text-destructive"
-                            onClick={() => handleDelete(category.id)}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              handleDelete(category.id);
+                            }}
                           >
                             <Icons.trash className="h-4 w-4 mr-2" />
                             {t('common.delete')}

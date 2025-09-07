@@ -1,5 +1,4 @@
-import React from "react";
-import * as LucideIcons from "lucide-react";
+import { memo } from "react";
 import { getIconComponent } from "@/lib/icons";
 
 interface CategoryIconProps {
@@ -7,8 +6,8 @@ interface CategoryIconProps {
   className?: string;
 }
 
-export function CategoryIcon({ iconName, className = "h-5 w-5" }: CategoryIconProps) {
+export const CategoryIcon = memo(function CategoryIcon({ iconName, className = "h-5 w-5" }: CategoryIconProps) {
   const IconComponent = getIconComponent(iconName);
   
-  return <IconComponent className={className} />;
-} 
+  return <IconComponent className={className} aria-hidden="true" />;
+}); 

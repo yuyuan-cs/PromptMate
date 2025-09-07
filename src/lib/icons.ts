@@ -73,8 +73,9 @@ export const getIconComponent = (iconName: string | undefined | null): React.FC<
 
   // Debug logging for Electron environment to help identify missing icons
   if (!ResolvedIconComponent && typeof window !== 'undefined' && window.process?.type === 'renderer') {
-    console.warn(`图标未找到: ${iconName}, 使用默认图标 HelpCircle`);
+    console.warn(`图标未找到: ${iconName}, 使用默认图标 Folder`);
   }
 
-  return ResolvedIconComponent || LucideIcons.HelpCircle; // Default to HelpCircle if truly not found
+  // Always return a valid component - use Folder as default instead of HelpCircle for better UX
+  return ResolvedIconComponent || LucideIcons.Folder;
 }; 
