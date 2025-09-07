@@ -38,9 +38,13 @@ function AppContent() {
   const isDev = import.meta.env.DEV;
   
   // 启动页面管理
-  const { showSplash } = useSplashScreen({
-    duration: 3000,
-    minDuration: 2000,
+  const { 
+    showSplash, 
+    isLoading, 
+    progress, 
+    currentTask, 
+    tasks 
+  } = useSplashScreen({
     onComplete: () => {
       console.log('启动页面完成');
     }
@@ -81,13 +85,20 @@ function AppContent() {
 
   // 如果显示启动页面，则只显示启动页面
   if (showSplash) {
-    return <SplashScreen />;
+    return (
+      <SplashScreen 
+        isLoading={isLoading}
+        progress={progress}
+        currentTask={currentTask}
+        tasks={tasks}
+      />
+    );
   }
 
   return (
-    <main className="h-screen flex flex-col">
+    <main className="h-screen flex flex-col" data-testid="main-app">
       <Header />
-      <div className="flex-1 flex min-h-0 overflow-hidden">
+      <div className="flex-1 flex min-h-0 overflow-hidden app-content">
         {renderCurrentView()}
       </div>
       <Toaster />

@@ -38,7 +38,7 @@
     "collapse": "折叠",
     "viewMore": "查看更多",
     "editPrompt": "编辑提示词",
-    "confirmDeletePrompt": "您确定要删除提示词 {promptToDelete?.title} 吗？此操作无法撤销。",
+    "confirmDeletePrompt": "您确定要删除提示词吗？此操作无法撤销。",
     "confirmDelete": "确认删除",
     "searchResults": "搜索结果：",  
     "all":"全部",
@@ -1052,7 +1052,14 @@
   },
   "splashScreen": {
     "description": "让AI提示词管理变得简单高效",
-    "loading": "正在加载..."
+    "loading": "正在加载...",
+    "completed": "加载完成",
+    "initializingDatabase": "初始化数据库",
+    "migratingData": "迁移数据",
+    "loadingPrompts": "加载提示词",
+    "loadingCategories": "加载分类",
+    "loadingSettings": "加载设置",
+    "checkingUpdates": "检查更新"
   },
   "ai_settings": {
     "title": "AI设置",

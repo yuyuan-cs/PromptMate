@@ -12,7 +12,7 @@
     "currentView": "Current View",
     "saveComparisonResult": "Save Comparison Result",
     "manualCreateVersion": "Manual Create Version",
-    "confirmDeleteDescription": "Are you sure you want to delete prompt {promptToDelete?.title}?",
+    "confirmDeleteDescription": "Are you sure you want to delete prompt?",
     "promptTitle": "Prompt Title",
     "confirm": "Confirm",
     "ok": "OK",
@@ -54,7 +54,7 @@
     "collapse": "Collapse",
     "viewMore": "View More",
     "editPrompt": "Edit Prompt",
-    "confirmDeletePrompt": "Are you sure you want to delete prompt {promptToDelete?.title}?",
+    "confirmDeletePrompt": "Are you sure you want to delete prompt?",
     "confirmDelete": "Confirm Delete",
     "searchResults": "Search Results:",
     "all": "All",
@@ -135,7 +135,8 @@
     "customizeAppearance": "Customize app appearance and behavior",
     "message": {
       "copySuccess": "Copy Successful",
-      "copySuccessDescription": "Final content has been copied to clipboard",
+      "copied": "Copy Successful",
+      "copiedDescription": "Final content has been copied to clipboard",
       "copyFailed": "Copy Failed",
       "copyFailedDescription": "Unable to copy to clipboard",
       "saving": "Saving...",
@@ -1218,7 +1219,14 @@
   },
   "splashScreen": {
     "description": "Make AI prompt management simple and efficient",
-    "loading": "Loading..."
+    "loading": "Loading...",
+    "completed": "Loading Complete",
+    "initializingDatabase": "Initializing Database",
+    "migratingData": "Migrating Data",
+    "loadingPrompts": "Loading Prompts",
+    "loadingCategories": "Loading Categories",
+    "loadingSettings": "Loading Settings",
+    "checkingUpdates": "Checking Updates"
   },
   "promptEditorModular":{
     "selectPromptToEdit": "Select a prompt to edit",

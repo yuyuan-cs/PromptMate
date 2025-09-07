@@ -407,7 +407,7 @@ export function PromptEditor() {
     if (!selectedPrompt) return;
     
     const newPrompt = addFromRecommended(selectedPrompt);
-    setSelectedPrompt(newPrompt);
+    setSelectedPrompt(selectedPrompt);
     setShowRecommended(false);
     
     toast({

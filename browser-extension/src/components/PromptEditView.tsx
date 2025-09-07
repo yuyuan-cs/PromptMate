@@ -337,11 +337,6 @@ export const PromptEditView: React.FC<PromptEditViewProps> = ({
               {tags.map((tag) => (
                 <span key={tag} className="bg-gray-100 px-2 py-1 rounded text-xs flex items-center gap-1">
                   {tag}
-                  <button 
-                    onClick={() => removeTag(tag)}
-                    className="text-gray-500 hover:text-red-500"
-                  >
-                  </button>
                 </span>
               ))}
             </div>

@@ -7,6 +7,16 @@ import {
   DialogTitle,
   DialogFooter
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -31,6 +41,10 @@ export function CategoryManager({ open, onOpenChange }: CategoryManagerProps) {
   const [editValues, setEditValues] = useState<{ name: string; icon: string }>({ name: "", icon: "" });
   const [newCategoryName, setNewCategoryName] = useState("");
   const [newCategoryIcon, setNewCategoryIcon] = useState("folder");
+  
+  // 删除确认对话框状态
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(null);
 
   // 重置编辑状态
   const resetEditState = () => {
@@ -80,133 +94,182 @@ export function CategoryManager({ open, onOpenChange }: CategoryManagerProps) {
     setNewCategoryIcon("folder");
   };
 
+  // 处理删除分类请求
+  const handleDeleteRequest = (category: Category) => {
+    setCategoryToDelete(category);
+    setShowDeleteDialog(true);
+  };
+
+  // 确认删除分类
+  const handleConfirmDelete = () => {
+    if (categoryToDelete) {
+      deleteCategory(categoryToDelete.id);
+      setShowDeleteDialog(false);
+      setCategoryToDelete(null);
+    }
+  };
+
+  // 取消删除
+  const handleCancelDelete = () => {
+    setShowDeleteDialog(false);
+    setCategoryToDelete(null);
+  };
+
   // 当对话框关闭时重置状态
   useEffect(() => {
     if (!open) {
       resetEditState();
       setNewCategoryName("");
       setNewCategoryIcon("folder");
+      setShowDeleteDialog(false);
+      setCategoryToDelete(null);
     }
   }, [open]);
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px] max-h-[600px]">
-        <DialogHeader>
-          <DialogTitle>分类管理</DialogTitle>
-        </DialogHeader>
-        
-        <div className="py-4 space-y-4">
-          {/* 添加新分类 */}
-          <div className="space-y-2">
-            <h3 className="text-sm font-medium">添加新分类</h3>
-            <div className="flex items-center space-x-2">
-              <div className="flex-1">
-                <Input
-                  placeholder="输入分类名称"
-                  value={newCategoryName}
-                  onChange={(e) => setNewCategoryName(e.target.value)}
-                />
-              </div>
-              <div className="w-[150px]">
-                <IconSelector
-                  value={newCategoryIcon}
-                  onChange={setNewCategoryIcon}
-                />
-              </div>
-              <Button onClick={handleAddCategory} size="icon" className="flex-shrink-0">
-                <Icons.plus className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-[425px] max-h-[600px]">
+          <DialogHeader>
+            <DialogTitle>分类管理</DialogTitle>
+          </DialogHeader>
           
-          {/* 分类列表 */}
-          <div className="space-y-2">
-            <h3 className="text-sm font-medium">现有分类</h3>
-            <ScrollArea className="h-[300px]">
-              <div className="space-y-2 pr-4">
-                {categories.map((category) => (
-                  <div
-                    key={category.id}
-                    className={cn(
-                      "border rounded-md transition-all duration-200",
-                      editingCategoryId === category.id ? "p-3 space-y-3" : "p-2"
-                    )}
-                  >
-                    {editingCategoryId === category.id ? (
-                      // 编辑模式
-                      <>
-                        <div className="space-y-2">
-                          <Label htmlFor={`edit-category-name-${category.id}`}>分类名称</Label>
-                          <Input
-                            id={`edit-category-name-${category.id}`}
-                            value={editValues.name}
-                            onChange={(e) => setEditValues(prev => ({ ...prev, name: e.target.value }))}
-                          />
-                        </div>
-                        
-                        <div className="space-y-2">
-                          <Label htmlFor={`edit-category-icon-${category.id}`}>分类图标</Label>
-                          <IconSelector
-                            value={editValues.icon}
-                            onChange={(icon) => setEditValues(prev => ({ ...prev, icon }))}
-                          />
-                        </div>
-                        
-                        <div className="flex justify-end space-x-2 mt-2">
-                          <Button variant="outline" size="sm" onClick={resetEditState}>
-                            取消
-                          </Button>
-                          <Button size="sm" onClick={() => handleSaveCategory(category.id)}>
-                            保存
-                          </Button>
-                        </div>
-                      </>
-                    ) : (
-                      // 查看模式
-                      <div className="flex items-center justify-between h-10">
-                        <div className="flex items-center">
-                          <CategoryIcon iconName={category.icon} className="h-4 w-4 mr-2" />
-                          <span>{category.name}</span>
-                        </div>
-                        
-                        <div className="flex items-center space-x-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleEditCategory(category)}
-                            className="h-8 w-8 hover:bg-muted/50"
-                          >
-                            <Icons.edit className="h-4 w-4" />
-                          </Button>
+          <div className="py-4 space-y-4">
+            {/* 添加新分类 */}
+            <div className="space-y-2">
+              <h3 className="text-sm font-medium">添加新分类</h3>
+              <div className="flex items-center space-x-2">
+                <div className="flex-1">
+                  <Input
+                    placeholder="输入分类名称"
+                    value={newCategoryName}
+                    onChange={(e) => setNewCategoryName(e.target.value)}
+                  />
+                </div>
+                <div className="w-[150px]">
+                  <IconSelector
+                    value={newCategoryIcon}
+                    onChange={setNewCategoryIcon}
+                  />
+                </div>
+                <Button onClick={handleAddCategory} size="icon" className="flex-shrink-0">
+                  <Icons.plus className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+            
+            {/* 分类列表 */}
+            <div className="space-y-2">
+              <h3 className="text-sm font-medium">现有分类</h3>
+              <ScrollArea className="h-[300px]">
+                <div className="space-y-2 pr-4">
+                  {categories.map((category) => (
+                    <div
+                      key={category.id}
+                      className={cn(
+                        "border rounded-md transition-all duration-200",
+                        editingCategoryId === category.id ? "p-3 space-y-3" : "p-2"
+                      )}
+                    >
+                      {editingCategoryId === category.id ? (
+                        // 编辑模式
+                        <>
+                          <div className="space-y-2">
+                            <Label htmlFor={`edit-category-name-${category.id}`}>分类名称</Label>
+                            <Input
+                              id={`edit-category-name-${category.id}`}
+                              value={editValues.name}
+                              onChange={(e) => setEditValues(prev => ({ ...prev, name: e.target.value }))}
+                            />
+                          </div>
                           
-                          {/* 不允许删除默认的 general 分类 */}
-                          {category.id !== "general" && (
+                          <div className="space-y-2">
+                            <Label htmlFor={`edit-category-icon-${category.id}`}>分类图标</Label>
+                            <IconSelector
+                              value={editValues.icon}
+                              onChange={(icon) => setEditValues(prev => ({ ...prev, icon }))}
+                            />
+                          </div>
+                          
+                          <div className="flex justify-end space-x-2 mt-2">
+                            <Button variant="outline" size="sm" onClick={resetEditState}>
+                              取消
+                            </Button>
+                            <Button size="sm" onClick={() => handleSaveCategory(category.id)}>
+                              保存
+                            </Button>
+                          </div>
+                        </>
+                      ) : (
+                        // 查看模式
+                        <div className="flex items-center justify-between h-10">
+                          <div className="flex items-center">
+                            <CategoryIcon iconName={category.icon} className="h-4 w-4 mr-2" />
+                            <span>{category.name}</span>
+                          </div>
+                          
+                          <div className="flex items-center space-x-1">
                             <Button
                               variant="ghost"
                               size="icon"
-                              onClick={() => deleteCategory(category.id)}
-                              className="h-8 w-8 hover:bg-destructive/10 hover:text-destructive"
+                              onClick={() => handleEditCategory(category)}
+                              className="h-8 w-8 hover:bg-muted/50"
                             >
-                              <Icons.trash className="h-4 w-4" />
+                              <Icons.edit className="h-4 w-4" />
                             </Button>
-                          )}
+                            
+                            {/* 不允许删除默认的 general 分类 */}
+                            {category.id !== "general" && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleDeleteRequest(category)}
+                                className="h-8 w-8 hover:bg-destructive/10 hover:text-destructive"
+                              >
+                                <Icons.trash className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </ScrollArea>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+            </div>
           </div>
-        </div>
-        
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            关闭
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
+              关闭
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 删除确认对话框 */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>确认删除分类</AlertDialogTitle>
+            <AlertDialogDescription>
+              您确定要删除分类 "{categoryToDelete?.name}" 吗？此操作无法撤销。
+              该分类下的所有提示词将被移动到"通用"分类中。
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleCancelDelete}>
+              取消
+            </AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleConfirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              删除
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 } 

@@ -3,47 +3,47 @@ import { cn } from '@/lib/utils';
 import { Icons } from '@/components/ui/icons';
 import { useTranslation } from 'react-i18next';
 
+interface LoadingTask {
+  id: string;
+  name: string;
+  status: 'pending' | 'loading' | 'completed' | 'error';
+  progress?: number;
+}
+
 interface SplashScreenProps {
+  isLoading?: boolean;
+  progress?: number;
+  currentTask?: string;
+  tasks?: LoadingTask[];
   onComplete?: () => void;
-  duration?: number;
 }
 
 export const SplashScreen: React.FC<SplashScreenProps> = ({ 
-  onComplete, 
-  duration = 500 
+  isLoading = true,
+  progress = 0,
+  currentTask,
+  tasks = [],
+  onComplete 
 }) => {
-  const [progress, setProgress] = useState(0);
   const [isVisible, setIsVisible] = useState(true);
   const { t } = useTranslation();
 
-  // 进度和消失逻辑保持不变
+  // 动态设置进度CSS变量
   useEffect(() => {
-    const startTime = Date.now();
-    let animationFrameId: number;
+    document.documentElement.style.setProperty('--progress', `${progress / 100}`);
+  }, [progress]);
 
-    const updateProgress = () => {
-      const elapsed = Date.now() - startTime;
-      const newProgress = Math.min((elapsed / duration) * 100, 100);
-      setProgress(newProgress);
-
-      if (newProgress >= 100) {
+  // 当加载完成时，延迟隐藏启动页面
+  useEffect(() => {
+    if (!isLoading && progress >= 100) {
+      setTimeout(() => {
+        setIsVisible(false);
         setTimeout(() => {
-          setIsVisible(false);
-          setTimeout(() => {
-            onComplete?.();
-          }, 300); 
-        }, 500);
-      } else {
-        animationFrameId = requestAnimationFrame(updateProgress);
-      }
-    };
-
-    updateProgress();
-
-    return () => {
-      cancelAnimationFrame(animationFrameId);
-    };
-  }, [duration, onComplete]);
+          onComplete?.();
+        }, 300); 
+      }, 500);
+    }
+  }, [isLoading, progress, onComplete]);
 
   return (
     <div className={cn(
@@ -74,20 +74,62 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
         </div>
 
         {/* 进度条和状态 */}
-        <div className="w-64 space-y-3 pt-4">
+        <div className="w-80 space-y-4 pt-4">
+          {/* 当前任务显示 */}
+          {currentTask && (
+            <div className="text-center">
+              <p className="text-sm text-neutral-600 dark:text-neutral-300">
+                {currentTask}
+              </p>
+            </div>
+          )}
+          
           <div className="flex justify-between text-xs font-mono">
             {/* 加载文字颜色变化 */}
-            <span className="text-neutral-600 dark:text-neutral-300">{t('splashScreen.loading')}...</span>
+            <span className="text-neutral-600 dark:text-neutral-300">
+              {isLoading ? t('splashScreen.loading') : t('splashScreen.completed')}
+            </span>
             <span className="text-neutral-600 dark:text-neutral-300">{Math.round(progress)}%</span>
           </div>
+          
           {/* 进度条轨道颜色变化 */}
           <div className="w-full bg-neutral-200 dark:bg-neutral-800 rounded-full h-1.5 overflow-hidden">
             {/* 进度条填充颜色变化 */}
             <div 
-              className="h-full bg-neutral-800 dark:bg-white rounded-full transition-transform duration-300 ease-out"
-              style={{ transform: `scaleX(${progress / 100})`, transformOrigin: 'left' }}
+              className="h-full bg-neutral-800 dark:bg-white rounded-full transition-transform duration-300 ease-out progress-bar-fill"
             />
           </div>
+          
+          {/* 任务列表显示 */}
+          {tasks.length > 0 && (
+            <div className="space-y-1 max-h-20 overflow-y-auto">
+              {tasks.map((task) => (
+                <div key={task.id} className="flex items-center space-x-2 text-xs">
+                  <div className="w-3 h-3 flex items-center justify-center">
+                    {task.status === 'completed' && (
+                      <Icons.check className="w-2 h-2 text-green-500" />
+                    )}
+                    {task.status === 'loading' && (
+                      <Icons.loader className="w-2 h-2 animate-spin text-blue-500" />
+                    )}
+                    {task.status === 'error' && (
+                      <Icons.x className="w-2 h-2 text-red-500" />
+                    )}
+                    {task.status === 'pending' && (
+                      <div className="w-2 h-2 rounded-full bg-neutral-300 dark:bg-neutral-600" />
+                    )}
+                  </div>
+                  <span className={cn(
+                    "text-neutral-500 dark:text-neutral-400",
+                    task.status === 'completed' && "text-green-600 dark:text-green-400",
+                    task.status === 'error' && "text-red-600 dark:text-red-400"
+                  )}>
+                    {task.name}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
       </div>

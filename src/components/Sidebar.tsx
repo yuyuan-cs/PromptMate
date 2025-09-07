@@ -368,26 +368,26 @@ export function Sidebar({ className }: { className?: string }) {
 
   // 添加删除处理函数
   const handleDelete = (categoryId: string) => {
+    console.log(`[Sidebar] handleDelete called for categoryId: ${categoryId}`);
     // 确认删除
-    let confirmed = false;
-    const confirmPromise = new Promise<void>((resolve) => {
-      showConfirm(
-        t("sidebar.message.deleteCategory"),
-        "",
-        () => { confirmed = true; resolve(); },
-        () => { confirmed = false; resolve(); }
-      );
-    });
-    confirmPromise.then(() => {
-      if (!confirmed) return;
-      // 删除分类
-      deleteCategory(categoryId);
-      console.log(t("sidebar.message.deleteCategorySuccess"));
-      // 如果删除的是当前选中的分类，切换到全部提示词
-      if (activeCategory === categoryId) {
-        handleAllPromptsClick();
+    showConfirm(
+      t("sidebar.message.deleteCategory"),
+      t("common.confirmDelete"),
+      () => {
+        console.log(`[Sidebar] Confirmed deletion for categoryId: ${categoryId}`);
+        // 确认后执行删除
+        deleteCategory(categoryId);
+        console.log(t("sidebar.message.deleteCategorySuccess"));
+        // 如果删除的是当前选中的分类，切换到全部提示词
+        if (activeCategory === categoryId) {
+          handleAllPromptsClick();
+        }
+      },
+      () => {
+        // 取消则不执行任何操作
+        console.log(`[Sidebar] Cancelled deletion for categoryId: ${categoryId}`);
       }
-    });
+    );
   };
 
   // 处理右键菜单新建提示词
@@ -544,7 +544,8 @@ export function Sidebar({ className }: { className?: string }) {
       <AlertComponent />
       {/* 拖拽调整区域 - 整个右边缘 */}
       <div
-        className="absolute top-0 right-0 w-4 h-full cursor-col-resize z-30 transform translate-x-0.5"
+        className="absolute top-0 right-0 w-4 h-full cursor-col-resize transform translate-x-0.5"
+        style={{ zIndex: isDragging ? 30 : -1 }}
         onMouseDown={handleMouseDown}
       />
 
