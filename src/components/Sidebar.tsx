@@ -392,9 +392,10 @@ export function Sidebar({ className }: { className?: string }) {
 
   // 处理右键菜单新建提示词
   const handleContextMenuNewPrompt = (categoryId: string) => {
-    console.log('🖱️ 右键菜单新建提示词:', {
-      clickedCategoryId: categoryId,
-      currentActiveCategory: activeCategory,
+    console.log('🔍 右键菜单新建提示词调试:', {
+      categoryId,
+      categoryName: categories.find(c => c.id === categoryId)?.name,
+      activeCategory,
       newPromptCategoryId: categoryId
     });
     setNewPromptCategoryId(categoryId);
@@ -1202,6 +1203,7 @@ export function Sidebar({ className }: { className?: string }) {
         options={{
           defaultCategory: newPromptCategoryId || undefined,
           onSuccess: () => {
+            console.log('🔍 新建提示词成功回调:', { newPromptCategoryId });
             setShowNewPromptDialog(false);
             setNewPromptCategoryId(null);
           }

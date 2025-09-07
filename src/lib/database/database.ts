@@ -79,47 +79,6 @@ export class DatabaseManager {
     this.db.backup(backupPath);
   }
 
-  // 清除所有数据
-  public clearAllData(): void {
-    if (!this.db) throw new Error('数据库未初始化');
-    
-    try {
-      const transaction = this.db.transaction(() => {
-        // 删除所有表的数据，保持表结构
-        this.db.exec('DELETE FROM prompt_tags');
-        this.db.exec('DELETE FROM prompt_images');
-        this.db.exec('DELETE FROM prompts');
-        this.db.exec('DELETE FROM categories');
-        this.db.exec('DELETE FROM tags');
-        this.db.exec('DELETE FROM settings');
-      });
-      
-      transaction();
-      console.log('数据库数据清除成功');
-    } catch (error) {
-      console.error('清除数据库数据失败:', error);
-      throw error;
-    }
-  }
-
-  // 重置为默认数据
-  public resetToDefaults(language: string = 'zh-CN'): void {
-    if (!this.db) throw new Error('数据库未初始化');
-    
-    try {
-      // 先清除所有数据
-      this.clearAllData();
-      
-      // 重新插入种子数据
-      this.seedDefaultData();
-      
-      console.log('数据库重置为默认数据成功');
-    } catch (error) {
-      console.error('重置数据库为默认数据失败:', error);
-      throw error;
-    }
-  }
-
   // 插入种子数据
   private async seedDefaultData(): Promise<void> {
     if (!this.db) throw new Error('数据库未初始化');

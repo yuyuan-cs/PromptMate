@@ -40,6 +40,7 @@ function usePromptsState() {
   const [showFavorites, setShowFavorites] = useState(false);
   const [refreshCounter, setRefreshCounter] = useState(0);
   const { toast } = useToast();
+  const { t } = useTranslation();
   
   // 数据库状态
   const [dbState, setDbState] = useState<DatabaseState>({
@@ -76,7 +77,8 @@ function usePromptsState() {
       }
       forceRefresh();
     } catch (error) {
-      console.error('重新加载数据失败:', error);
+      //重新加载数据失败
+      console.error(t('common.message.reloadDataFailed'), error);
     }
   }, [dbState.useSqlite, dbClient]);
 
@@ -84,14 +86,15 @@ function usePromptsState() {
   useEffect(() => {
     const initDatabase = async () => {
       try {
-        console.log('开始初始化数据库...');
+        //开始初始化数据库
+        console.log(t('common.message.startInitializeDatabase'));
         
         // 检查是否在Electron环境中并且数据库客户端可用
         if (dbClient.isAvailable()) {
           try {
             // 获取数据库状态
             const dbStatus = await dbClient.getStatus();
-            console.log('数据库状态:', dbStatus);
+            console.log(t('common.message.databaseStatus'), dbStatus);
             
             if (dbStatus.initialized) {
               // 数据库已初始化，检查是否需要迁移
@@ -99,7 +102,7 @@ function usePromptsState() {
               
               if (migrationStatus === 'pending') {
                 // 执行数据迁移
-                console.log('开始数据迁移...');
+                console.log(t('common.message.startDataMigration'));
                 const localData = {
                   prompts: loadPrompts(),
                   categories: loadCategories(),
@@ -107,7 +110,7 @@ function usePromptsState() {
                 };
                 
                 await dbClient.migrateFromLocalStorage(localData);
-                console.log('数据迁移完成');
+                console.log(t('common.message.dataMigrationCompleted'));
               }
               
               // 更新数据库状态
@@ -119,31 +122,31 @@ function usePromptsState() {
               });
               
               // 从数据库加载数据
-              console.log('从数据库加载数据...');
+              console.log(t('common.message.loadDataFromDatabase'));
               await loadDataFromDatabase();
               
-              console.log('SQLite数据库初始化成功');
+              console.log(t('common.message.sqliteDatabaseInitialized'));
             } else {
-              throw new Error('数据库初始化失败');
+              throw new Error(t('common.message.databaseInitializationFailed'));
             }
           } catch (dbError) {
-            console.warn('SQLite初始化失败，回退到localStorage:', dbError);
+            console.warn(t('common.message.sqliteInitializationFailed'), dbError);
             throw dbError;
           }
         } else {
           // 非Electron环境或数据库客户端不可用，使用localStorage
-          console.log('数据库客户端不可用，使用localStorage');
-          throw new Error('数据库客户端不可用');
+          console.log(t('common.message.databaseClientUnavailable'));
+          throw new Error(t('common.message.databaseClientUnavailable'));
         }
       } catch (error) {
-        console.log('使用localStorage模式');
+        console.log(t('common.message.useLocalStorageMode'));
         
         // 回退到localStorage
         setDbState({
           isInitialized: true,
           isConnected: false,
           useSqlite: false,
-          error: error instanceof Error ? error.message : '未知错误'
+          error: error instanceof Error ? error.message : t('common.message.unknownError')
         });
         
         await loadDataFromLocalStorage();
@@ -299,8 +302,8 @@ function usePromptsState() {
       }
 
       toast({
-        title: "添加成功",
-        description: "提示词已添加",
+        title: t('common.message.addSuccess'),
+        description: t('common.message.addSuccessDescription'),
         variant: "success",
       });
 
@@ -378,8 +381,8 @@ function usePromptsState() {
       }
       
       toast({
-        title: "更新失败",
-        description: "提示词更新失败，请重试",
+        title: t('common.message.updateFailed'),
+        description: t('common.message.updateFailedDescription'),
         variant: "destructive",
       });
     }
@@ -398,7 +401,7 @@ function usePromptsState() {
           const filteredPrompts = prompts.filter(p => p.id !== id);
           savePrompts(filteredPrompts);
           
-          console.log('提示词已从数据库删除:', id);
+          console.log(t('common.message.promptDeletedFromDatabase'), id);
         }
       } else {
         // 使用localStorage
@@ -406,7 +409,7 @@ function usePromptsState() {
         setPrompts(filteredPrompts);
         savePrompts(filteredPrompts);
         
-        console.log('提示词已从localStorage删除:', id);
+        console.log(t('common.message.promptDeletedFromLocalStorage'), id);
       }
 
       // 如果删除的是当前选中的提示词，清空选中状态
@@ -415,17 +418,17 @@ function usePromptsState() {
       }
 
       toast({
-        title: "删除成功",
-        description: "提示词已删除",
+        title: t('common.message.deleteSuccess'),
+        description: t('common.message.deleteSuccessDescription'),
         variant: "success",
       });
 
     } catch (error) {
-      console.error('删除提示词失败:', error);
+      console.error(t('common.message.deleteFailed'), error);
       
       toast({
-        title: "删除失败",
-        description: "提示词删除失败，请重试",
+        title: t('common.message.deleteFailed'),
+        description: t('common.message.deleteFailedDescription'),
         variant: "destructive",
       });
     }
@@ -468,18 +471,18 @@ function usePromptsState() {
       }
 
       toast({
-        title: "分类已添加",
-        description: `新分类 "${name}" 已成功创建`,
+        title: t('common.message.categoryAddSuccess'),
+        description: t('common.message.categoryCreatedSuccessfully', { name: name }),
         variant: "success",
       });
 
       return newCategory;
     } catch (error) {
-      console.error('添加分类失败:', error);
+      console.error(t('common.message.categoryAddFailed'), error);
       
       // 如果数据库操作失败，回退到localStorage
       if (dbState.useSqlite) {
-        console.log('数据库操作失败，回退到localStorage');
+        console.log(t('common.message.databaseOperationFailed'), error);
         const newCategory: Category = {
           id: generateId(),
           name: name.trim(),
@@ -489,11 +492,11 @@ function usePromptsState() {
         const updatedCategories = [...categories, newCategory];
         setCategories(updatedCategories);
         saveCategories(updatedCategories);
-      }
+      } 
       
       toast({
-        title: "添加失败",
-        description: "分类添加失败，请重试",
+        title: t('common.message.categoryAddFailed'),
+        description: t('common.message.categoryAddFailedDescription'),
         variant: "destructive",
       });
     }
@@ -521,8 +524,8 @@ function usePromptsState() {
     saveCategories(updatedCategories);
     
     toast({
-      title: "分类已更新",
-      description: `分类 "${oldCategory?.name || id}" 已更新`,
+      title: t('common.message.categoryUpdated'),
+      description: t('common.message.categoryUpdatedDescription', { name: oldCategory?.name || id }),
       variant: "success",
     });
   }, [categories, toast]);
@@ -555,8 +558,8 @@ function usePromptsState() {
     toast({
       title: "分类已删除",
       description: promptsInCategory > 0 
-        ? `分类 "${categoryToDelete?.name || id}" 已删除，${promptsInCategory} 个提示词已移至"通用"分类`
-        : `分类 "${categoryToDelete?.name || id}" 已删除`,
+        ? `${t('common.message.category')} "${categoryToDelete?.name || id}" ${t('common.message.deleted')}，${promptsInCategory} ${t('common.message.promptsInCategory')} ${t('common.message.generalCategory')}`
+        : `${t('common.message.category')} "${categoryToDelete?.name || id}" ${t('common.message.deleted')}`,
       variant: "warning",
     });
   }, [categories, prompts, activeCategory, toast]);
@@ -567,8 +570,8 @@ function usePromptsState() {
     saveCategories(reorderedCategories);
     
     toast({
-      title: "分类顺序已更新",
-      description: "分类顺序已成功更新",
+      title: t('common.message.categoryOrderUpdated'),
+      description: t('common.message.categoryOrderUpdatedSuccessfully'),
       variant: "success",
     });
   }, [toast]);
@@ -584,7 +587,7 @@ function usePromptsState() {
         });
         return Array.from(tags).sort();
       } catch (error) {
-        console.error('从数据库获取标签失败:', error);
+        console.error(t('common.message.getTagsFailed'), error);
       }
     }
     
@@ -670,15 +673,15 @@ function usePromptsState() {
     navigator.clipboard.writeText(prompt.content)
       .then(() => {
         toast({
-          title: "复制成功",
-          description: "提示词内容已复制到剪贴板",
+          title: t('common.message.copied'),
+          description: t('common.message.copiedDescription'),
           variant: "success",
         });
       })
       .catch(() => {
         toast({
-          title: "复制失败",
-          description: "无法复制到剪贴板，请手动复制",
+          title: t('common.message.copyFailed'),
+          description: t('common.message.copyFailedDescription'),
           variant: "destructive",
         });
       });

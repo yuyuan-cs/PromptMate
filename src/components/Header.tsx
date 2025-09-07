@@ -68,8 +68,8 @@ export function Header() {
   // 获取标题
   const getTitle = () => {
     if (prompts.length === 0) return "PromptMate";
-    return `PromptMate - ${prompts.length} 个提示词`;
-  };
+    return `PromptMate - ${prompts.length} ${t("common.xPrompts")}`;  // X个提示词
+  }; 
 
   // 切换侧边栏
   const toggleSidebar = () => {

@@ -4,6 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { PromptImage, Prompt } from "@/types";
 import { generateId } from "@/lib/data";
 import { applyVariableValues } from "@/lib/variableUtils";
+import { useTranslation } from "react-i18next";
 
 // 防抖函数
 function debounce<T extends (...args: any[]) => any>(func: T, wait: number): (...args: Parameters<T>) => void {
@@ -46,6 +47,7 @@ export interface PromptEditorState {
 
 export const usePromptEditor = (options: PromptEditorOptions = {}) => {
   const { toast } = useToast();
+  const { t } = useTranslation();
   const {
     updatePrompt,
     deletePrompt,
@@ -181,8 +183,8 @@ export const usePromptEditor = (options: PromptEditorOptions = {}) => {
       updateState({ autoSaveStatus: "idle" });
       isAutoSavingRef.current = false;
       toast({
-        title: "保存失败",
-        description: "请稍后重试",
+        title: t('common.message.saveFailed'),
+        description: t('common.message.saveFailedDescription'),
         variant: "destructive",
       });
       return false;
@@ -200,8 +202,8 @@ export const usePromptEditor = (options: PromptEditorOptions = {}) => {
     const success = await saveChanges();
     if (success) {
       toast({
-        title: "保存成功",
-        description: "更改已保存",
+        title: t('common.message.saveSuccess'),
+        description: t('common.message.saveSuccessDescription'),
         variant: "success",
         duration: 1000,
       });
@@ -217,8 +219,8 @@ export const usePromptEditor = (options: PromptEditorOptions = {}) => {
     Array.from(files).forEach(file => {
       if (file.size > 5 * 1024 * 1024) {
         toast({
-          title: "文件过大",
-          description: `图片 "${file.name}" 大小不能超过5MB`,
+          title: t('common.message.fileSize'),
+          description: t('common.message.fileType', { fileName: file.name }),
           variant: "destructive",
         });
         return;
@@ -302,15 +304,15 @@ export const usePromptEditor = (options: PromptEditorOptions = {}) => {
           navigator.clipboard.writeText(finalContent)
             .then(() => {
               toast({
-                title: "复制成功",
-                description: "最终内容已复制到剪贴板",
+                title: t('common.message.copied'),
+                description: t('common.message.copiedDescription'),
                 variant: "success",
               });
             })
             .catch(() => {
               toast({
-                title: "复制失败",
-                description: "无法复制到剪贴板，请手动复制",
+                title: t('common.message.copyFailed'),
+                description: t('common.message.copyFailedDescription'),
                 variant: "destructive",
               });
             });

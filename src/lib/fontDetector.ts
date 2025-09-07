@@ -433,3 +433,4 @@ export class FontDetector {
 
 // 导出单例实例
 export const fontDetector = FontDetector.getInstance();
+

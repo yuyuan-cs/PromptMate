@@ -83,7 +83,7 @@ const PromptDetailDialog = memo(function PromptDetailDialog({
                 variant="ghost"
                 size="icon"
                 onClick={() => copyPromptContent(prompt.content)}
-                title="复制提示词"
+                title={t('common.copyPromptContent')}
               >
                 <Icons.copy className="h-4 w-4" />
               </Button>
@@ -94,7 +94,7 @@ const PromptDetailDialog = memo(function PromptDetailDialog({
                   e.stopPropagation();
                   toggleFavorite(prompt.id);
                 }}
-                title={prompt.isFavorite ? "取消收藏" : "收藏"}
+                title={prompt.isFavorite ? t('common.unfavorite') : t('common.favorite')}
               >
                 {prompt.isFavorite ? (
                   <Icons.starFilled className="h-4 w-4 fill-yellow-400 text-yellow-400" />
@@ -109,7 +109,7 @@ const PromptDetailDialog = memo(function PromptDetailDialog({
         <ScrollArea className="flex-1 max-h-[calc(90vh-120px)]">
           <div className="space-y-4 p-1">
             <div>
-              <h4 className="text-sm font-medium mb-2">提示词内容</h4>
+              <h4 className="text-sm font-medium mb-2">{t('common.promptContent')}</h4>
               <div className="p-4 rounded-md bg-muted/50 text-sm whitespace-pre-wrap markdown-body">
                 <ReactMarkdown>{prompt.content}</ReactMarkdown>
               </div>
@@ -117,14 +117,14 @@ const PromptDetailDialog = memo(function PromptDetailDialog({
             
             {prompt.description && (
               <div>
-                <h4 className="text-sm font-medium mb-2">描述</h4>
+                <h4 className="text-sm font-medium mb-2">{t('common.description')}</h4>
                 <p className="text-sm text-muted-foreground">{prompt.description}</p>
               </div>
             )}
             
             {prompt.tags.length > 0 && (
               <div>
-                <h4 className="text-sm font-medium mb-2">标签</h4>
+                <h4 className="text-sm font-medium mb-2">{t('common.tags')}</h4>
                 <div className="flex flex-wrap gap-2">
                   {prompt.tags.map((tag) => (
                     <Badge key={tag} variant="secondary" className="text-xs">
@@ -136,10 +136,10 @@ const PromptDetailDialog = memo(function PromptDetailDialog({
             )}
             
             <div className="text-xs text-muted-foreground">
-              创建时间: {new Date(prompt.createdAt).toLocaleString()}
+              {t('common.createdAt')}: {new Date(prompt.createdAt).toLocaleString()}
               {prompt.updatedAt !== prompt.createdAt && (
                 <span className="ml-4">
-                  更新时间: {new Date(prompt.updatedAt).toLocaleString()}
+                  {t('common.updatedAt')}: {new Date(prompt.updatedAt).toLocaleString()}
                 </span>
               )}
             </div>
@@ -148,7 +148,7 @@ const PromptDetailDialog = memo(function PromptDetailDialog({
         
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            关闭
+            {t('common.close')}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -301,11 +301,11 @@ export const PromptList = memo(function PromptList({
   // 处理从推荐添加
   const handleAddFromRecommended = useCallback((prompt: Prompt) => {
     addFromRecommended(prompt);
-    toast({
-      title: "添加成功",
-      description: "提示词已添加到您的收藏",
-      variant: "success",
-    });
+    // toast({
+    //   // title: t('common.message.addSuccess'),
+    //   // description: t('common.message.addSuccessDescription'),
+    //   variant: "success",
+    // });
   }, [addFromRecommended, toast]);
 
   // 简化的编辑处理
@@ -342,22 +342,22 @@ export const PromptList = memo(function PromptList({
     if (showRecommended) {
       return {
         icon: <Icons.fileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />,
-        title: "暂无推荐",
-        description: "当前没有可用的推荐模板。",
+        title: t('common.noRecommended'),
+        description: t('common.noRecommendedDescription'),
       };
     }
     if (showFavorites) {
       return {
         icon: <Icons.star className="h-12 w-12 text-muted-foreground mx-auto mb-4" />,
         title: t('common.noFavoritePrompt'),
-        description: "您还没有收藏任何提示词，快去收藏一些吧！",
+        description: t('common.noFavoritePromptDescription'),
       };
     }
     if (activeCategory) {
       return {
         icon: <Ghost className="h-12 w-12 text-primary/60 mx-auto mb-4" />,
-        title: "这个分类有点孤单",
-        description: "快来添加第一个提示词，让这里热闹起来吧！",
+        title: t('common.noCategory'),
+        description: t('common.noCategoryDescription'),
       };
     }
     return {
@@ -372,7 +372,7 @@ export const PromptList = memo(function PromptList({
     <div className="flex flex-col h-full card-container-transition">
       {/* 当前分类/模式指示器 */}
       <div className="bg-muted/30 px-4 py-2 text-sm flex items-center w-full sticky top-0 z-20 border-b border-border/40">
-        {/* <span className="font-medium mr-2">当前查看:</span> */}
+        {/* <span className="font-medium mr-2">{t('common.currentView')}:</span> */}
         <ViewBadge 
           showRecommended={showRecommended}
           showFavorites={showFavorites}
@@ -695,7 +695,7 @@ export const PromptList = memo(function PromptList({
                               e.stopPropagation();
                               handleCopyPrompt(prompt.id);
                             }}
-                            title="复制提示词"
+                            title={t('common.copyPrompt')}
                           >
                             <Icons.copy className="h-3 w-3" />
                           </Button>
@@ -707,7 +707,7 @@ export const PromptList = memo(function PromptList({
                               e.stopPropagation();
                               handleToggleFavorite(e, prompt.id);
                             }}
-                            title={prompt.isFavorite ? "取消收藏" : "收藏"}
+                            title={prompt.isFavorite ? t('common.unfavorite') : t('common.favorite')}
                           >
                             {prompt.isFavorite ? (
                               <Icons.starFilled className="h-3 w-3 fill-yellow-400 text-yellow-400" />
@@ -793,7 +793,7 @@ export const PromptList = memo(function PromptList({
               description: enhancementPrompt.description,
               images: enhancementPrompt.images,
               createdAt: new Date().toISOString(),
-              changeNotes: changeNotes || '手动创建版本'
+              changeNotes: changeNotes || t('common.manualCreateVersion')
             };
             const updatedPrompt = {
               ...enhancementPrompt,
@@ -836,7 +836,7 @@ export const PromptList = memo(function PromptList({
           }}
           onSaveComparison={(comparison) => {
             // 保存对比结果的逻辑
-            console.log('保存对比结果:', comparison);
+            console.log(t('common.saveComparisonResult'), comparison);
           }}
           existingComparisons={[]}
         />
@@ -860,7 +860,7 @@ export const PromptList = memo(function PromptList({
           <DialogHeader>
             <DialogTitle>{t('common.confirmDelete')}</DialogTitle>
             <DialogDescription>
-              您确定要删除提示词 "{promptToDelete?.title}" 吗？此操作无法撤销。
+              {t('common.confirmDeleteDescription')} "{promptToDelete?.title}"
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -880,7 +880,7 @@ export const PromptList = memo(function PromptList({
         onOpenChange={setShowNewPromptDialog}
         mode="create"
         options={{
-          defaultCategory: categories[0]?.id || "general",
+          defaultCategory: activeCategory || categories[0]?.id || "general",
           onSuccess: handleCreatePromptSuccess,
           onCancel: () => setShowNewPromptDialog(false)
         }}

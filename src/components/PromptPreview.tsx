@@ -10,6 +10,7 @@ import { Prompt } from "@/types";
 import { VariableDisplay } from "./VariableHighlighter";
 import { VariableForm } from "./VariableForm";
 import { applyVariableValues } from "@/lib/variableUtils";
+import { useTranslation } from "react-i18next";
 
 interface PromptPreviewProps {
   prompt: Prompt;
@@ -28,6 +29,7 @@ export const PromptPreview: React.FC<PromptPreviewProps> = ({
   onVariableChange,
   onPreviewChange,
 }) => {
+  const { t } = useTranslation();
   // 计算预览内容
   const previewContent = variableValues && Object.keys(variableValues).length > 0
     ? applyVariableValues(prompt.content, variableValues)
@@ -42,9 +44,9 @@ export const PromptPreview: React.FC<PromptPreviewProps> = ({
       {showVariableForm && (
         <div className="flex-shrink-0 bg-muted/30 rounded-md p-4 space-y-4 mb-4 w-full min-w-0">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-medium">变量填写</h3>
+            <h3 className="text-sm font-medium">{t('variableForm.variableFill')}</h3>
             <div className="text-xs text-muted-foreground">
-              填写变量后，下方将显示最终预览效果
+              {t('variableForm.fillVariablesHint')}
             </div>
           </div>
           
@@ -63,11 +65,11 @@ export const PromptPreview: React.FC<PromptPreviewProps> = ({
         <div className="flex items-center justify-between">
           
           <h3 className="text-sm font-medium">
-            {Object.keys(safeVariableValues).length > 0 ? "最终预览" : "原始内容"}
+            {Object.keys(safeVariableValues).length > 0 ? t('variableForm.finalContent') : t('variableForm.originalContent')}
           </h3>
           {Object.keys(safeVariableValues).length > 0 && (
             <div className="text-xs text-muted-foreground">
-              已填写 {Object.keys(safeVariableValues).length} 个变量
+              t(variable.completed) {Object.keys(safeVariableValues).length} t('variableHighlighter.variableCount')
             </div>
           )}
         </div>
@@ -86,7 +88,7 @@ export const PromptPreview: React.FC<PromptPreviewProps> = ({
         {/* 最终预览内容 */}
         {Object.keys(safeVariableValues).length > 0 && (
           <div className="space-y-3">
-            <div className="text-xs text-muted-foreground">变量替换后的最终内容：</div>
+            <div className="text-xs text-muted-foreground">t('variableForm.variableReplacement')</div>
             <div className="markdown-body">
               <ReactMarkdown>{previewContent}</ReactMarkdown>
             </div>
@@ -101,7 +103,7 @@ export const PromptPreview: React.FC<PromptPreviewProps> = ({
       {/* 图片预览区域 */}
       {prompt.images && prompt.images.length > 0 && (
         <div className="flex-shrink-0 space-y-3 mt-4">
-          <h3 className="text-sm font-medium">参考图片</h3>
+          <h3 className="text-sm font-medium">t('common.imageUpload')</h3>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
             {prompt.images.map((image, index) => (
               <Popover key={image.id}>
@@ -109,7 +111,7 @@ export const PromptPreview: React.FC<PromptPreviewProps> = ({
                   <div className="border rounded-md overflow-hidden cursor-pointer hover:opacity-90">
                     <img 
                       src={image.data} 
-                      alt={image.caption || `图片 ${index + 1}`} 
+                      alt={image.caption || `$t('common.image') ${index + 1}`} 
                       className="w-full h-28 object-cover"
                     />
                   </div>
@@ -117,11 +119,11 @@ export const PromptPreview: React.FC<PromptPreviewProps> = ({
                 <PopoverContent className="p-2 max-w-xs">
                   <img 
                     src={image.data} 
-                    alt={image.caption || `图片 ${index + 1}`} 
+                    alt={image.caption || `$t('common.image') ${index + 1}`} 
                     className="w-full mb-2 rounded" 
                   />
                   <div className="text-xs text-muted-foreground">
-                    {image.caption || "无说明"}
+                    {image.caption || `$t('common.imageCaptionPlaceholder') ${index + 1}`}
                   </div>
                 </PopoverContent>
               </Popover>

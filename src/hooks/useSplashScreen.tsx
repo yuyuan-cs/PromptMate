@@ -59,3 +59,4 @@ export const useSplashScreen = (options: UseSplashScreenOptions = {}) => {
     progress: isLoading ? 0 : 100
   };
 };
+

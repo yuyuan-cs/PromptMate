@@ -29,13 +29,14 @@ import { VariableDisplay } from "./VariableHighlighter";
 import { VariableForm } from "./VariableForm";
 import { applyVariableValues } from "@/lib/variableUtils";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 
 export function PromptEditorModular() {
   const isMobile = useMediaQuery("(max-width: 768px)");
   const { selectedPrompt } = usePrompts();
   const [showAISettings, setShowAISettings] = useState(false);
-
+  const { t } = useTranslation();
   const {
     state,
     deleteDialogOpen,
@@ -82,8 +83,8 @@ export function PromptEditorModular() {
     return (
       <div className="flex-1 flex items-center justify-center text-muted-foreground">
         <div className="text-center">
-          <p className="text-lg mb-2">选择一个提示词开始编辑</p>
-          <p className="text-sm">从左侧列表中选择要编辑的提示词</p>
+          <p className="text-lg mb-2">{t("promptEditorModular.selectPromptToEdit")}</p>   // 选择一个提示词开始编辑
+          <p className="text-sm">{t("promptEditorModular.selectPromptToEditDescription")}</p>   // 从左侧列表中选择要编辑的提示词
         </div>
       </div>
     );
@@ -93,9 +94,9 @@ export function PromptEditorModular() {
   const getAutoSaveStatusText = () => {
     switch (state.autoSaveStatus) {
       case "saving":
-        return "保存中...";
+        return t("common.saving");
       case "saved":
-        return "已保存";
+        return t("common.saved");
       default:
         return "";
     }
@@ -112,7 +113,7 @@ export function PromptEditorModular() {
             </h2>
             {state.hasChanges && (
               <span className="text-xs text-muted-foreground">
-                • {getAutoSaveStatusText() || "有未保存的更改"}
+                • {getAutoSaveStatusText() || t("promptEditorModular.unsavedChanges")}
               </span>
             )}
           </div>
@@ -142,30 +143,11 @@ export function PromptEditorModular() {
                           </Button>
                         </TooltipTrigger>
                         <TooltipContent>
-                          {state.showVariableForm ? "隐藏变量表单" : "填写变量"}
+                          {/* 隐藏变量表单/填写变量 */}
+                          {state.showVariableForm ? t("promptEditorModular.hideVariableForm") : t("promptEditorModular.fillVariable")}  
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
-                    
-                    {/* {state.variableValues && Object.keys(state.variableValues).length > 0 && (
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              onClick={() => updateField('variableValues', {})}
-                              className="h-9 w-9 transition-all duration-300 hover:bg-gradient-to-r hover:from-gray-50 hover:to-blue-50 hover:border-blue-200 hover:shadow-md"
-                            >
-                              <RotateCcw className="h-4 w-4" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            重置变量
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    )} */}
                   </div>
                 </div>
               </div>
@@ -187,7 +169,7 @@ export function PromptEditorModular() {
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  {state.isEditing ? "切换到预览模式" : "切换到编辑模式"}
+                  {state.isEditing ? t("promptEditorModular.switchToPreviewMode") : t("promptEditorModular.switchToEditMode")}
                 </TooltipContent>
               </Tooltip>
 
@@ -204,7 +186,7 @@ export function PromptEditorModular() {
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  {state.isFavorite ? "取消收藏" : "收藏"}
+                  {state.isFavorite ? t("promptEditorModular.unfavorite") : t("promptEditorModular.favorite")}
                 </TooltipContent>
               </Tooltip> */}
 
@@ -220,7 +202,7 @@ export function PromptEditorModular() {
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  {state.isEditing ? "复制原始内容" : "复制最终内容"}
+                  {state.isEditing ? t("promptEditorModular.copyOriginalContent") : t("promptEditorModular.copyFinalContent")}
                 </TooltipContent>
               </Tooltip>
 
@@ -236,7 +218,7 @@ export function PromptEditorModular() {
                     <Save className="h-4 w-4" />
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent>保存更改</TooltipContent>
+                <TooltipContent>{t("promptEditorModular.saveChanges")}</TooltipContent>
               </Tooltip> */}
 
               {/* 删除按钮 */}
@@ -251,7 +233,7 @@ export function PromptEditorModular() {
                     <Trash className="h-4 w-4" />
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent>删除</TooltipContent>
+                <TooltipContent>{t("promptEditorModular.delete")}</TooltipContent>
               </Tooltip>
             </TooltipProvider>
           </div>
@@ -302,14 +284,16 @@ export function PromptEditorModular() {
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>确认删除</AlertDialogTitle>
+            <AlertDialogTitle>{t("promptEditorModular.confirmDelete")}</AlertDialogTitle>
             <AlertDialogDescription>
-              此操作将永久删除此提示词，该操作无法撤销。
+              {t("promptEditorModular.confirmDeleteDescription")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>取消</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete}>删除</AlertDialogAction>
+            {/* 取消 */}
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+            {/* 删除 */}
+            <AlertDialogAction onClick={handleDelete}>{t("common.delete")}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -318,18 +302,23 @@ export function PromptEditorModular() {
       <AlertDialog open={switchConfirmOpen} onOpenChange={setSwitchConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>未保存的更改</AlertDialogTitle>
+            {/* 未保存的更改 */}
+            <AlertDialogTitle>{t("promptEditorModular.unsavedChanges")}</AlertDialogTitle>  
             <AlertDialogDescription>
-              您有未保存的更改。要保存更改并继续，放弃更改，还是留在当前编辑页面？
+              {/* 您有未保存的更改。要保存更改并继续，放弃更改，还是留在当前编辑页面？ */}
+              {t("promptEditorModular.unsavedChangesDescription")}  
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex flex-col sm:flex-row gap-2">
-            <AlertDialogCancel className="mt-0">留在当前页面</AlertDialogCancel>
+            {/* 留在当前页面 */}
+            <AlertDialogCancel className="mt-0">{t("promptEditorModular.stayOnCurrentPage")}</AlertDialogCancel>
             <Button variant="outline" onClick={confirmSwitchPrompt}>
-              放弃更改
+              {/* 放弃更改 */}
+              {t("promptEditorModular.discardChanges")}
             </Button>
             <Button onClick={saveAndSwitchPrompt}>
-              保存并继续
+              {/* 保存并继续 */}
+              {t("promptEditorModular.saveAndContinue")}  
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
