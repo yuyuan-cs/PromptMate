@@ -201,23 +201,32 @@ export function DataImportExport({
   };
 
   // 重置为默认数据
-  const handleReset = () => {
-    resetToDefaults();
-    
-    toast({
-      title: t('dataManagement.message.resetSuccess'),
-      description: t('dataManagement.message.resetSuccessData'),
-      variant: "warning",
-    });
-    
-    setShowConfirmReset(false);
-    
-    // 延迟触发数据变更回调，确保数据已保存
-    setTimeout(() => {
-      onDataChanged?.();
-    }, 100);
-    
-    onOpenChange?.(false);
+  const handleReset = async () => {
+    try {
+      await resetToDefaults();
+      
+      toast({
+        title: t('dataManagement.message.resetSuccess'),
+        description: t('dataManagement.message.resetSuccessData'),
+        variant: "warning",
+      });
+      
+      setShowConfirmReset(false);
+      
+      // 延迟触发数据变更回调，确保数据已保存
+      setTimeout(() => {
+        onDataChanged?.();
+      }, 100);
+      
+      onOpenChange?.(false);
+    } catch (error) {
+      console.error('重置数据失败:', error);
+      toast({
+        title: t('dataManagement.message.resetError'),
+        description: t('dataManagement.message.resetErrorData'),
+        variant: "destructive",
+      });
+    }
   };
 
   // 渲染侧边栏导航

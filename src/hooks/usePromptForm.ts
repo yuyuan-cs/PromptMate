@@ -65,10 +65,20 @@ export const usePromptForm = (options: PromptFormOptions) => {
       };
     }
     
+    // 修复默认分类逻辑：defaultCategory 应该有最高优先级
+    // 只有在没有指定 defaultCategory 时才使用 activeCategory
+    const getDefaultCategory = () => {
+      if (initialData?.category) return initialData.category;
+      if (defaultCategory) return defaultCategory;
+      if (activeCategory) return activeCategory;
+      if (categories[0]?.id) return categories[0].id;
+      return "general";
+    };
+    
     return {
       title: initialData?.title || "",
       content: initialData?.content || "",
-      category: initialData?.category || defaultCategory || activeCategory || categories[0]?.id || "general",
+      category: getDefaultCategory(),
       tags: initialData?.tags || "",
       images: initialData?.images || [],
       isFavorite: initialData?.isFavorite || false,

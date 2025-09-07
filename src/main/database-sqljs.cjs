@@ -604,6 +604,96 @@ class DatabaseServiceSqlJs {
     this.executeUpdate(sql, [key, serializedValue, type, new Date().toISOString()]);
   }
 
+  // 清除所有数据
+  clearAllData() {
+    if (!this.isInitialized) throw new Error('数据库未初始化');
+    
+    try {
+      // 删除所有表的数据，保持表结构
+      this.executeUpdate('DELETE FROM prompt_tags');
+      this.executeUpdate('DELETE FROM prompt_images');
+      this.executeUpdate('DELETE FROM prompts');
+      this.executeUpdate('DELETE FROM categories');
+      this.executeUpdate('DELETE FROM tags');
+      this.executeUpdate('DELETE FROM settings');
+      
+      console.log('数据库数据清除成功');
+    } catch (error) {
+      console.error('清除数据库数据失败:', error);
+      throw error;
+    }
+  }
+
+  // 重置为默认数据
+  resetToDefaults(language = 'zh-CN') {
+    if (!this.isInitialized) throw new Error('数据库未初始化');
+    
+    try {
+      // 先清除所有数据
+      this.clearAllData();
+      
+      // 重新插入默认分类
+      const defaultCategories = {
+        'zh-CN': [
+          { id: 'general', name: '通用', icon: '📝' },
+          { id: 'creative', name: '创意生成', icon: '🎨' },
+          { id: 'development', name: '开发编程', icon: '💻' },
+          { id: 'business', name: '商务沟通', icon: '💼' },
+          { id: 'education', name: '教育学习', icon: '📚' },
+          { id: 'productivity', name: '生产力', icon: '⚡' }
+        ],
+        'en-US': [
+          { id: 'general', name: 'General', icon: '📝' },
+          { id: 'creative', name: 'Creative', icon: '🎨' },
+          { id: 'development', name: 'Development', icon: '💻' },
+          { id: 'business', name: 'Business', icon: '💼' },
+          { id: 'education', name: 'Education', icon: '📚' },
+          { id: 'productivity', name: 'Productivity', icon: '⚡' }
+        ]
+      };
+      
+      const categories = defaultCategories[language] || defaultCategories['zh-CN'];
+      const now = new Date().toISOString();
+      
+      // 插入默认分类
+      for (const category of categories) {
+        this.createCategory(category);
+      }
+      
+      // 插入示例提示词
+      const samplePrompts = {
+        'zh-CN': [
+          { id: '1', title: '代码解释器', content: '请解释以下代码的功能和实现原理，使用简单易懂的语言：\n\n```\n[在此粘贴代码]\n```', category: 'development', tags: ['代码', '解释', '编程'], isFavorite: false, version: 1 },
+          { id: '2', title: '故事创意生成器', content: '请构思一个有创意的故事，包含以下元素：[元素1]、[元素2]和[元素3]。故事类型为[类型]，适合[目标受众]阅读。', category: 'creative', tags: ['写作', '创意', '故事'], isFavorite: false, version: 1 },
+          { id: '3', title: '商务邮件撰写', content: '请帮我撰写一封关于[主题]的专业商务邮件，收件人是[收件人]。邮件语气应该[正式/友好/专业]，主要包含以下要点：\n1. [要点1]\n2. [要点2]\n3. [要点3]', category: 'business', tags: ['邮件', '商务', '沟通'], isFavorite: false, version: 1 },
+          { id: '4', title: '学术论文结构', content: '请为一篇关于[主题]的学术论文创建详细大纲，包括引言、文献综述、方法论、讨论和结论等部分。请针对每个部分提供详细的子标题和内容建议。', category: 'education', tags: ['学术', '论文', '写作'], isFavorite: false, version: 1 },
+          { id: '5', title: '会议总结生成器', content: '请根据以下会议记录生成一份简洁明了的会议总结：\n\n[会议记录]\n\n总结应包括：主要讨论点、做出的决策和后续行动项。', category: 'productivity', tags: ['会议', '总结', '效率'], isFavorite: false, version: 1 },
+          { id: '6', title: '知识提取与总结', content: '请帮我从以下内容中提取关键信息并总结为要点列表：\n\n[文本内容]\n\n要点应按重要性排序，并提供简洁的解释。', category: 'general', tags: ['总结', '学习', '知识'], isFavorite: false, version: 1 }
+        ],
+        'en-US': [
+          { id: '1', title: 'Code Interpreter', content: 'Please explain the functionality and implementation principles of the following code using simple and understandable language:\n\n```\n[Paste your code here]\n```', category: 'development', tags: ['code', 'explanation', 'programming'], isFavorite: false, version: 1 },
+          { id: '2', title: 'Story Idea Generator', content: 'Please create a creative story that includes the following elements: [Element 1], [Element 2], and [Element 3]. The story type should be [Type], suitable for [Target Audience] to read.', category: 'creative', tags: ['writing', 'creativity', 'story'], isFavorite: false, version: 1 },
+          { id: '3', title: 'Business Email Writer', content: 'Please help me write a professional business email about [Topic] to [Recipient]. The email tone should be [Formal/Friendly/Professional] and include the following key points:\n1. [Point 1]\n2. [Point 2]\n3. [Point 3]', category: 'business', tags: ['email', 'business', 'communication'], isFavorite: false, version: 1 },
+          { id: '4', title: 'Academic Paper Structure', content: 'Please create a detailed outline for an academic paper about [Topic], including introduction, literature review, methodology, discussion, and conclusion sections. Please provide detailed subheadings and content suggestions for each section.', category: 'education', tags: ['academic', 'paper', 'writing'], isFavorite: false, version: 1 },
+          { id: '5', title: 'Meeting Summary Generator', content: 'Please generate a concise and clear meeting summary based on the following meeting notes:\n\n[Meeting Notes]\n\nThe summary should include: main discussion points, decisions made, and follow-up action items.', category: 'productivity', tags: ['meeting', 'summary', 'productivity'], isFavorite: false, version: 1 },
+          { id: '6', title: 'Knowledge Extraction & Summary', content: 'Please help me extract key information from the following content and summarize it into bullet points:\n\n[Text Content]\n\nPoints should be sorted by importance and provide concise explanations.', category: 'general', tags: ['summary', 'learning', 'knowledge'], isFavorite: false, version: 1 }
+        ]
+      };
+      
+      const prompts = samplePrompts[language] || samplePrompts['zh-CN'];
+      
+      // 插入示例提示词
+      for (const prompt of prompts) {
+        this.createPrompt(prompt);
+      }
+      
+      console.log('数据库重置为默认数据成功');
+    } catch (error) {
+      console.error('重置数据库为默认数据失败:', error);
+      throw error;
+    }
+  }
+
   // 关闭数据库
   close() {
     if (this.db) {

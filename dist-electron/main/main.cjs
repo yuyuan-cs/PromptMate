@@ -1103,6 +1103,27 @@ ipcMain.handle('db-get-migration-status', async () => {
   }
 });
 
+// 数据库重置相关IPC处理程序
+ipcMain.handle('db-clear-all-data', async () => {
+  try {
+    if (!databaseService) throw new Error('数据库服务未初始化');
+    databaseService.clearAllData();
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('db-reset-to-defaults', async (_, language = 'zh-CN') => {
+  try {
+    if (!databaseService) throw new Error('数据库服务未初始化');
+    databaseService.resetToDefaults(language);
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
 // 添加应用信息和更新检查相关IPC
 ipcMain.handle('get-app-info', () => {
   return getAppInfo();

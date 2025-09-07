@@ -39,6 +39,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getDatabaseStatus: () => ipcRenderer.invoke('get-database-status'),
   initializeDatabase: () => ipcRenderer.invoke('initialize-database'),
   
+  // 数据库重置API
+  clearAllData: () => ipcRenderer.invoke('db-clear-all-data'),
+  resetToDefaults: (language) => ipcRenderer.invoke('db-reset-to-defaults', language),
+  
   // 通用IPC调用方法
   invoke: (channel, ...args) => ipcRenderer.invoke(channel, ...args)
 }); 

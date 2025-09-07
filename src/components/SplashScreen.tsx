@@ -10,7 +10,7 @@ interface SplashScreenProps {
 
 export const SplashScreen: React.FC<SplashScreenProps> = ({ 
   onComplete, 
-  duration = 1500 
+  duration = 500 
 }) => {
   const [progress, setProgress] = useState(0);
   const [isVisible, setIsVisible] = useState(true);

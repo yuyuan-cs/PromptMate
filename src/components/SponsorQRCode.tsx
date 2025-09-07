@@ -1,9 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Label } from './ui/label';
 import { QrCode, Eye, EyeOff } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+
+// 导入静态资源
+import qrWechat from '/images/qr-wechat.png';
+import qrAlipay from '/images/qr-alipay.png';
 
 interface QRCodeData {
   type: 'wechat' | 'alipay';
@@ -20,18 +24,18 @@ export const SponsorQRCode: React.FC<SponsorQRCodeProps> = ({ className }) => {
   const { t } = useTranslation();
   const [showQR, setShowQR] = useState(false);
 
-  // 二维码数据 - 您可以替换为真实的二维码图片URL
+  // 二维码数据 - 使用导入的静态资源
   const qrCodes: QRCodeData[] = [
     {
       type: 'wechat',
       title: t('about.support.qr.wechat'),
-      imageUrl: '/images/qr-wechat.png', // 替换为您的微信二维码图片路径
+      imageUrl: qrWechat,
       placeholder: '微信二维码'
     },
     {
       type: 'alipay',
       title: t('about.support.qr.alipay'),
-      imageUrl: '/images/qr-alipay.png', // 替换为您的支付宝二维码图片路径
+      imageUrl: qrAlipay,
       placeholder: '支付宝二维码'
     }
   ];
@@ -112,9 +116,9 @@ export const SponsorQRCode: React.FC<SponsorQRCodeProps> = ({ className }) => {
         {process.env.NODE_ENV === 'development' && (
           <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs">
             <p className="text-yellow-800 font-medium">调试信息:</p>
-            <p className="text-yellow-700">微信二维码路径: /images/qr-wechat.png</p>
-            <p className="text-yellow-700">支付宝二维码路径: /images/qr-alipay.png</p>
-            <p className="text-yellow-700">请确保图片文件存在于 public/images/ 目录下</p>
+            <p className="text-yellow-700">微信二维码路径: {qrWechat}</p>
+            <p className="text-yellow-700">支付宝二维码路径: {qrAlipay}</p>
+            <p className="text-yellow-700">使用静态资源导入，Vite会自动处理路径</p>
           </div>
         )}
       </div>

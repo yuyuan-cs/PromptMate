@@ -309,24 +309,42 @@ export const getAllTags = (prompts: Prompt[]): string[] => {
 };
 
 // 清除所有数据（谨慎使用）
-export const clearAllData = (): void => {
+export const clearAllData = async (): Promise<void> => {
   try {
+    // 清除 localStorage 数据
     localStorage.removeItem(STORAGE_KEYS.PROMPTS);
     localStorage.removeItem(STORAGE_KEYS.CATEGORIES);
     localStorage.removeItem(STORAGE_KEYS.SETTINGS);
+    
+    // 如果使用 SQLite 数据库，也清除数据库数据
+    if (typeof window !== 'undefined' && (window as any).electronAPI?.clearAllData) {
+      const result = await (window as any).electronAPI.clearAllData();
+      if (!result.success) {
+        console.error('清除数据库数据失败:', result.error);
+      }
+    }
   } catch (error) {
     console.error("清除数据时出错:", error);
   }
 };
 
 // 重置为默认数据
-export const resetToDefaults = (language: string = 'zh-CN'): void => {
+export const resetToDefaults = async (language: string = 'zh-CN'): Promise<void> => {
   try {
+    // 重置 localStorage 数据
     savePrompts(samplePrompts);
     saveCategories(getDefaultCategories(language));
     saveSettings(defaultSettings);
     saveWorkflows([]);
     saveWorkflowExecutions([]);
+    
+    // 如果使用 SQLite 数据库，也重置数据库数据
+    if (typeof window !== 'undefined' && (window as any).electronAPI?.resetToDefaults) {
+      const result = await (window as any).electronAPI.resetToDefaults(language);
+      if (!result.success) {
+        console.error('重置数据库数据失败:', result.error);
+      }
+    }
   } catch (error) {
     console.error("重置为默认数据时出错:", error);
   }
