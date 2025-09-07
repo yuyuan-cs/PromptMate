@@ -105,6 +105,14 @@ class DatabaseClient {
     return await this.invoke<any>('db-create-category', category);
   }
 
+  async updateCategoryLanguage(language: string) {
+    return await this.invoke<void>('db-update-category-language', language);
+  }
+
+  async updatePromptsLanguage(language: string) {
+    return await this.invoke<void>('db-update-prompts-language', language);
+  }
+
   // 标签操作
   async getAllTags() {
     return await this.invoke<string[]>('db-get-all-tags');

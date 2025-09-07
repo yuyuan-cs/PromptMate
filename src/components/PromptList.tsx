@@ -350,7 +350,7 @@ export const PromptList = memo(function PromptList({
     }
     if (activeCategory) {
       return {
-        icon: <Icons.ghost className="h-12 w-12 text-primary/60 mx-auto mb-4" />,
+        icon: <Ghost className="h-12 w-12 text-primary/60 mx-auto mb-4" />,
         title: "这个分类有点孤单",
         description: "快来添加第一个提示词，让这里热闹起来吧！",
       };

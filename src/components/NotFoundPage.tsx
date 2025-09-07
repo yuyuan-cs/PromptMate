@@ -1,8 +1,7 @@
 import React from 'react';
-import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Icons } from '@/components/ui/icons';
+import { Home, Bug, RefreshCw, FileQuestion } from 'lucide-react';
 
 interface NotFoundPageProps {
   error?: string;
@@ -15,7 +14,6 @@ const NotFoundPage: React.FC<NotFoundPageProps> = ({
   onGoHome,
   onReload
 }) => {
-  const { t } = useTranslation();
 
   const handleGoHome = () => {
     if (onGoHome) {
@@ -34,38 +32,38 @@ const NotFoundPage: React.FC<NotFoundPageProps> = ({
   };
 
   const handleReportIssue = () => {
-    // 收集错误信息
+    // Collect error information
     const errorInfo = {
       timestamp: new Date().toISOString(),
       url: window.location.href,
       userAgent: navigator.userAgent,
       error: error || 'Page not found',
-      appVersion: import.meta.env.VITE_APP_VERSION || 'unknown',
     };
 
-    // 创建 GitHub issue URL
+    // Create GitHub issue URL
     const issueTitle = encodeURIComponent(`404 Error: ${error || 'Page not found'}`);
     const issueBody = encodeURIComponent(`
-## 错误描述
-页面无法找到或加载失败
+## Error Description
+The page could not be found or failed to load.
 
-## 错误信息
+## Error Information
 \`\`\`json
 ${JSON.stringify(errorInfo, null, 2)}
 \`\`\`
 
-## 复现步骤
-1. 访问页面: ${window.location.href}
-2. 遇到404错误
+## Steps to Reproduce
+1. Visit the page: ${window.location.href}
+2. Encounter the 404 error.
 
-## 期望行为
-页面应该正常加载
+## Expected Behavior
+The page should load correctly.
 
-## 实际行为
-显示404错误页面
+## Actual Behavior
+A 404 error page is displayed.
     `);
 
-    const githubUrl = `https://github.com/your-username/PromptMate/issues/new?title=${issueTitle}&body=${issueBody}`;
+    // IMPORTANT: Replace 'your-github-username' with your actual GitHub username or organization name.
+    const githubUrl = `https://github.com/your-github-username/PromptMate/issues/new?title=${issueTitle}&body=${issueBody}`;
     window.open(githubUrl, '_blank');
   };
 
@@ -74,22 +72,22 @@ ${JSON.stringify(errorInfo, null, 2)}
       <Card className="w-full max-w-lg text-center">
         <CardHeader>
           <div className="flex justify-center mb-4">
-            <Icons.fileX className="h-24 w-24 text-muted-foreground" />
+            <FileQuestion className="h-24 w-24 text-muted-foreground" />
           </div>
           <CardTitle className="text-4xl font-bold text-muted-foreground">
             404
           </CardTitle>
           <CardDescription className="text-lg">
-            {t('notFound.title')}
+            Page Not Found
           </CardDescription>
         </CardHeader>
         
         <CardContent className="space-y-6">
           <div className="text-muted-foreground">
-            <p>{t('notFound.description')}</p>
+            <p>The page you are looking for does not exist or has been moved.</p>
             {error && (
-              <div className="mt-4 p-3 bg-muted rounded-lg">
-                <p className="text-sm font-medium">{t('notFound.errorDetails')}:</p>
+              <div className="mt-4 p-3 bg-muted rounded-lg text-left">
+                <p className="text-sm font-medium">Error Details:</p>
                 <p className="text-xs mt-1 font-mono break-all">{error}</p>
               </div>
             )}
@@ -97,12 +95,12 @@ ${JSON.stringify(errorInfo, null, 2)}
 
           <div className="flex flex-col sm:flex-row gap-3">
             <Button onClick={handleGoHome} className="flex-1">
-              <Icons.home className="mr-2 h-4 w-4" />
-              {t('notFound.goHome')}
+              <Home className="mr-2 h-4 w-4" />
+              Go Home
             </Button>
             <Button onClick={handleReload} variant="outline" className="flex-1">
-              <Icons.refresh className="mr-2 h-4 w-4" />
-              {t('notFound.reload')}
+              <RefreshCw className="mr-2 h-4 w-4" />
+              Reload Page
             </Button>
           </div>
 
@@ -113,13 +111,13 @@ ${JSON.stringify(errorInfo, null, 2)}
               size="sm"
               className="text-muted-foreground"
             >
-              <Icons.bug className="mr-2 h-4 w-4" />
-              {t('notFound.reportIssue')}
+              <Bug className="mr-2 h-4 w-4" />
+              Report Issue
             </Button>
           </div>
 
           <div className="text-xs text-muted-foreground">
-            <p>{t('notFound.supportInfo')}</p>
+            <p>If you believe this is an error, please report the issue.</p>
           </div>
         </CardContent>
       </Card>

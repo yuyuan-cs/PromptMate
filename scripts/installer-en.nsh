@@ -45,3 +45,4 @@ LangString UNINSTALL_QUESTION ${LANG_ENGLISH} "Do you want to delete all user da
 LangString UNINSTALL_KEEP_DATA ${LANG_ENGLISH} "Choose 'No' to keep your prompts and settings."
 LangString UNINSTALL_DELETE_DATA ${LANG_ENGLISH} "Choose 'Yes' to delete all user data."
 
+

@@ -45,3 +45,4 @@ LangString UNINSTALL_QUESTION ${LANG_SIMPCHINESE} "是否同时删除所有用�
 LangString UNINSTALL_KEEP_DATA ${LANG_SIMPCHINESE} "选择"否"将保留您的提示词和设置。"
 LangString UNINSTALL_DELETE_DATA ${LANG_SIMPCHINESE} "选择"是"将删除所有用户数据。"
 
+

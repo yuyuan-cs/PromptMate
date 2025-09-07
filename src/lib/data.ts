@@ -2,18 +2,36 @@ import { Prompt, Category, Settings } from "../types";
 import { Workflow, WorkflowExecution, WorkflowTemplate } from "../types/workflow";
 
 // 从JSON文件导入默认数据
-import defaultCategoriesData from '../data/categories.zh.json';
-import samplePromptsData from '../data/prompts.zh.json';
+import defaultCategoriesDataZh from '../data/categories.zh.json';
+import defaultCategoriesDataEn from '../data/categories.en.json';
+import samplePromptsDataZh from '../data/prompts.zh.json';
+import samplePromptsDataEn from '../data/prompts.en.json';
 import defaultSettingsData from '../data/settings.zh.json';
 import builtInWorkflowTemplatesData from '../data/workflow-templates.zh.json';
 
 // 类型断言，确保导入的数据符合我们的类型定义
-export const defaultCategories: Category[] = defaultCategoriesData as Category[];
+export const defaultCategoriesZh: Category[] = defaultCategoriesDataZh as Category[];
+export const defaultCategoriesEn: Category[] = defaultCategoriesDataEn as Category[];
 export const defaultSettings: Settings = defaultSettingsData as Settings;
 export const builtInWorkflowTemplates: WorkflowTemplate[] = builtInWorkflowTemplatesData as WorkflowTemplate[];
 
-// 对于包含动态数据的提示词，我们需要处理一下
-export const samplePrompts: Prompt[] = samplePromptsData.map(p => ({
+// 根据语言获取默认分类
+export const getDefaultCategories = (language: string = 'zh-CN'): Category[] => {
+  return language === 'en-US' ? defaultCategoriesEn : defaultCategoriesZh;
+};
+
+// 根据语言获取示例提示词
+export const getSamplePrompts = (language: string = 'zh-CN'): Prompt[] => {
+  const promptsData = language === 'en-US' ? samplePromptsDataEn : samplePromptsDataZh;
+  return promptsData.map(p => ({
+    ...p,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  }));
+};
+
+// 对于包含动态数据的提示词，我们需要处理一下（保持向后兼容）
+export const samplePrompts: Prompt[] = samplePromptsDataZh.map(p => ({
   ...p,
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
@@ -30,17 +48,43 @@ const STORAGE_KEYS = {
 };
 
 // 加载提示词
-export const loadPrompts = (): Prompt[] => {
+export const loadPrompts = (language: string = 'zh-CN'): Prompt[] => {
   try {
     const saved = localStorage.getItem(STORAGE_KEYS.PROMPTS);
     if (saved) {
-      return JSON.parse(saved);
+      const savedPrompts = JSON.parse(saved);
+      // 如果有保存的提示词，检查是否需要更新语言
+      return updatePromptsLanguage(savedPrompts, language);
     }
-    return samplePrompts;
+    return getSamplePrompts(language);
   } catch (error) {
     console.error("加载提示词时出错:", error);
-    return samplePrompts;
+    return getSamplePrompts(language);
   }
+};
+
+// 更新提示词语言
+const updatePromptsLanguage = (prompts: Prompt[], targetLanguage: string): Prompt[] => {
+  const samplePrompts = getSamplePrompts(targetLanguage);
+  
+  // 创建示例提示词的映射
+  const samplePromptMap = new Map(samplePrompts.map(prompt => [prompt.id, prompt]));
+  
+  // 更新现有提示词的语言
+  return prompts.map(prompt => {
+    const samplePrompt = samplePromptMap.get(prompt.id);
+    if (samplePrompt) {
+      // 如果是示例提示词，使用对应语言的标题、内容和标签
+      return {
+        ...prompt,
+        title: samplePrompt.title,
+        content: samplePrompt.content,
+        tags: samplePrompt.tags
+      };
+    }
+    // 用户自定义提示词保持原样
+    return prompt;
+  });
 };
 
 // 保存提示词
@@ -53,17 +97,41 @@ export const savePrompts = (prompts: Prompt[]): void => {
 };
 
 // 加载分类
-export const loadCategories = (): Category[] => {
+export const loadCategories = (language: string = 'zh-CN'): Category[] => {
   try {
     const saved = localStorage.getItem(STORAGE_KEYS.CATEGORIES);
     if (saved) {
-      return JSON.parse(saved);
+      const savedCategories = JSON.parse(saved);
+      // 如果有保存的分类，检查是否需要更新语言
+      return updateCategoriesLanguage(savedCategories, language);
     }
-    return defaultCategories;
+    return getDefaultCategories(language);
   } catch (error) {
     console.error("加载分类时出错:", error);
-    return defaultCategories;
+    return getDefaultCategories(language);
   }
+};
+
+// 更新分类语言
+const updateCategoriesLanguage = (categories: Category[], targetLanguage: string): Category[] => {
+  const defaultCategories = getDefaultCategories(targetLanguage);
+  
+  // 创建默认分类的映射
+  const defaultCategoryMap = new Map(defaultCategories.map(cat => [cat.id, cat]));
+  
+  // 更新现有分类的语言
+  return categories.map(category => {
+    const defaultCategory = defaultCategoryMap.get(category.id);
+    if (defaultCategory) {
+      // 如果是默认分类，使用对应语言的名称
+      return {
+        ...category,
+        name: defaultCategory.name
+      };
+    }
+    // 用户自定义分类保持原样
+    return category;
+  });
 };
 
 // 保存分类
@@ -252,10 +320,10 @@ export const clearAllData = (): void => {
 };
 
 // 重置为默认数据
-export const resetToDefaults = (): void => {
+export const resetToDefaults = (language: string = 'zh-CN'): void => {
   try {
     savePrompts(samplePrompts);
-    saveCategories(defaultCategories);
+    saveCategories(getDefaultCategories(language));
     saveSettings(defaultSettings);
     saveWorkflows([]);
     saveWorkflowExecutions([]);

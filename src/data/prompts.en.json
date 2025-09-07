@@ -1,0 +1,56 @@
+[
+  {
+    "id": "1",
+    "title": "Code Interpreter",
+    "content": "Please explain the functionality and implementation principles of the following code using simple and understandable language:\n\n```\n[Paste your code here]\n```",
+    "category": "development",
+    "tags": ["code", "explanation", "programming"],
+    "isFavorite": false,
+    "version": 1
+  },
+  {
+    "id": "2",
+    "title": "Story Idea Generator",
+    "content": "Please create a creative story that includes the following elements: [Element 1], [Element 2], and [Element 3]. The story type should be [Type], suitable for [Target Audience] to read.",
+    "category": "creative",
+    "tags": ["writing", "creativity", "story"],
+    "isFavorite": true,
+    "version": 1
+  },
+  {
+    "id": "3",
+    "title": "Business Email Writer",
+    "content": "Please help me write a professional business email about [Topic] to [Recipient]. The email tone should be [Formal/Friendly/Professional] and include the following key points:\n1. [Point 1]\n2. [Point 2]\n3. [Point 3]",
+    "category": "business",
+    "tags": ["email", "business", "communication"],
+    "isFavorite": false,
+    "version": 1
+  },
+  {
+    "id": "4",
+    "title": "Academic Paper Structure",
+    "content": "Please create a detailed outline for an academic paper about [Topic], including introduction, literature review, methodology, discussion, and conclusion sections. Please provide detailed subheadings and content suggestions for each section.",
+    "category": "education",
+    "tags": ["academic", "paper", "writing"],
+    "isFavorite": false,
+    "version": 1
+  },
+  {
+    "id": "5",
+    "title": "Meeting Summary Generator",
+    "content": "Please generate a concise and clear meeting summary based on the following meeting notes:\n\n[Meeting Notes]\n\nThe summary should include: main discussion points, decisions made, and follow-up action items.",
+    "category": "productivity",
+    "tags": ["meeting", "summary", "productivity"],
+    "isFavorite": true,
+    "version": 1
+  },
+  {
+    "id": "6",
+    "title": "Knowledge Extraction & Summary",
+    "content": "Please help me extract key information from the following content and summarize it into bullet points:\n\n[Text Content]\n\nPoints should be sorted by importance and provide concise explanations.",
+    "category": "general",
+    "tags": ["summary", "learning", "knowledge"],
+    "isFavorite": false,
+    "version": 1
+  }
+]

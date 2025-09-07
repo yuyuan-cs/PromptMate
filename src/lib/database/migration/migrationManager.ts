@@ -1,5 +1,5 @@
 import { DatabaseManager } from '../database';
-import { loadPrompts, loadCategories, loadSettings } from '../../data';
+import { loadPrompts, loadCategories, loadSettings, getDefaultCategories } from '../../data';
 import { PromptDAO } from '../dao/PromptDAO';
 import { CategoryDAO } from '../dao/CategoryDAO';
 import { SettingsDAO } from '../dao/SettingsDAO';

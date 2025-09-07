@@ -1,5 +1,6 @@
 import { Category } from '../../../types';
 import { BaseDAO } from './BaseDAO';
+import { getDefaultCategories, getSamplePrompts } from '../../data';
 
 export class CategoryDAO extends BaseDAO {
   // 获取所有分类
@@ -79,5 +80,65 @@ export class CategoryDAO extends BaseDAO {
     `);
     const result = stmt.get(id) as { count: number };
     return result.count > 0;
+  }
+
+  // 更新分类语言
+  updateLanguage(language: string): void {
+    const defaultCategories = getDefaultCategories(language);
+    const defaultCategoryMap = new Map(defaultCategories.map(cat => [cat.id, cat]));
+    
+    const updateStmt = this.db.prepare(`
+      UPDATE categories 
+      SET name = ?, updated_at = ?
+      WHERE id = ?
+    `);
+    
+    const now = new Date().toISOString();
+    
+    // 使用事务更新所有默认分类的语言
+    const transaction = this.db.transaction(() => {
+      defaultCategoryMap.forEach((defaultCategory, id) => {
+        updateStmt.run(defaultCategory.name, now, id);
+      });
+    });
+    
+    transaction();
+    
+    console.log(`已更新分类语言为: ${language}`);
+  }
+
+  // 更新提示词语言
+  updatePromptsLanguage(language: string): void {
+    const samplePrompts = getSamplePrompts(language);
+    const samplePromptMap = new Map(samplePrompts.map(prompt => [prompt.id, prompt]));
+    
+    const updatePromptStmt = this.db.prepare(`
+      UPDATE prompts 
+      SET title = ?, content = ?, updated_at = ?
+      WHERE id = ?
+    `);
+    
+    const updateTagStmt = this.db.prepare(`
+      UPDATE tags 
+      SET name = ?, created_at = ?
+      WHERE name = ?
+    `);
+    
+    const now = new Date().toISOString();
+    
+    // 使用事务更新所有示例提示词的语言
+    const transaction = this.db.transaction(() => {
+      samplePromptMap.forEach((samplePrompt, id) => {
+        // 更新提示词标题和内容
+        updatePromptStmt.run(samplePrompt.title, samplePrompt.content, now, id);
+        
+        // 更新标签（这里需要更复杂的逻辑来处理标签更新）
+        // 暂时跳过标签更新，因为标签更新需要重新建立关联关系
+      });
+    });
+    
+    transaction();
+    
+    console.log(`已更新提示词语言为: ${language}`);
   }
 }

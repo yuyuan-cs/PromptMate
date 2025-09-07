@@ -1,7 +1,7 @@
 // 在src/hooks/usePrompts.tsx中添加SQLite支持
 import { useState, useEffect, useMemo, createContext, useContext, ReactNode, useRef, useCallback } from 'react';
 import { Prompt, Category } from '../types';
-import { loadPrompts, savePrompts, loadCategories, saveCategories, generateId } from '../lib/data';
+import { loadPrompts, savePrompts, loadCategories, saveCategories, generateId, getDefaultCategories, getSamplePrompts } from '../lib/data';
 import recommendedPromptsDataZh from "../data/recommendedPrompts-zh.json";
 import recommendedPromptsDataEn from "../data/recommendedPrompts-en.json";
 import { useToast } from '@/hooks/use-toast';
@@ -139,6 +139,74 @@ function usePromptsState() {
     initDatabase();
   }, []);
 
+  // 监听语言变化，更新分类显示
+  useEffect(() => {
+    const currentLanguage = i18n.language || 'zh-CN';
+    console.log(`🌐 语言变化检测: ${currentLanguage}, 数据库模式: ${dbState.useSqlite}`);
+    
+    // 如果使用localStorage模式，重新加载分类和提示词
+    if (!dbState.useSqlite) {
+      const updatedCategories = loadCategories(currentLanguage);
+      const updatedPrompts = loadPrompts(currentLanguage);
+      setCategories(updatedCategories);
+      setPrompts(updatedPrompts);
+      console.log(`📱 localStorage模式: 语言切换到 ${currentLanguage}，更新分类和提示词显示`);
+      console.log(`📊 分类数量: ${updatedCategories.length}, 提示词数量: ${updatedPrompts.length}`);
+    } else {
+      // 如果使用数据库模式，需要更新数据库中的分类和提示词语言
+      const updateDatabaseLanguage = async () => {
+        try {
+          // 同时更新分类和提示词语言
+          await Promise.all([
+            dbClient.updateCategoryLanguage(currentLanguage),
+            dbClient.updatePromptsLanguage(currentLanguage)
+          ]);
+          
+          // 重新加载数据
+          const [updatedCategories, updatedPrompts] = await Promise.all([
+            dbClient.getAllCategories(),
+            dbClient.getAllPrompts()
+          ]);
+          
+          setCategories(updatedCategories);
+          setPrompts(updatedPrompts);
+          
+          console.log(`🗄️ 数据库模式: 语言切换到 ${currentLanguage}，已更新数据库分类和提示词语言`);
+          console.log(`📊 分类数量: ${updatedCategories.length}, 提示词数量: ${updatedPrompts.length}`);
+        } catch (error) {
+          console.error('更新数据库语言失败:', error);
+          
+          // 回退到前端更新
+          const defaultCategories = getDefaultCategories(currentLanguage);
+          const samplePrompts = getSamplePrompts(currentLanguage);
+          
+          const defaultCategoryMap = new Map(defaultCategories.map(cat => [cat.id, cat]));
+          const samplePromptMap = new Map(samplePrompts.map(prompt => [prompt.id, prompt]));
+          
+          setCategories(prev => prev.map(category => {
+            const defaultCategory = defaultCategoryMap.get(category.id);
+            if (defaultCategory) {
+              return { ...category, name: defaultCategory.name };
+            }
+            return category;
+          }));
+          
+          setPrompts(prev => prev.map(prompt => {
+            const samplePrompt = samplePromptMap.get(prompt.id);
+            if (samplePrompt) {
+              return { ...prompt, title: samplePrompt.title, content: samplePrompt.content, tags: samplePrompt.tags };
+            }
+            return prompt;
+          }));
+          
+          console.log(`语言切换到 ${currentLanguage}，使用前端更新分类和提示词显示`);
+        }
+      };
+
+      updateDatabaseLanguage();
+    }
+  }, [i18n.language, dbState.useSqlite]);
+
   // 从数据库加载数据
   const loadDataFromDatabase = async () => {
     try {
@@ -160,13 +228,14 @@ function usePromptsState() {
   // 从localStorage加载数据（回退方案）
   const loadDataFromLocalStorage = async () => {
     try {
-      const localPrompts = await loadPrompts();
-      const localCategories = loadCategories();
+      const currentLanguage = i18n.language || 'zh-CN';
+      const localPrompts = loadPrompts(currentLanguage);
+      const localCategories = loadCategories(currentLanguage);
       
       setPrompts(localPrompts);
       setCategories(localCategories);
       
-      console.log(`从localStorage加载了 ${localPrompts.length} 个提示词和 ${localCategories.length} 个分类`);
+      console.log(`从localStorage加载了 ${localPrompts.length} 个提示词和 ${localCategories.length} 个分类 (语言: ${currentLanguage})`);
     } catch (error) {
       console.error('从localStorage加载数据失败:', error);
     }
@@ -355,6 +424,66 @@ function usePromptsState() {
 
     updatePrompt(id, { isFavorite: !prompt.isFavorite });
   }, [prompts, updatePrompt]);
+
+  // 添加分类
+  const addCategory = useCallback(async (name: string, icon?: string) => {
+    try {
+      const newCategory: Category = {
+        id: generateId(),
+        name: name.trim(),
+        icon: icon || "folder",
+      };
+
+      if (dbState.useSqlite && dbClient.isAvailable()) {
+        // 使用SQLite数据库
+        const savedCategory = await dbClient.createCategory(newCategory);
+        setCategories(prev => [...prev, savedCategory]);
+        
+        // 同时备份到localStorage
+        const allCategories = [...categories, savedCategory];
+        saveCategories(allCategories);
+        
+        console.log('分类已保存到数据库:', savedCategory.id);
+      } else {
+        // 使用localStorage
+        const updatedCategories = [...categories, newCategory];
+        setCategories(updatedCategories);
+        saveCategories(updatedCategories);
+        
+        console.log('分类已保存到localStorage:', newCategory.id);
+      }
+
+      toast({
+        title: "分类已添加",
+        description: `新分类 "${name}" 已成功创建`,
+        variant: "success",
+      });
+
+      return newCategory;
+    } catch (error) {
+      console.error('添加分类失败:', error);
+      
+      // 如果数据库操作失败，回退到localStorage
+      if (dbState.useSqlite) {
+        console.log('数据库操作失败，回退到localStorage');
+        const newCategory: Category = {
+          id: generateId(),
+          name: name.trim(),
+          icon: icon || "folder",
+        };
+        
+        const updatedCategories = [...categories, newCategory];
+        setCategories(updatedCategories);
+        saveCategories(updatedCategories);
+      }
+      
+      toast({
+        title: "添加失败",
+        description: "分类添加失败，请重试",
+        variant: "destructive",
+      });
+    }
+  }, [categories, dbState.useSqlite, dbClient, toast]);
 
   // 更新分类
   const updateCategory = useCallback((id: string, name: string, icon?: string) => {
@@ -654,6 +783,7 @@ function usePromptsState() {
     getTagsForCategory,
     
     // 分类管理
+    addCategory,
     updateCategory,
     deleteCategory,
     updateCategoriesOrder,
