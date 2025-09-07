@@ -1,10 +1,10 @@
 {
   "name": "promptmate",
   "private": true,
-  "version": "1.1.8",
+  "version": "1.1.9",
   "type": "commonjs",
   "main": "dist-electron/main/main.cjs",
-  "buildDate": "2025-09-06T03:40:39.724Z",
+  "buildDate": "2025-09-07T02:42:11.532Z",
   "author": {
     "name": "泺源",
     "email": "yuyuan3162021@163.com"
@@ -233,30 +233,7 @@
       ],
       "artifactName": "${productName}-${version}-${arch}.${ext}",
       "requestedExecutionLevel": "asInvoker",
-      "verifyUpdateCodeSignature": false,
-      "nsis": {
-        "oneClick": false,
-        "allowElevation": true,
-        "allowToChangeInstallationDirectory": true,
-        "installerIcon": "./public/favicon.ico",
-        "uninstallerIcon": "./public/favicon.ico",
-        "installerHeaderIcon": "./public/favicon.ico",
-        "createDesktopShortcut": true,
-        "createStartMenuShortcut": true,
-        "menuCategory": "生产力工具",
-        "shortcutName": "PromptMate",
-        "runAfterFinish": true,
-        "artifactName": "${productName} Setup ${version}.${ext}",
-        "deleteAppDataOnUninstall": false,
-        "include": "./scripts/installer.nsh",
-        "displayLanguageSelector": true,
-        "installerLanguages": [
-          "zh_CN",
-          "en_US"
-        ],
-        "license": "./LICENSE",
-        "warningsAsErrors": false
-      }
+      "verifyUpdateCodeSignature": false
     },
     "linux": {
       "target": [

@@ -8,8 +8,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ChevronDown, Type } from "lucide-react";
+import { ChevronDown, Type, Monitor } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { useState } from "react";
+import SystemFontSelector from "./SystemFontSelector";
 
 interface FontSelectorProps {
   value?: string;
@@ -19,6 +21,8 @@ interface FontSelectorProps {
 export function FontSelector({ value, onChange }: FontSelectorProps = {}) {
   const { settings, availableFonts, updateSettings } = useSettings();
   const { t } = useTranslation();
+  const [showSystemFontSelector, setShowSystemFontSelector] = useState(false);
+  
   // 使用传入的value或从settings中获取
   const currentFont = value || settings.font;
 
@@ -50,6 +54,19 @@ export function FontSelector({ value, onChange }: FontSelectorProps = {}) {
         <DropdownMenuContent>
           <DropdownMenuLabel>{t('font.selectFont')}</DropdownMenuLabel>
           <DropdownMenuSeparator />
+          
+          {/* 系统字体选择器入口 */}
+          <DropdownMenuItem
+            onClick={() => setShowSystemFontSelector(true)}
+            className="flex items-center gap-2"
+          >
+            <Monitor className="h-4 w-4" />
+            {t('font.selectSystemFont')}
+          </DropdownMenuItem>
+          
+          <DropdownMenuSeparator />
+          
+          {/* 预设字体 */}
           {availableFonts.map((font) => (
             <DropdownMenuItem
               key={font.name}
@@ -82,6 +99,15 @@ export function FontSelector({ value, onChange }: FontSelectorProps = {}) {
           +
         </Button>
       </div>
+
+      {/* 系统字体选择器 */}
+      <SystemFontSelector
+        open={showSystemFontSelector}
+        onOpenChange={setShowSystemFontSelector}
+        currentFont={currentFont}
+        onFontSelect={handleSelectFont}
+        title={t('font.selectSystemFont')}
+      />
     </div>
   );
 }

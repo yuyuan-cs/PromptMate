@@ -205,9 +205,6 @@ export function useSettings() {
     { name: 'System UI', value: FONT_FAMILIES['System UI'] },
     { name: '思源黑体', value: FONT_FAMILIES['思源黑体'] },
     { name: '思源宋体', value: FONT_FAMILIES['思源宋体'] },
-    { name: '苹方', value: FONT_FAMILIES['苹方'] },
-    { name: '微软雅黑', value: FONT_FAMILIES['微软雅黑'] },
-    { name: 'Inter', value: FONT_FAMILIES['Inter'] },
     { name: 'Source Code Pro', value: FONT_FAMILIES['Source Code Pro'] }
   ];
 

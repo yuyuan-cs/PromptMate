@@ -65,6 +65,20 @@ function usePromptsState() {
 
   // 强制刷新函数
   const forceRefresh = () => setRefreshCounter(prev => prev + 1);
+  
+  // 重新加载数据函数
+  const reloadData = useCallback(async () => {
+    try {
+      if (dbState.useSqlite && dbClient.isAvailable()) {
+        await loadDataFromDatabase();
+      } else {
+        await loadDataFromLocalStorage();
+      }
+      forceRefresh();
+    } catch (error) {
+      console.error('重新加载数据失败:', error);
+    }
+  }, [dbState.useSqlite, dbClient]);
 
   // 初始化数据库连接
   useEffect(() => {
@@ -790,6 +804,7 @@ function usePromptsState() {
     
     // 工具方法
     forceRefresh,
+    reloadData,
     setCheckUnsavedChangesCallback,
     
     // 重置所有过滤器

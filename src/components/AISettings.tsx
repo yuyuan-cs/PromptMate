@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import { Loader2, CheckCircle, XCircle, Eye, EyeOff, Sparkles, Edit3, TestTube } from 'lucide-react';
+import { Loader2, CheckCircle, XCircle, Eye, EyeOff, Sparkles, Edit3, TestTube, Settings } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { aiService, type AIConfig, getModelsForProvider, type AIModel } from '@/services/aiService';
 import { Badge } from '@/components/ui/badge';
@@ -309,11 +309,11 @@ export const AISettings: React.FC = () => {
     <Card className="w-full max-w-none">
       <CardHeader className="pb-4">
         <CardTitle className="flex items-center gap-2 text-base">
-          <TestTube className="h-5 w-5" />
+          <Settings className="h-5 w-5" />
           {t("ai.configureAI")}
         </CardTitle>
         <CardDescription className="text-sm">
-          {t("ai.configureAIDesc")}
+          {t("ai.settings.description")}
           <br />
           <span className="text-blue-600 text-xs mt-1 block">
             {t("ai.settings.tip")}
@@ -438,9 +438,9 @@ export const AISettings: React.FC = () => {
                         </Badge>
                       )}
                     </div>
-                    {model.description && (
+                    {/* {model.description && (
                       <span className="text-xs text-muted-foreground truncate w-full">{model.description}</span>
-                    )}
+                    )} */}
                   </div>
                 </SelectItem>
               ))}
@@ -510,77 +510,77 @@ export const AISettings: React.FC = () => {
               openai: { 
                 name: 'OpenAI API Keys', 
                 url: 'https://platform.openai.com/api-keys', 
-                description: t("ai.settings.getApiKeyDescription.openai") 
+                description: t("ai.getApiKeyDescription.openai") 
               },
               anthropic: { 
                 name: 'Anthropic Console', 
                 url: 'https://console.anthropic.com/', 
-                description: t("ai.settings.getApiKeyDescription.anthropic") 
+                description: t("ai.getApiKeyDescription.anthropic") 
               },
               gemini: { 
                 name: 'Google AI Studio', 
                 url: 'https://makersuite.google.com/app/apikey', 
-                description: t("ai.settings.getApiKeyDescription.gemini") 
+                description: t("ai.getApiKeyDescription.gemini") 
               },
               deepseek: { 
                 name: 'DeepSeek Platform', 
                 url: 'https://platform.deepseek.com/api_keys', 
-                description: t("ai.settings.getApiKeyDescription.deepseek") 
+                description: t("ai.getApiKeyDescription.deepseek") 
               },
               kimi: { 
                 name: 'Moonshot AI', 
                 url: 'https://platform.moonshot.cn/console/api-keys', 
-                description: t("ai.settings.getApiKeyDescription.kimi") 
+                description: t("ai.getApiKeyDescription.kimi") 
               },
               doubao: { 
                 name: '火山引擎', 
                 url: 'https://console.volcengine.com/ark/', 
-                description: t("ai.settings.getApiKeyDescription.doubao") 
+                description: t("ai.getApiKeyDescription.doubao") 
               },
               qwen: { 
                 name: '阿里云百炼', 
                 url: 'https://bailian.console.aliyun.com/', 
-                description: t("ai.settings.getApiKeyDescription.qwen") 
+                description: t("ai.getApiKeyDescription.qwen") 
               },
               baidu: { 
                 name: '百度智能云', 
                 url: 'https://console.bce.baidu.com/qianfan/ais/console/applicationConsole/application', 
-                description: t("ai.settings.getApiKeyDescription.baidu") 
+                description: t("ai.getApiKeyDescription.baidu") 
               },
               siliconflow: { 
                 name: 'SiliconFlow', 
                 url: 'https://cloud.siliconflow.cn/account/ak', 
-                description: t("ai.settings.getApiKeyDescription.siliconflow") 
+                description: t("ai.getApiKeyDescription.siliconflow") 
               },
               oneapi: { 
                 name: 'One API', 
                 url: 'https://github.com/songquanpeng/one-api', 
-                description: t("ai.settings.getApiKeyDescription.oneapi") 
+                description: t("ai.getApiKeyDescription.oneapi") 
               },
               groq: { 
                 name: 'Groq Console', 
                 url: 'https://console.groq.com/keys', 
-                description: t("ai.settings.getApiKeyDescription.groq") 
+                description: t("ai.getApiKeyDescription.groq") 
               },
               perplexity: { 
                 name: 'Perplexity API', 
                 url: 'https://www.perplexity.ai/settings/api', 
-                description: t("ai.settings.getApiKeyDescription.perplexity") 
+                description: t("ai.getApiKeyDescription.perplexity") 
               },
               together: { 
                 name: 'Together AI', 
                 url: 'https://api.together.xyz/settings/api-keys', 
-                description: t("ai.settings.getApiKeyDescription.together") 
+                description: t("ai.getApiKeyDescription.together") 
               },
               ollama: { 
                 name: 'Ollama', 
                 url: 'https://ollama.ai/', 
-                description: t("ai.settings.getApiKeyDescription.ollama") 
+                description: t("ai.getApiKeyDescription.ollama") 
               },
               lmstudio: { 
                 name: 'LM Studio', 
                 url: 'https://lmstudio.ai/', 
-                description: t("ai.settings.getApiKeyDescription.lmstudio") 
+                description: t("ai.getApiKeyDescription.lmstudio") 
               },
               custom: { 
                 name: t("ai.settings.custom"), 

@@ -6,8 +6,9 @@ import { toast } from 'sonner';
 import { Badge } from './ui/badge';
 import { Separator } from './ui/separator';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
-import { ExternalLink, Download, Info, CheckCircle, AlertCircle, RefreshCw } from 'lucide-react';
+import { ExternalLink, Download, Info, CheckCircle, AlertCircle, RefreshCw, Heart, MessageCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next'; // 假设您使用的是 react-i18next
+import SponsorQRCode from './SponsorQRCode';
 
 // 应用信息接口
 interface AppInfo {
@@ -461,6 +462,82 @@ export function About() {
               )}
             </div>
           )}
+        </CardContent>
+      </Card>
+
+      {/* 赞助和反馈卡片 */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Heart className="h-5 w-5 text-red-500" />
+            {t("about.support.title")}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            {t("about.support.description")}
+          </p>
+          
+          {/* 赞助链接 */}
+          <div className="space-y-3">
+            <div>
+              <Label className="text-sm font-medium">{t("about.support.sponsor.title")}</Label>
+              <div className="mt-2 space-y-2">
+                <Button
+                  variant="outline"
+                  className="w-full justify-start"
+                  onClick={() => window.open('https://github.com/sponsors/yy0691', '_blank')}
+                >
+                  <Heart className="mr-2 h-4 w-4 text-red-500" />
+                  {t("about.support.sponsor.github")}
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full justify-start"
+                  onClick={() => window.open('https://afdian.net/@luoyuan', '_blank')}
+                >
+                  <Heart className="mr-2 h-4 w-4 text-red-500" />
+                  {t("about.support.sponsor.afdian")}
+                </Button>
+                {/* <Button
+                  variant="outline"
+                  className="w-full justify-start"
+                  onClick={() => window.open('https://paypal.me/luoyuan316', '_blank')}
+                >
+                  <Heart className="mr-2 h-4 w-4 text-blue-500" />
+                  {t("about.support.sponsor.paypal")}
+                </Button> */}
+              </div>
+            </div>
+            
+            {/* 赞助二维码 */}
+            <SponsorQRCode />
+          </div>
+          
+          <Separator />
+          
+          {/* 反馈链接 */}
+          <div>
+            <Label className="text-sm font-medium">{t("about.support.feedback.title")}</Label>
+            <div className="mt-2 space-y-2">
+              <Button
+                variant="outline"
+                className="w-full justify-start"
+                onClick={() => window.open('https://github.com/yy0691/PromptMate/issues', '_blank')}
+              >
+                <MessageCircle className="mr-2 h-4 w-4" />
+                {t("about.support.feedback.github")}
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full justify-start"
+                onClick={() => window.open('mailto:yuyuan3162021@163.com?subject=PromptMate反馈', '_blank')}
+              >
+                <MessageCircle className="mr-2 h-4 w-4" />
+                {t("about.support.feedback.email")}
+              </Button>
+            </div>
+          </div>
         </CardContent>
       </Card>
 

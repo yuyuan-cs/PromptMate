@@ -18,6 +18,8 @@ import {
   FileText,
   Settings,
   Palette,
+  Maximize,
+  Minimize,
   Cpu,
   SunMedium,
   Moon,
@@ -64,7 +66,12 @@ import {
   Clipboard,
   ZoomIn,
   ZoomOut,
-  Maximize
+  Cloud,
+  Database,
+  Archive,
+  Globe,
+  HardDrive,
+  Server
 } from "lucide-react";
 
 export const Icons = {
@@ -88,6 +95,8 @@ export const Icons = {
   fileText: FileText,
   settings: Settings,
   palette: Palette,
+  maximize: Maximize,
+  minimize: Minimize,
   sun: SunMedium,
   moon: Moon,
   panelLeft: PanelLeft,
@@ -135,6 +144,11 @@ export const Icons = {
   clipboard: Clipboard,
   zoomIn: ZoomIn,
   zoomOut: ZoomOut,
-  maximize: Maximize,
-  cpu: Cpu
+  cpu: Cpu,
+  cloud: Cloud,
+  database: Database,
+  archive: Archive,
+  google: Globe,
+  dropbox: HardDrive,
+  microsoft: Server
 }; 

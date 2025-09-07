@@ -43,6 +43,7 @@ import { LanguageSelector } from "@/components/ui/LanguageSelector";
 import { useSidebarAlert } from "@/hooks/useSidebarAlert";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { PreferencesPanel } from "./PreferencesPanel";
+import { CardContent } from "./ui/card";
 
 // 侧边栏显示模式类型
 type SidebarMode = "expanded" | "collapsed";
@@ -66,6 +67,7 @@ export function Sidebar({ className }: { className?: string }) {
     setSelectedPrompt,
     resetAllFilters,
     forceRefresh,
+    reloadData,
     updateCategory,
     deleteCategory,
     updateCategoriesOrder,
@@ -103,6 +105,7 @@ export function Sidebar({ className }: { className?: string }) {
       accent: "#f1f5f9",
     }
   );
+  const [isFullscreen, setIsFullscreen] = useState(false);
   
   // 当设置对话框关闭时，重置面板状态
   useEffect(() => {
@@ -225,7 +228,9 @@ export function Sidebar({ className }: { className?: string }) {
   };
 
   // 数据变更后刷新
-  const handleDataChanged = () => {
+  const handleDataChanged = async () => {
+    // 重新加载数据
+    await reloadData();
     // 重置为默认视图
     handleAllPromptsClick();
     // 这里可以添加额外的刷新逻辑
@@ -511,6 +516,11 @@ export function Sidebar({ className }: { className?: string }) {
     // 重置拖拽状态
     setDraggedCategory(null);
     setDragOverCategory(null);
+  };
+
+  //处理设置面板全屏功能
+  const handleFullscreen = () => {
+    setIsFullscreen(!isFullscreen);
   };
 
   // 渲染侧边栏
@@ -922,7 +932,7 @@ export function Sidebar({ className }: { className?: string }) {
                 }}
               />
             </TooltipTrigger>
-            <TooltipContent side="right">{t('common.newprompt')}</TooltipContent>
+            <TooltipContent side="right">{t('prompts.createNew')}</TooltipContent>
           </Tooltip>
         </TooltipProvider>
         
@@ -955,37 +965,61 @@ export function Sidebar({ className }: { className?: string }) {
 
 
       {/* 设置对话框 */}
-      <Dialog open={showSettings} onOpenChange={setShowSettings}>
-        <DialogContent className="sm:max-w-[650px] md:max-w-[750px]">
-          <DialogHeader>
-            <DialogTitle>{t('common.appSettings')}</DialogTitle>
-            <DialogDescription>
-              {t('common.customizeAppearance')}
-            </DialogDescription>
+      <Dialog 
+        open={showSettings} 
+        onOpenChange={(open) => {
+          setShowSettings(open);
+          if (!open) {
+            setIsFullscreen(false); // 关闭对话框时重置全屏状态
+          }
+        }}
+      >
+        <DialogContent className={cn(
+          "transition-all duration-300",
+          isFullscreen 
+            ? "fixed left-0 top-0 w-screen h-screen max-w-none max-h-none m-0 rounded-none translate-x-0 translate-y-0" 
+            : `sm:max-w-[650px] md:max-w-[750px] ${settingsPanel === "data" ? 'max-h-[85vh]' : 'max-h-[85vh]'}`
+        )}>
+          <DialogHeader className="flex flex-row items-center justify-between">
+            <div>
+              <div className="flex items-center justify-between w-full">
+                <DialogTitle>{t('common.appSettings')}</DialogTitle>
+                {/* <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleFullscreen}
+                  className="ml-4"
+                  title={isFullscreen ? t('common.exitFullscreen') : t('common.toggleFullscreen')}
+                >
+                  {isFullscreen ? (
+                    <Icons.minimize className="h-4 w-4" />
+                  ) : (
+                    <Icons.maximize className="h-4 w-4" />
+                  )}
+                </Button> */}
+              </div>
+              <DialogDescription>
+                {t('common.customizeAppearance')}
+              </DialogDescription>
+              
+            </div>
+            
           </DialogHeader>
           
           {/* 设置导航按钮 */}
-          <div className="grid grid-cols-5 gap-2 mb-4">
+          <div className="flex flex-wrap gap-2 mb-4">
             <Button 
               variant={settingsPanel === "appearance" ? "default" : "outline"} 
               onClick={() => setSettingsPanel("appearance")}
-              className="w-full"
+              className="flex items-center"
             >
               <Icons.palette className="mr-2 h-4 w-4" />
               {t('common.appearance')}
             </Button>
-            {/* <Button 
-              variant={settingsPanel === "preferences" ? "default" : "outline"} 
-              onClick={() => setSettingsPanel("preferences")}
-              className="w-full"
-            >
-              <Icons.settings className="mr-2 h-4 w-4" />
-              {t('preferences.title')}
-            </Button> */}
             <Button 
               variant={settingsPanel === "data" ? "default" : "outline"} 
               onClick={() => setSettingsPanel("data")}
-              className="w-full"
+              className="flex items-center"
             >
               <Icons.fileJson className="mr-2 h-4 w-4" />
               {t('dataManagement.title')}
@@ -993,7 +1027,7 @@ export function Sidebar({ className }: { className?: string }) {
             <Button 
               variant={settingsPanel === "ai" ? "default" : "outline"} 
               onClick={() => setSettingsPanel("ai")}
-              className="w-full"
+              className="flex items-center"
             >
               <Icons.star className="mr-2 h-4 w-4" />
               {t('common.aiSettings')}
@@ -1001,7 +1035,7 @@ export function Sidebar({ className }: { className?: string }) {
             <Button 
               variant={settingsPanel === "about" ? "default" : "outline"} 
               onClick={() => setSettingsPanel("about")}
-              className="w-full"
+              className="flex items-center"
             >
               <Icons.info className="mr-2 h-4 w-4" />
               {t('common.about')}
@@ -1097,7 +1131,8 @@ export function Sidebar({ className }: { className?: string }) {
           
           {/* 数据管理面板 */}
           {settingsPanel === "data" && (
-            <div className="py-4">
+            <div className="py-2 h-[60vh] overflow-y-auto">
+              <CardContent className="text-sm font-medium mb-2 text-muted-foreground color-green-500">{t('dataManagement.cloudSyncDescription2')}</CardContent>
               <DataImportExport 
                 inline={true} 
                 open={true} 

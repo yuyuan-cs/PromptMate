@@ -1038,6 +1038,16 @@ ipcMain.handle('db-update-category-language', async (_, language) => {
   }
 });
 
+ipcMain.handle('db-update-prompts-language', async (_, language) => {
+  try {
+    if (!databaseService) throw new Error('数据库服务未初始化');
+    databaseService.updatePromptsLanguage(language);
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
 ipcMain.handle('db-get-all-tags', async () => {
   try {
     if (!databaseService) throw new Error('数据库服务未初始化');

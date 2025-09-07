@@ -39,6 +39,11 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
 import { 
   ContextMenu,
   ContextMenuContent,
@@ -450,7 +455,9 @@ export const PromptList = memo(function PromptList({
 
       {/* 提示词列表 */}
       <ScrollArea className="flex-1">
-        <div className="p-4">
+        <ContextMenu>
+          <ContextMenuTrigger asChild>
+            <div className="p-4 min-h-full">
           {filteredPrompts.length === 0 ? (
             // *** MODIFICATION START ***
             <div className="flex flex-col items-center justify-center h-full text-center pt-16">
@@ -481,26 +488,27 @@ export const PromptList = memo(function PromptList({
                 : 'grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5'
             }`}>
               {filteredPrompts.map((prompt) => (
-                <Card 
-                  key={prompt.id}
-                  className={cn(
-                    "prompt-card cursor-pointer p-0.5",
-                    "w-full max-w-none", // 确保卡片占满网格单元格
-                    "focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-offset-1",
-                    "border border-border/20 backdrop-blur-sm",
-                    selectedPrompt?.id === prompt.id 
-                    ? "selected"
-                    : "hover:border-primary/30 hover:shadow-md"
-                  )}
-                  onClick={() => handleSelectPrompt(prompt)}
-                  tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      handleSelectPrompt(prompt);
-                    }
-                  }}
-                >
+                <HoverCard key={prompt.id}>
+                  <HoverCardTrigger asChild>
+                    <Card 
+                      className={cn(
+                        "prompt-card cursor-pointer p-0.5",
+                        "w-full max-w-none", // 确保卡片占满网格单元格
+                        "focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-offset-1",
+                        "border border-border/20 backdrop-blur-sm",
+                        selectedPrompt?.id === prompt.id 
+                        ? "selected"
+                        : "hover:border-primary/30 hover:shadow-md"
+                      )}
+                      onClick={() => handleSelectPrompt(prompt)}
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          handleSelectPrompt(prompt);
+                        }
+                      }}
+                    >
                   <CardHeader className="pb-2">
                     <div className="flex justify-between items-start">
                       <CardTitle className="text-lg line-clamp-1">{prompt.title}</CardTitle>
@@ -667,11 +675,92 @@ export const PromptList = memo(function PromptList({
                       </Button>
                     )}
                   </CardFooter>
-                </Card>
+                    </Card>
+                  </HoverCardTrigger>
+                  <HoverCardContent 
+                    className="w-96 max-h-80 p-4" 
+                    side="top"
+                    align="center"
+                    sideOffset={8}
+                  >
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <h4 className="font-semibold text-sm">{prompt.title}</h4>
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleCopyPrompt(prompt.id);
+                            }}
+                            title="复制提示词"
+                          >
+                            <Icons.copy className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleToggleFavorite(e, prompt.id);
+                            }}
+                            title={prompt.isFavorite ? "取消收藏" : "收藏"}
+                          >
+                            {prompt.isFavorite ? (
+                              <Icons.starFilled className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                            ) : (
+                              <Icons.star className="h-3 w-3" />
+                            )}
+                          </Button>
+                        </div>
+                      </div>
+                      
+                      <div className="text-xs text-muted-foreground max-h-48 overflow-y-auto prose prose-sm max-w-none">
+                        <ReactMarkdown>
+                          {prompt.content}
+                        </ReactMarkdown>
+                      </div>
+                      
+                      {prompt.tags.length > 0 && (
+                        <div className="flex flex-wrap gap-1">
+                          {prompt.tags.slice(0, 5).map((tag) => (
+                            <Badge key={tag} variant="secondary" className="text-xs px-1.5 py-0.5">
+                              {tag}
+                            </Badge>
+                          ))}
+                          {prompt.tags.length > 5 && (
+                            <Badge variant="outline" className="text-xs px-1.5 py-0.5">
+                              +{prompt.tags.length - 5}
+                            </Badge>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </HoverCardContent>
+                </HoverCard>
               ))}
             </div>
           )}
-        </div>
+            </div>
+          </ContextMenuTrigger>
+          <ContextMenuContent>
+            <ContextMenuItem onClick={() => setShowNewPromptDialog(true)}>
+              <Icons.plus className="mr-2 h-4 w-4" />
+              {t('common.create_prompt.title')}
+            </ContextMenuItem>
+            <ContextMenuItem onClick={() => setShowFavorites(!showFavorites)}>
+              <Icons.star className="mr-2 h-4 w-4" />
+              {showFavorites ? t('common.showAll') : t('common.showFavorites')}
+            </ContextMenuItem>
+            <ContextMenuItem onClick={() => setShowRecommended(!showRecommended)}>
+              <Icons.fileText className="mr-2 h-4 w-4" />
+              {showRecommended ? t('common.showAll') : t('common.showRecommended')}
+            </ContextMenuItem>
+          </ContextMenuContent>
+        </ContextMenu>
       </ScrollArea>
 
 

@@ -1,5 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Settings, ThemeType } from '../types';
+import { Settings } from '../shared/types';
+
+// 定义主题类型
+type ThemeType = 'light' | 'dark' | 'system' | 'custom';
 import { loadSettings, saveSettings } from '../lib/data';
 import { useToast } from '@/hooks/use-toast';
 import { applyThemeVariables, getThemePreset } from '../lib/themes';
@@ -8,12 +11,9 @@ import { applyThemeVariables, getThemePreset } from '../lib/themes';
 const FONT_FAMILIES = {
   'System UI': 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif',
   'SF Pro': 'SF Pro, system-ui, sans-serif',
-  'Inter': 'Inter var, sans-serif',
   'Source Code Pro': 'Source Code Pro, monospace',
   '思源黑体': '"Noto Sans SC", "Source Han Sans SC", "Source Han Sans CN", "思源黑体 CN", sans-serif',
   '思源宋体': '"Noto Serif SC", "Source Han Serif SC", "Source Han Serif CN", "思源宋体 CN", serif',
-  '苹方': '"PingFang SC", "SF Pro SC", "苹方-简", sans-serif',
-  '微软雅黑': '"Microsoft YaHei", "微软雅黑", sans-serif',
 };
 
 // 设置主题

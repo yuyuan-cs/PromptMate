@@ -9,6 +9,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { Icons } from "@/components/ui/icons"; // Import Icons for fallback
 import ErrorBoundary from "@/components/ErrorBoundary";
 import NotFoundPage from "@/components/NotFoundPage";
+import SplashScreen from "@/components/SplashScreen";
+import { useSplashScreen } from "@/hooks/useSplashScreen";
 
 // Lazy load the Index component (handle named export)
 const Index = lazy(() => 
@@ -34,6 +36,15 @@ function AppContent() {
   const { currentView } = useAppView();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const isDev = import.meta.env.DEV;
+  
+  // 启动页面管理
+  const { showSplash } = useSplashScreen({
+    duration: 3000,
+    minDuration: 2000,
+    onComplete: () => {
+      console.log('启动页面完成');
+    }
+  });
 
   // 切换侧边栏显示状态 (Memoized with useCallback)
   const toggleSidebar = useCallback(() => {
@@ -67,6 +78,11 @@ function AppContent() {
         );
     }
   };
+
+  // 如果显示启动页面，则只显示启动页面
+  if (showSplash) {
+    return <SplashScreen />;
+  }
 
   return (
     <main className="h-screen flex flex-col">
