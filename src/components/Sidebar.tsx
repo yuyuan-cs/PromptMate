@@ -392,6 +392,11 @@ export function Sidebar({ className }: { className?: string }) {
 
   // 处理右键菜单新建提示词
   const handleContextMenuNewPrompt = (categoryId: string) => {
+    console.log('🖱️ 右键菜单新建提示词:', {
+      clickedCategoryId: categoryId,
+      currentActiveCategory: activeCategory,
+      newPromptCategoryId: categoryId
+    });
     setNewPromptCategoryId(categoryId);
     setShowNewPromptDialog(true);
   };

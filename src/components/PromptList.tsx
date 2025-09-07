@@ -880,7 +880,7 @@ export const PromptList = memo(function PromptList({
         onOpenChange={setShowNewPromptDialog}
         mode="create"
         options={{
-          defaultCategory: activeCategory || categories[0]?.id || "general",
+          defaultCategory: categories[0]?.id || "general",
           onSuccess: handleCreatePromptSuccess,
           onCancel: () => setShowNewPromptDialog(false)
         }}

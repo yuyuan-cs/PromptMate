@@ -68,10 +68,31 @@ export const usePromptForm = (options: PromptFormOptions) => {
     // 修复默认分类逻辑：defaultCategory 应该有最高优先级
     // 只有在没有指定 defaultCategory 时才使用 activeCategory
     const getDefaultCategory = () => {
-      if (initialData?.category) return initialData.category;
-      if (defaultCategory) return defaultCategory;
-      if (activeCategory) return activeCategory;
-      if (categories[0]?.id) return categories[0].id;
+      console.log('🔍 分类选择调试:', {
+        initialDataCategory: initialData?.category,
+        defaultCategory,
+        activeCategory,
+        firstCategory: categories[0]?.id,
+        mode
+      });
+      
+      if (initialData?.category) {
+        console.log('✅ 使用 initialData.category:', initialData.category);
+        return initialData.category;
+      }
+      if (defaultCategory) {
+        console.log('✅ 使用 defaultCategory:', defaultCategory);
+        return defaultCategory;
+      }
+      if (activeCategory) {
+        console.log('⚠️ 使用 activeCategory:', activeCategory);
+        return activeCategory;
+      }
+      if (categories[0]?.id) {
+        console.log('✅ 使用第一个分类:', categories[0].id);
+        return categories[0].id;
+      }
+      console.log('✅ 使用默认分类: general');
       return "general";
     };
     
@@ -160,9 +181,9 @@ export const usePromptForm = (options: PromptFormOptions) => {
 
   // 重置表单
   const resetForm = useCallback(() => {
-    const initialData = getInitialFormData();
+    const initialFormData = getInitialFormData();
     setState({
-      ...initialData,
+      ...initialFormData,
       hasChanges: false,
       selectedImageIndex: null,
       imageCaption: "",
