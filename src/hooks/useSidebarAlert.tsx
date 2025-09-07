@@ -53,17 +53,27 @@ export function useSidebarAlert() {
   };
 
   const handleConfirm = () => {
+    console.log('[useSidebarAlert] handleConfirm called');
     const confirmCallback = callbacks.current?.onConfirm;
+    console.log('[useSidebarAlert] confirmCallback exists:', !!confirmCallback);
     close();
     // 在关闭后延迟触发回调，防止状态冲突
-    setTimeout(() => confirmCallback?.(), 0);
+    setTimeout(() => {
+      console.log('[useSidebarAlert] executing confirmCallback');
+      confirmCallback?.();
+    }, 0);
   };
 
   const handleCancel = () => {
+    console.log('[useSidebarAlert] handleCancel called');
     const cancelCallback = callbacks.current?.onCancel;
+    console.log('[useSidebarAlert] cancelCallback exists:', !!cancelCallback);
     close();
     // 在关闭后延迟触发回调，防止状态冲突
-    setTimeout(() => cancelCallback?.(), 0);
+    setTimeout(() => {
+      console.log('[useSidebarAlert] executing cancelCallback');
+      cancelCallback?.();
+    }, 0);
   };
 
   const AlertComponent: React.FC = () => {
@@ -91,13 +101,21 @@ export function useSidebarAlert() {
           <AlertDialogFooter>
             {state.mode === 'confirm' && (
               <AlertDialogCancel 
-                onClick={handleCancel}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleCancel();
+                }}
               >
                 {state.cancelText || '取消'}
               </AlertDialogCancel>
             )}
             <AlertDialogAction 
-              onClick={handleConfirm}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleConfirm();
+              }}
             >
               {state.confirmText || '确定'}
             </AlertDialogAction>
