@@ -65,14 +65,13 @@ export function IconSelector({ value, onChange, className }: IconSelectorProps) 
   };
 
   return (
-    <Popover open={open} onOpenChange={setOpen} modal={false}>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         {/* 选择图标按钮 */}
         <Button
           variant="outline"
-          role="combobox"
-          aria-expanded={open}
           className={cn("w-8 h-8 p-0 justify-center", className)}
+          aria-label="选择图标"
         >
           <SelectedIconComponent className="h-4 w-4" />
         </Button>

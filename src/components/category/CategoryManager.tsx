@@ -212,8 +212,13 @@ export function CategoryManager({ open, onOpenChange }: CategoryManagerProps) {
                             <Button
                               variant="ghost"
                               size="icon"
-                              onClick={() => handleEditCategory(category)}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handleEditCategory(category);
+                              }}
                               className="h-8 w-8 hover:bg-muted/50"
+                              aria-label={`编辑分类 ${category.name}`}
                             >
                               <Icons.edit className="h-4 w-4" />
                             </Button>
@@ -223,8 +228,13 @@ export function CategoryManager({ open, onOpenChange }: CategoryManagerProps) {
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                onClick={() => handleDeleteRequest(category)}
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  handleDeleteRequest(category);
+                                }}
                                 className="h-8 w-8 hover:bg-destructive/10 hover:text-destructive"
+                                aria-label={`删除分类 ${category.name}`}
                               >
                                 <Icons.trash className="h-4 w-4" />
                               </Button>
@@ -248,7 +258,11 @@ export function CategoryManager({ open, onOpenChange }: CategoryManagerProps) {
       </Dialog>
 
       {/* 删除确认对话框 */}
-      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+      <AlertDialog open={showDeleteDialog} onOpenChange={(open) => {
+        if (!open) {
+          handleCancelDelete();
+        }
+      }}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>确认删除分类</AlertDialogTitle>
