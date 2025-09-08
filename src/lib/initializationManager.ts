@@ -240,7 +240,7 @@ export class InitializationManager {
     
     // 等待主应用加载，最多等待2秒
     let attempts = 0;
-    const maxAttempts = 20; // 2秒 / 100ms = 20次
+    const maxAttempts = 10; // 2秒 / 100ms = 20次
     
     while (!checkAppLoaded() && attempts < maxAttempts) {
       await new Promise(resolve => setTimeout(resolve, 100));
