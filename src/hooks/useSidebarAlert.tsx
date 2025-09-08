@@ -1,129 +1,142 @@
-import React, { useCallback, useState, useRef } from 'react';
-import { 
-  AlertDialog, 
-  AlertDialogContent, 
-  AlertDialogHeader, 
-  AlertDialogTitle, 
-  AlertDialogDescription, 
-  AlertDialogFooter,
+import {
+  AlertDialog,
   AlertDialogAction,
-  AlertDialogCancel
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import React, { useState, useCallback } from 'react';
 
-// Keep the state interface simple, callbacks are handled by a ref.
+// ✅ FIX: Include optional callbacks directly in the state type.
+// This keeps all related data for a single alert action together.
 interface AlertState {
   open: boolean;
-  title?: string;
-  message?: string;
+  title: string;
+  message: string;
   mode: 'alert' | 'confirm';
-  confirmText?: string;
+  confirmText: string;
   cancelText?: string;
+  onConfirm?: () => void;
+  onCancel?: () => void;
 }
 
+// Define a partial initial state to avoid repetition.
+const initialState: Omit<AlertState, 'open'> = {
+  title: '',
+  message: '',
+  mode: 'alert',
+  confirmText: 'OK',
+};
+
 export function useSidebarAlert() {
-  const [state, setState] = useState<AlertState>({ open: false, mode: 'alert' });
-  
-  // Use a ref to hold the latest callbacks to avoid stale closures.
-  const callbacks = useRef<{ onConfirm?: () => void; onCancel?: () => void; }>();
+  // The state now holds everything, or is null when closed.
+  const [state, setState] = useState<AlertState | null>(null);
 
-  const showAlert = useCallback((message: string, title = '提示', onConfirm?: () => void, confirmText = '确定') => {
-    callbacks.current = { onConfirm };
-    setState({ open: true, mode: 'alert', message, title, confirmText });
-  }, []);
-
+  // ✅ FIX: This function now simply sets the state directly.
+  // No more setTimeout or useRef. The logic is clean and synchronous.
   const showConfirm = useCallback(
     (
       message: string,
-      title = '确认',
+      title = 'Confirm',
       onConfirm?: () => void,
       onCancel?: () => void,
-      confirmText = '确定',
-      cancelText = '取消'
+      confirmText = 'Confirm',
+      cancelText = 'Cancel'
     ) => {
-      callbacks.current = { onConfirm, onCancel };
-      setState({ open: true, mode: 'confirm', message, title, confirmText, cancelText });
+      console.log('[useSidebarAlert] showConfirm called');
+      setState({
+        open: true,
+        mode: 'confirm',
+        message,
+        title,
+        onConfirm,
+        onCancel,
+        confirmText,
+        cancelText,
+      });
     },
-    []
+    [] // Empty dependency array ensures this function's reference is stable.
   );
 
-  const close = () => {
-    setState(prev => ({ ...prev, open: false }));
-    // 清空回调，防止重复触发
-    callbacks.current = undefined;
-  };
+  // ✅ FIX: showAlert is also simplified.
+  const showAlert = useCallback((message: string, title = 'Alert', onConfirm?: () => void, confirmText = 'OK') => {
+    setState({
+      open: true,
+      mode: 'alert',
+      message,
+      title,
+      onConfirm,
+      confirmText,
+    });
+  }, []);
+  
+  // ✅ FIX: A single, clean function to close the dialog.
+  const handleClose = useCallback(() => {
+    setState(null);
+  }, []);
 
-  const handleConfirm = () => {
-    console.log('[useSidebarAlert] handleConfirm called');
-    const confirmCallback = callbacks.current?.onConfirm;
-    console.log('[useSidebarAlert] confirmCallback exists:', !!confirmCallback);
-    close();
-    // 在关闭后延迟触发回调，防止状态冲突
-    setTimeout(() => {
-      console.log('[useSidebarAlert] executing confirmCallback');
-      confirmCallback?.();
-    }, 0);
-  };
+  // ✅ FIX: Handler logic is simpler. It calls the callback from state, then closes.
+  const handleConfirm = useCallback(() => {
+    if (state?.onConfirm) {
+      state.onConfirm();
+    }
+    handleClose();
+  }, [state, handleClose]);
 
-  const handleCancel = () => {
-    console.log('[useSidebarAlert] handleCancel called');
-    const cancelCallback = callbacks.current?.onCancel;
-    console.log('[useSidebarAlert] cancelCallback exists:', !!cancelCallback);
-    close();
-    // 在关闭后延迟触发回调，防止状态冲突
-    setTimeout(() => {
-      console.log('[useSidebarAlert] executing cancelCallback');
-      cancelCallback?.();
-    }, 0);
-  };
+  const handleCancel = useCallback(() => {
+    if (state?.onCancel) {
+      state.onCancel();
+    }
+    handleClose();
+  }, [state, handleClose]);
 
-  const AlertComponent: React.FC = () => {
+  // ✅ FIX: The entire component definition is wrapped in useCallback.
+  // This memoizes the component itself, making it stable across renders
+  // unless its dependencies (state, handlers) change.
+  const AlertComponent = useCallback(() => {
+    if (!state) {
+      return null;
+    }
+
     return (
-      <AlertDialog 
-        open={state.open} 
-        onOpenChange={(open) => {
-          // 只在未手动关闭时才触发取消操作
-          if (!open && state.open) {
-            // 使用直接关闭，不触发取消回调，防止闪烁
-            close();
+      <AlertDialog
+        open={state.open}
+        onOpenChange={(isOpen) => {
+          // If the dialog is closed by clicking outside or pressing Escape,
+          // trigger the cancel action.
+          if (!isOpen) {
+            handleCancel();
           }
         }}
       >
         <AlertDialogContent>
-          {state.title && (
-            <AlertDialogHeader>
-              <AlertDialogTitle>{state.title}</AlertDialogTitle>
-              {state.message && <AlertDialogDescription>{state.message}</AlertDialogDescription>}
-            </AlertDialogHeader>
-          )}
-          {!state.title && state.message && (
-            <div className="text-sm text-muted-foreground">{state.message}</div>
-          )}
+          <AlertDialogHeader>
+            <AlertDialogTitle>{state.title}</AlertDialogTitle>
+            <AlertDialogDescription>{state.message}</AlertDialogDescription>
+          </AlertDialogHeader>
           <AlertDialogFooter>
             {state.mode === 'confirm' && (
-              <AlertDialogCancel 
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  handleCancel();
-                }}
-              >
-                {state.cancelText || '取消'}
+              <AlertDialogCancel onClick={handleCancel}>
+                {state.cancelText}
               </AlertDialogCancel>
             )}
-            <AlertDialogAction 
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                handleConfirm();
-              }}
-            >
-              {state.confirmText || '确定'}
+            <AlertDialogAction onClick={handleConfirm}>
+              {state.confirmText}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     );
-  }
+  }, [state, handleConfirm, handleCancel]);
 
-  return { showAlert, showConfirm, AlertComponent };
+  return { 
+    showAlert, 
+    showConfirm, 
+    AlertComponent,
+    // You can optionally expose the open state if needed elsewhere
+    isAlertOpen: state?.open ?? false 
+  };
 }

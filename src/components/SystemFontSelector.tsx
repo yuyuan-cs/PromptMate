@@ -183,7 +183,7 @@ export function SystemFontSelector({
       <DialogContent className="max-w-4xl h-[80vh] p-0">
         <DialogHeader className="p-6 pb-0">
           <DialogTitle className="flex items-center gap-2">
-            <Icons.font className="h-5 w-5" />
+            <Icons.microsoft className="h-5 w-5" />
             {title || t('font.selectSystemFont')}
           </DialogTitle>
         </DialogHeader>
@@ -233,7 +233,7 @@ export function SystemFontSelector({
                 ) : filteredFonts.length === 0 ? (
                   <div className="flex items-center justify-center h-32">
                     <div className="text-center">
-                      <Icons.font className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+                      <Icons.microsoft className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
                       <p className="text-muted-foreground">
                         {searchTerm ? t('font.noSearchResults') : t('font.noFontsFound')}
                       </p>

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
@@ -49,6 +49,22 @@ import { CardContent } from "./ui/card";
 type SidebarMode = "expanded" | "collapsed";
 
 export function Sidebar({ className }: { className?: string }) {
+  
+  // 在组件顶部添加这个调试代码
+  const renderCount = useRef(0);
+  renderCount.current++;
+  
+  // ⚠️ 修复：activeCategory、showFavorites、showRecommended 必须在 usePrompts 解构后才能使用
+  // 所以将此调试代码移动到 usePrompts 解构之后
+
+  // 追踪 useSidebarAlert 的影响
+  const alertResult = useSidebarAlert();
+  console.log('[Sidebar] useSidebarAlert result:', {
+    showAlert: !!alertResult.showAlert,
+    showConfirm: !!alertResult.showConfirm,
+    AlertComponent: !!alertResult.AlertComponent
+  });
+  
   const { t } = useTranslation();
   const { showAlert, showConfirm, AlertComponent } = useSidebarAlert();
   const {
@@ -80,6 +96,8 @@ export function Sidebar({ className }: { className?: string }) {
   const { currentView, setCurrentView } = useAppView();
   const isDev = import.meta.env.DEV;
 
+  // ✅ 第一步：添加这个新的 state
+  const [deletingCategoryId, setDeletingCategoryId] = useState<string | null>(null);
   // 新建提示词对话框状态
   const [showNewPromptDialog, setShowNewPromptDialog] = useState(false);
   const [newPromptCategoryId, setNewPromptCategoryId] = useState<string | null>(null);
@@ -106,6 +124,13 @@ export function Sidebar({ className }: { className?: string }) {
     }
   );
   const [isFullscreen, setIsFullscreen] = useState(false);
+
+  // 处理点击全部提示词
+  const handleAllPromptsClick = useCallback(() => {
+    console.log('All prompts clicked');
+    resetAllFilters();
+    console.log(t("sidebar.message.allPromptsClicked"));
+  }, [resetAllFilters, t]); // ✅ 添加依赖项
   
   // 当设置对话框关闭时，重置面板状态
   useEffect(() => {
@@ -149,6 +174,49 @@ export function Sidebar({ className }: { className?: string }) {
       categories
     });
   }, [activeCategory, showFavorites, showRecommended, categories]);
+
+  
+  const handleDeleteCategory = useCallback((categoryId: string) => {
+    console.log('🗑️ handleDeleteCategory called with:', categoryId);
+    
+    const categoryToDelete = categories.find(cat => cat.id === categoryId);
+    
+    if (!categoryToDelete) {
+      console.warn('❌ Category not found:', categoryId);
+      return;
+    }
+  
+    console.log('📝 About to show confirm dialog for:', categoryToDelete.name);
+     
+    
+    showConfirm(
+      t("sidebar.message.deleteCategory").replace("{name}", categoryToDelete.name),
+      t("common.confirmDelete"),
+      () => {
+        console.log('✅ Confirm callback executed for:', categoryId);
+        try {
+          deleteCategory(categoryId);
+          console.log('✅ Category deleted successfully');
+          
+          if (activeCategory === categoryId) {
+            handleAllPromptsClick();
+            console.log('✅ Switched to all prompts view');
+          }
+          
+          toast({
+            title: "删除成功",
+            description: `分类 "${categoryToDelete.name}" 已删除`,
+          });
+        } catch (error) {
+          console.error('❌ Error deleting category:', error);
+          showAlert("删除失败，请重试", "错误");
+        }
+      },
+      () => {
+        console.log('❌ Cancel callback executed for:', categoryId);
+      }
+    );
+  }, [categories, deleteCategory, activeCategory, handleAllPromptsClick, toast, showAlert, showConfirm, t]);
 
   // 处理点击分类
   const handleCategoryClick = (categoryId: string) => {
@@ -216,16 +284,7 @@ export function Sidebar({ className }: { className?: string }) {
     console.log(t("sidebar.message.recommendedClicked"));
   };
 
-  // 处理点击全部提示词
-  const handleAllPromptsClick = () => {
-    console.log('All prompts clicked');
-    
-    // 使用全局重置函数
-    resetAllFilters();
-    
-    // 添加强制刷新的调试日志
-    console.log(t("sidebar.message.allPromptsClicked"));
-  };
+  
 
   // 数据变更后刷新
   const handleDataChanged = async () => {
@@ -367,51 +426,55 @@ export function Sidebar({ className }: { className?: string }) {
   };
 
   // 添加删除处理函数
-  const handleDelete = (categoryId: string) => {
-    console.log(`[Sidebar] handleDelete called for categoryId: ${categoryId}`);
+  // const handleDelete = (categoryId: string) => {
+  //   console.log(`[Sidebar] handleDelete called for categoryId: ${categoryId}`);
     
-    // 找到要删除的分类
-    const categoryToDelete = categories.find(cat => cat.id === categoryId);
-    if (!categoryToDelete) {
-      console.warn(`[Sidebar] Category with id ${categoryId} not found`);
-      return;
-    }
+  //   // 找到要删除的分类
+  //   const categoryToDelete = categories.find(cat => cat.id === categoryId);
+  //   if (!categoryToDelete) {
+  //     console.warn(`[Sidebar] Category with id ${categoryId} not found`);
+  //     return;
+  //   }
     
-    console.log(`[Sidebar] About to show confirm dialog for category: ${categoryToDelete.name}`);
+  //   console.log(`[Sidebar] About to show confirm dialog for category: ${categoryToDelete.name}`);
     
-    // 确认删除
-    showConfirm(
-      t("sidebar.message.deleteCategory").replace("{name}", categoryToDelete.name),
-      t("common.confirmDelete"),
-      () => {
-        console.log(`[Sidebar] Confirmed deletion for categoryId: ${categoryId}`);
-        console.log(`[Sidebar] Calling deleteCategory function...`);
-        try {
-          // 确认后执行删除
-          deleteCategory(categoryId);
-          console.log(`[Sidebar] deleteCategory called successfully`);
+  //   // 确认删除
+  //   showConfirm(
+  //     t("sidebar.message.deleteCategory").replace("{name}", categoryToDelete.name),
+  //     t("common.confirmDelete"),
+  //     () => {
+  //       debugger; // 在这里暂停
+  //       console.log(`[Sidebar] Confirmed deletion for categoryId: ${categoryId}`);
+  //       console.log(`[Sidebar] Calling deleteCategory function...`);
+  //       try {
+  //         // 确认后执行删除
+  //         deleteCategory(categoryId);
+  //         console.log(`[Sidebar] deleteCategory called successfully`);
           
-          // 如果删除的是当前选中的分类，切换到全部提示词
-          if (activeCategory === categoryId) {
-            console.log(`[Sidebar] Switching to all prompts view`);
-            handleAllPromptsClick();
-          }
+  //         // 如果删除的是当前选中的分类，切换到全部提示词
+  //         if (activeCategory === categoryId) {
+  //           console.log(`[Sidebar] Switching to all prompts view`);
+  //           handleAllPromptsClick();
+  //         }
           
-          toast({
-            title: "删除成功",
-            description: `分类 "${categoryToDelete.name}" 已删除`,
-          });
-        } catch (error) {
-          console.error(`[Sidebar] Error deleting category:`, error);
-          showAlert("删除失败，请重试", "错误");
-        }
-      },
-      () => {
-        // 取消则不执行任何操作
-        console.log(`[Sidebar] Cancelled deletion for categoryId: ${categoryId}`);
-      }
-    );
-  };
+  //         toast({
+  //           title: "删除成功",
+  //           description: `分类 "${categoryToDelete.name}" 已删除`,
+  //         });
+  //       } catch (error) {
+  //         console.error(`[Sidebar] Error deleting category:`, error);
+  //         showAlert("删除失败，请重试", "错误");
+  //       }
+  //     },
+  //     () => {
+  //       debugger; // 在这里暂停
+  //       // 取消则不执行任何操作
+  //       console.log(`[Sidebar] Cancelled deletion for categoryId: ${categoryId}`);
+  //     }
+  //   );
+  // };
+
+
 
   // 处理右键菜单新建提示词
   const handleContextMenuNewPrompt = (categoryId: string) => {
@@ -762,27 +825,27 @@ export function Sidebar({ className }: { className?: string }) {
             
             {/* 分类列表内容 */}
             <div className="space-y-1">
-              {categories.map((category) => (
-                <TooltipProvider key={category.id} delayDuration={100}>
+            {categories.map((category) => (
+              <ContextMenu key={category.id}>
+                <TooltipProvider delayDuration={100}>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <ContextMenu>
-                        <ContextMenuTrigger asChild>
-                          <div
-                            className={cn(
-                              "w-full",
-                              draggedCategory === category.id && "opacity-50",
-                              dragOverCategory === category.id && "border-t-2 border-primary"
-                            )}
-                            onKeyDown={(e) => handleKeyDown(e, category)}
-                            tabIndex={0}
-                            draggable={editingCategory !== category.id}
-                            onDragStart={(e) => handleDragStart(e, category.id)}
-                            onDragEnd={handleDragEnd}
-                            onDragOver={(e) => handleDragOver(e, category.id)}
-                            onDragLeave={handleDragLeave}
-                            onDrop={(e) => handleDrop(e, category.id)}
-                          >
+                      <ContextMenuTrigger asChild>
+                        <div
+                          className={cn(
+                            "w-full",
+                            draggedCategory === category.id && "opacity-50",
+                            dragOverCategory === category.id && "border-t-2 border-primary"
+                          )}
+                          onKeyDown={(e) => handleKeyDown(e, category)}
+                          tabIndex={0}
+                          draggable={editingCategory !== category.id}
+                          onDragStart={(e) => handleDragStart(e, category.id)}
+                          onDragEnd={handleDragEnd}
+                          onDragOver={(e) => handleDragOver(e, category.id)}
+                          onDragLeave={handleDragLeave}
+                          onDrop={(e) => handleDrop(e, category.id)}
+                        >
                             {editingCategory === category.id ? (
                               <div className="flex flex-col p-1 space-y-2">
                                 {/* 第一行：图标选择和文字输入 */}
@@ -866,12 +929,17 @@ export function Sidebar({ className }: { className?: string }) {
                             )}
                           </div>
                         </ContextMenuTrigger>
+                        </TooltipTrigger>
+                        
+                        {isCollapsed && (
+                          <TooltipContent side="right">
+                            {category.name}
+                          </TooltipContent>
+                        )}
+                      </Tooltip>
+                    </TooltipProvider>
                         <ContextMenuContent>
-                          <ContextMenuItem onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            handleEditCategory(category);
-                          }}>
+                        <ContextMenuItem onSelect={() => handleEditCategory(category)}>
                             <Icons.edit className="h-4 w-4 mr-2" />
                             {t('common.edit')}
                           </ContextMenuItem>
@@ -883,28 +951,31 @@ export function Sidebar({ className }: { className?: string }) {
                             <Icons.plus className="h-4 w-4 mr-2" />
                             {t('common.create_prompt.title')}
                           </ContextMenuItem>
-                          <ContextMenuItem 
-                            className="text-destructive"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              handleDelete(category.id);
-                            }}
-                          >
-                            <Icons.trash className="h-4 w-4 mr-2" />
-                            {t('common.delete')}
-                          </ContextMenuItem>
-                        </ContextMenuContent>
-                      </ContextMenu>
-                    </TooltipTrigger>
-                    {isCollapsed && (
-                      <TooltipContent side="right">
-                        {category.name}
-                      </TooltipContent>
-                    )}
-                  </Tooltip>
-                </TooltipProvider>
-              ))}
+                          <ContextMenuItem
+                              className="text-destructive"
+                              // ✅ 第三步：修改 onSelect 的逻辑
+                              onSelect={() => {
+                                setTimeout(() => {
+                                  handleDeleteCategory(category.id);
+                              }, 0);
+                              }}
+                            >
+                              <Icons.trash className="h-4 w-4 mr-2" />
+                              {t('common.delete')}
+                            </ContextMenuItem>
+                            {/* <ContextMenuItem
+                              className="text-destructive"
+                              onSelect={() => {
+                                console.log('[Action] onSelect fired. Setting deletingCategoryId to:', category.id);
+                                setDeletingCategoryId(category.id);
+                              }}
+                            >
+                              <Icons.trash className="h-4 w-4 mr-2" />
+                              {t('common.delete')}
+                            </ContextMenuItem> */}
+                          </ContextMenuContent>
+                        </ContextMenu>
+                      ))}
               
               {/* 列表末尾的拖拽区域 */}
               {draggedCategory && (

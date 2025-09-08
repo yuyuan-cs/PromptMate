@@ -1,4 +1,5 @@
 interface ElectronAPI {
+  [x: string]: any;
   // 设置管理
   getSettings: () => Promise<{
     theme: string;
