@@ -1,6 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Code+Pro:wght@400;500;600&display=swap');
 
-@import "github-markdown-css/github-markdown.css";
+/* @import "github-markdown-css/github-markdown.css"; */
 
 @tailwind base;
 @tailwind components;
@@ -370,7 +370,7 @@
 }
 
 .markdown-body {
-  color: var(--foreground, #222);
+  color: var(--card-foreground);
   background: transparent;
   font-size: 1em;
   line-height: 1.7;
@@ -380,8 +380,8 @@
   font-weight: bold;
   margin: 1.2em 0 0.6em 0;
 }
-.markdown-body h1 { font-size: 2em; border-bottom: 1px solid #eee; padding-bottom: 0.3em;}
-.markdown-body h2 { font-size: 1.5em; border-bottom: 1px solid #eee; padding-bottom: 0.2em;}
+.markdown-body h1 { font-size: 2em; border-bottom: 1px solid var(--border); padding-bottom: 0.3em;}
+.markdown-body h2 { font-size: 1.5em; border-bottom: 1px solid var(--border); padding-bottom: 0.2em;}
 .markdown-body h3 { font-size: 1.2em; }
 .markdown-body ul, .markdown-body ol {
   margin: 0.5em 0 0.5em 1.5em;
@@ -391,14 +391,14 @@
 .markdown-body ol { list-style: decimal inside; }
 .markdown-body li { margin: 0.2em 0; }
 .markdown-body code {
-  background: var(--muted, #f5f5f5);
+  background: hsl(var(--muted));
   color: var(--primary, #d6336c);
   padding: 2px 6px;
   border-radius: 4px;
   font-size: 0.95em;
 }
 .markdown-body pre {
-  background: var(--muted, #f5f5f5);
+  background: hsl(var(--muted));
   color: var(--foreground, #222);
   padding: 1em;
   border-radius: 6px;

@@ -495,7 +495,7 @@ export const PromptList = memo(function PromptList({
                         "prompt-card cursor-pointer p-0.5",
                         "w-full max-w-none", // 确保卡片占满网格单元格
                         "focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-offset-1",
-                        "border border-border/20 backdrop-blur-sm",
+                        "border border-border/20",
                         selectedPrompt?.id === prompt.id 
                         ? "selected"
                         : "hover:border-primary/30 hover:shadow-md"

@@ -395,6 +395,15 @@ class DatabaseServiceSqlJs {
           }
         }
       }
+
+        // 设置迁移状态为已完成
+      this.executeQuery('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)', 
+        'migration_status', JSON.stringify('completed'));
+      this.executeQuery('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)', 
+        'migration_date', new Date().toISOString());
+      this.executeQuery('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)', 
+        'migration_source', 'localStorage');
+      
       
       console.log('数据迁移完成');
       return true;
