@@ -12,7 +12,7 @@
     "currentView":"当前查看",
     "saveComparisonResult":"保存对比结果",
     "manualCreateVersion":"手动创建版本",
-    "confirmDeleteDescription":"您确定要删除提示词 {promptToDelete?.title} 吗？此操作无法撤销。",
+    "confirmDeleteDescription":"您确定要删除提示词吗？此操作无法撤销。",
     "promptTitle":"提示词标题",
     "confirm": "确认",
     "ok": "确定",

@@ -288,6 +288,7 @@ export function Sidebar({ className }: { className?: string }) {
 
   // 数据变更后刷新
   const handleDataChanged = async () => {
+    console.log("[DEBUG] handleDataChanged: Entered. Calling reloadData.");
     // 重新加载数据
     await reloadData();
     // 重置为默认视图
@@ -1247,9 +1248,6 @@ export function Sidebar({ className }: { className?: string }) {
             <div className="py-2 h-[60vh] overflow-y-auto">
               <CardContent className="text-sm font-medium mb-2 text-muted-foreground color-green-500">{t('dataManagement.cloudSyncDescription2')}</CardContent>
               <DataImportExport 
-                inline={true} 
-                open={true} 
-                onOpenChange={() => {}} 
                 onDataChanged={handleDataChanged}
               />
             </div>

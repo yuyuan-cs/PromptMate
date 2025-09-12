@@ -1,3 +1,4 @@
+/// <reference types="vitest" />
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import { fileURLToPath } from "node:url";
@@ -153,5 +154,10 @@ export default defineConfig(({ mode }) => ({
   server: {
     port: 5173,
     strictPort: false, // 不锁定端口，允许自动选择
-  }
+  },
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    setupFiles: './src/setupTests.ts',
+  },
 }));

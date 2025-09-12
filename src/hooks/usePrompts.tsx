@@ -69,6 +69,7 @@ function usePromptsState() {
   
   // 重新加载数据函数
   const reloadData = useCallback(async () => {
+    console.log("[DEBUG] reloadData: Entered.");
     try {
       if (dbState.useSqlite && dbClient.isAvailable()) {
         await loadDataFromDatabase();
@@ -235,7 +236,10 @@ function usePromptsState() {
       setPrompts(dbPrompts);
       setCategories(dbCategories);
       
-      console.log(`从数据库加载了 ${dbPrompts.length} 个提示词和 ${dbCategories.length} 个分类`);
+      console.log(`[DEBUG] DB_READ: Loaded ${dbPrompts.length} prompts and ${dbCategories.length} categories from database.`);
+      console.log("[DEBUG] DB_READ: Loaded Prompts sample (first 3):", dbPrompts.slice(0, 3));
+      console.log("[DEBUG] DB_READ: Loaded Categories sample (first 3):", dbCategories.slice(0, 3));
+
     } catch (error) {
       console.error('从数据库加载数据失败:', error);
       throw error;

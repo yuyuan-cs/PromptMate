@@ -860,7 +860,7 @@ export const PromptList = memo(function PromptList({
           <DialogHeader>
             <DialogTitle>{t('common.confirmDelete')}</DialogTitle>
             <DialogDescription>
-              {t('common.confirmDeleteDescription')} "{promptToDelete?.title}"
+              {t('common.confirmDeleteDescription')}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

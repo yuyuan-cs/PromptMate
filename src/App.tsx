@@ -11,6 +11,7 @@ import ErrorBoundary from "@/components/ErrorBoundary";
 import NotFoundPage from "@/components/NotFoundPage";
 import SplashScreen from "@/components/SplashScreen";
 import { useSplashScreen } from "@/hooks/useSplashScreen";
+import { useSplashScreenContext } from "@/hooks/useSplashScreenContext";
 
 // Lazy load the Index component (handle named export)
 const Index = lazy(() => 
@@ -34,6 +35,7 @@ const WorkflowView = lazy(() =>
 
 function AppContent() {
   const { currentView } = useAppView();
+  const { setAppReady } = useSplashScreenContext();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const isDev = import.meta.env.DEV;
   
@@ -49,6 +51,12 @@ function AppContent() {
       console.log('启动页面完成');
     }
   });
+
+  useEffect(() => {
+    requestAnimationFrame(() => {
+      setAppReady();
+    });
+  }, [setAppReady]);
 
   // 切换侧边栏显示状态 (Memoized with useCallback)
   const toggleSidebar = useCallback(() => {
