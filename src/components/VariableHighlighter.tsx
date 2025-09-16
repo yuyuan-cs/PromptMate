@@ -111,6 +111,8 @@ interface VariableTextAreaProps {
   rows?: number;
   disabled?: boolean;
   showVariables?: boolean;
+  showMarkdownPreview?: boolean; // 是否显示Markdown预览
+  previewMode?: 'split' | 'tabs'; // 预览模式：分屏或标签页
   minHeight?: number; // 最小高度（像素）
   maxHeight?: number; // 最大高度（像素）
   enableResize?: boolean; // 是否允许手动调整大小
@@ -124,58 +126,217 @@ export const VariableTextArea: React.FC<VariableTextAreaProps> = ({
   rows = 4,
   disabled = false,
   showVariables = true,
+  showMarkdownPreview = false,
+  previewMode = 'tabs',
   minHeight = 120,
   maxHeight = 400,
   enableResize = false,
 }) => {
   const { t } = useTranslation();
+  const [activeTab, setActiveTab] = React.useState<'edit' | 'preview'>('edit');
+  
   // 提取变量信息用于显示
   const variables = useMemo(() => extractVariables(value), [value]);
   
-  return (
-    <div className="relative">
-      {/* 文本输入区域 - 使用动态高度组件 */}
-      <DynamicTextarea
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        className={cn(
-          'w-full border rounded-md p-3',
-          'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent',
-          'bg-background text-foreground',
-          'placeholder:text-muted-foreground',
-          'disabled:opacity-50 disabled:cursor-not-allowed',
-          className
-        )}
-        minHeight={minHeight}
-        maxHeight={maxHeight}
-        enableResize={enableResize}
-        disabled={disabled}
-      />
-      
-      {/* 变量高亮覆盖层（仅显示，不可编辑） */}
-      {showVariables && variables.length > 0 && (
-        <div
+  // 如果不显示Markdown预览，使用原来的简单模式
+  if (!showMarkdownPreview) {
+    return (
+      <div className="relative">
+        {/* 文本输入区域 - 使用动态高度组件 */}
+        <DynamicTextarea
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={placeholder}
           className={cn(
-            'variable-highlight-overlay',
-            'text-foreground'
+            'w-full border rounded-md p-3',
+            'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent',
+            'bg-background text-foreground',
+            'placeholder:text-muted-foreground',
+            'disabled:opacity-50 disabled:cursor-not-allowed',
+            className
           )}
-        >
-          <VariableHighlighter
-            content={value}
-            highlightClassName="!bg-transparent !border-transparent !text-transparent"
+          minHeight={minHeight}
+          maxHeight={maxHeight}
+          enableResize={enableResize}
+          disabled={disabled}
+        />
+        
+        {/* 变量高亮覆盖层（仅显示，不可编辑） */}
+        {showVariables && variables.length > 0 && (
+          <div
+            className={cn(
+              'variable-highlight-overlay',
+              'text-foreground'
+            )}
+          >
+            <VariableHighlighter
+              content={value}
+              highlightClassName="!bg-transparent !border-transparent !text-transparent"
+            />
+          </div>
+        )}
+        
+        {/* 变量统计信息 */}
+        {showVariables && variables.length > 0 && (
+          <div className="absolute top-2 right-2 pointer-events-none">
+            <div className="bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400 text-xs px-2 py-1 rounded-full">
+              {variables.length} {t('variableHighlighter.variableCount')}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // 带Markdown预览的增强模式
+  if (previewMode === 'split') {
+    return (
+      <div className={cn('grid grid-cols-2 gap-4', className)}>
+        {/* 左侧：编辑区域 */}
+        <div className="relative">
+          <div className="text-xs text-muted-foreground mb-2">{t('common.edit')}</div>
+          <DynamicTextarea
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder={placeholder}
+            className={cn(
+              'w-full border rounded-md p-3',
+              'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent',
+              'bg-background text-foreground',
+              'placeholder:text-muted-foreground',
+              'disabled:opacity-50 disabled:cursor-not-allowed'
+            )}
+            minHeight={minHeight}
+            maxHeight={maxHeight}
+            enableResize={enableResize}
+            disabled={disabled}
           />
+          
+          {/* 变量统计信息 */}
+          {showVariables && variables.length > 0 && (
+            <div className="absolute top-8 right-2 pointer-events-none">
+              <div className="bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400 text-xs px-2 py-1 rounded-full">
+                {variables.length} {t('variableHighlighter.variableCount')}
+              </div>
+            </div>
+          )}
         </div>
-      )}
-      
-      {/* 变量统计信息 */}
-      {showVariables && variables.length > 0 && (
-        <div className="absolute top-2 right-2 pointer-events-none">
-          <div className="bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400 text-xs px-2 py-1 rounded-full">
-            {variables.length} {t('variableHighlighter.variableCount')}
+        
+        {/* 右侧：预览区域 */}
+        <div className="relative">
+          <div className="text-xs text-muted-foreground mb-2">{t('common.markdownPreview')}</div>
+          <div 
+            className="border rounded-md p-3 bg-muted/30 overflow-auto"
+            style={{ minHeight, maxHeight }}
+          >
+            {value ? (
+              <VariableDisplay
+                content={value}
+                showVariableCount={false}
+                className="prose prose-sm max-w-none"
+              />
+            ) : (
+              <div className="text-muted-foreground text-sm">
+                {t('common.markdownPreviewPlaceholder')}
+              </div>
+            )}
           </div>
         </div>
-      )}
+      </div>
+    );
+  }
+
+  // 标签页模式
+  return (
+    <div className={cn('space-y-2', className)}>
+      {/* 标签页切换 */}
+      <div className="flex border-b">
+        <button
+          type="button"
+          className={cn(
+            'px-3 py-2 text-sm font-medium border-b-2 transition-colors',
+            activeTab === 'edit'
+              ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+              : 'border-transparent text-muted-foreground hover:text-foreground'
+          )}
+          onClick={() => setActiveTab('edit')}
+        >
+          {t('common.edit')}
+          {showVariables && variables.length > 0 && (
+            <span className="ml-2 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400 text-xs px-1.5 py-0.5 rounded-full">
+              {variables.length}
+            </span>
+          )}
+        </button>
+        <button
+          type="button"
+          className={cn(
+            'px-3 py-2 text-sm font-medium border-b-2 transition-colors',
+            activeTab === 'preview'
+              ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+              : 'border-transparent text-muted-foreground hover:text-foreground'
+          )}
+          onClick={() => setActiveTab('preview')}
+        >
+          {t('common.markdownPreview')}
+        </button>
+      </div>
+      
+      {/* 内容区域 */}
+      <div className="relative">
+        {activeTab === 'edit' ? (
+          <div className="relative">
+            <DynamicTextarea
+              value={value}
+              onChange={(e) => onChange(e.target.value)}
+              placeholder={placeholder}
+              className={cn(
+                'w-full border rounded-md p-3',
+                'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent',
+                'bg-background text-foreground',
+                'placeholder:text-muted-foreground',
+                'disabled:opacity-50 disabled:cursor-not-allowed'
+              )}
+              minHeight={minHeight}
+              maxHeight={maxHeight}
+              enableResize={enableResize}
+              disabled={disabled}
+            />
+            
+            {/* 变量高亮覆盖层（仅显示，不可编辑） */}
+            {showVariables && variables.length > 0 && (
+              <div
+                className={cn(
+                  'variable-highlight-overlay',
+                  'text-foreground'
+                )}
+              >
+                <VariableHighlighter
+                  content={value}
+                  highlightClassName="!bg-transparent !border-transparent !text-transparent"
+                />
+              </div>
+            )}
+          </div>
+        ) : (
+          <div 
+            className="border rounded-md p-3 bg-muted/30 overflow-auto"
+            style={{ minHeight, maxHeight }}
+          >
+            {value ? (
+              <VariableDisplay
+                content={value}
+                showVariableCount={showVariables}
+                className="prose prose-sm max-w-none"
+              />
+            ) : (
+              <div className="text-muted-foreground text-sm">
+                {t('common.markdownPreviewPlaceholder')}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 };

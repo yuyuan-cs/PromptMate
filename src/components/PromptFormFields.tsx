@@ -178,6 +178,8 @@ export const PromptFormFields: React.FC<PromptFormFieldsProps> = ({
               onChange={(value) => onFieldChange('content', value)}
               placeholder={t('prompteditform.promptContentPlaceholder')}
               showVariables={mode === 'create'}
+              showMarkdownPreview={showMarkdownPreview}
+              previewMode="tabs"
               minHeight={120}
               maxHeight={500}
               enableResize={false}
@@ -198,8 +200,8 @@ export const PromptFormFields: React.FC<PromptFormFieldsProps> = ({
             )}
           </div>
 
-          {/* Markdown 预览 */}
-          {showMarkdownPreview && state.content && (
+          {/* 注释掉原来的Markdown预览，因为现在集成在VariableTextArea中 */}
+          {/* {showMarkdownPreview && state.content && (
             <div className="space-y-2">
               <Label className="text-xs text-muted-foreground">
                 {t('common.markdownPreview')}
@@ -216,7 +218,7 @@ export const PromptFormFields: React.FC<PromptFormFieldsProps> = ({
                 )}
               </div>
             </div>
-          )}
+          )} */}
         </div>
       )}
 
