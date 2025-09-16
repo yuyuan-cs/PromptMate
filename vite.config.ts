@@ -38,13 +38,7 @@ export default defineConfig(({ mode }) => ({
     emptyOutDir: true,
     assetsInlineLimit: 4096,
     sourcemap: true,
-    minify: 'terser',
-    terserOptions: {
-      compress: {
-        drop_console: false,
-        drop_debugger: false
-      }
-    },
+    minify: 'esbuild',
     // 增加代码块大小警告限制
     chunkSizeWarningLimit: 1000,
     rollupOptions: {
@@ -74,84 +68,15 @@ export default defineConfig(({ mode }) => ({
           'fsevents': 'fsevents'
         },
         // 手动分割代码块以优化加载性能
-        manualChunks: (id) => {
-          // 动态分块策略 - 工作流相关代码单独分块
-          if (id.includes('workflow') || id.includes('reactflow') || id.includes('@reactflow')) {
-            return 'workflow-plugin';
-          }
-          
-          // 静态分块配置
-          const staticChunks = {
-          // 将React相关库分离到单独的chunk
+        manualChunks: {
+          // React核心库
           'react-vendor': ['react', 'react-dom'],
-          // 将UI组件库分离
-          'ui-vendor': [
-            '@radix-ui/react-accordion',
-            '@radix-ui/react-alert-dialog',
-            '@radix-ui/react-aspect-ratio',
-            '@radix-ui/react-avatar',
-            '@radix-ui/react-checkbox',
-            '@radix-ui/react-collapsible',
-            '@radix-ui/react-context-menu',
-            '@radix-ui/react-dialog',
-            '@radix-ui/react-dropdown-menu',
-            '@radix-ui/react-hover-card',
-            '@radix-ui/react-label',
-            '@radix-ui/react-menubar',
-            '@radix-ui/react-navigation-menu',
-            '@radix-ui/react-popover',
-            '@radix-ui/react-progress',
-            '@radix-ui/react-radio-group',
-            '@radix-ui/react-scroll-area',
-            '@radix-ui/react-select',
-            '@radix-ui/react-separator',
-            '@radix-ui/react-slider',
-            '@radix-ui/react-slot',
-            '@radix-ui/react-switch',
-            '@radix-ui/react-tabs',
-            '@radix-ui/react-toast',
-            '@radix-ui/react-toggle',
-            '@radix-ui/react-toggle-group',
-            '@radix-ui/react-tooltip'
-          ],
-          // 将ReactFlow相关库分离到可选chunk（仅在需要时加载）
-          'reactflow-vendor': [
-            '@reactflow/background',
-            '@reactflow/controls',
-            '@reactflow/core',
-            '@reactflow/minimap',
-            'reactflow'
-          ],
-          // 将其他工具库分离
-          'utils-vendor': [
-            'i18next',
-            'i18next-browser-languagedetector',
-            'react-i18next',
-            'date-fns',
-            'clsx',
-            'tailwind-merge',
-            'class-variance-authority',
-            'cmdk',
-            'lucide-react',
-            'sonner',
-            'vaul'
-          ],
-          // 将图表和可视化库分离
-          'charts-vendor': [
-            'recharts',
-            'react-markdown',
-            'remark-gfm',
-            'rehype-raw',
-            'github-markdown-css'
-          ]
-          };
-          
-          // 检查是否匹配静态分块
-          for (const [chunkName, modules] of Object.entries(staticChunks)) {
-            if (modules.some(module => id.includes(module))) {
-              return chunkName;
-            }
-          }
+          // 工作流相关代码（动态加载）
+          'workflow-plugin': ['@reactflow/background', '@reactflow/controls', '@reactflow/core', '@reactflow/minimap', 'reactflow'],
+          // 工具库
+          'utils-vendor': ['i18next', 'i18next-browser-languagedetector', 'react-i18next', 'date-fns', 'clsx', 'tailwind-merge', 'class-variance-authority', 'cmdk', 'lucide-react', 'sonner', 'vaul'],
+          // 图表库
+          'charts-vendor': ['recharts', 'react-markdown', 'remark-gfm', 'rehype-raw', 'github-markdown-css']
         },
         assetFileNames: (assetInfo) => {
           const info = assetInfo.names?.[0]?.split('.') || [];
