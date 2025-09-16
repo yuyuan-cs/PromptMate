@@ -160,6 +160,7 @@ class DatabaseServiceSqlJs {
     
     return results.map(row => ({
       ...row,
+      category: row.category_id, // 映射 category_id 到 category
       tags: row.tags ? row.tags.split(',') : [],
       images: row.images ? JSON.parse(row.images).filter(img => img.id) : [],
       isFavorite: Boolean(row.is_favorite)
@@ -545,7 +546,7 @@ class DatabaseServiceSqlJs {
       values.push(updates.content);
     }
     if (updates.category !== undefined) {
-      fields.push('category = ?');
+      fields.push('category_id = ?');
       values.push(updates.category);
     }
     if (updates.isFavorite !== undefined) {

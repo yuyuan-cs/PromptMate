@@ -34,7 +34,7 @@ interface WorkflowBuilderProps {
   onCancel: () => void;
 }
 
-export function WorkflowBuilder({ workflow, onSave, onCancel }: WorkflowBuilderProps) {
+function WorkflowBuilder({ workflow, onSave, onCancel }: WorkflowBuilderProps) {
   const { categories: workflowCategories } = useWorkflows();
   const { prompts, categories: promptCategories } = usePrompts();
   
@@ -702,3 +702,5 @@ export function WorkflowBuilder({ workflow, onSave, onCancel }: WorkflowBuilderP
     </div>
   );
 }
+
+export default WorkflowBuilder;

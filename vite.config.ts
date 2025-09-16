@@ -74,7 +74,14 @@ export default defineConfig(({ mode }) => ({
           'fsevents': 'fsevents'
         },
         // 手动分割代码块以优化加载性能
-        manualChunks: {
+        manualChunks: (id) => {
+          // 动态分块策略 - 工作流相关代码单独分块
+          if (id.includes('workflow') || id.includes('reactflow') || id.includes('@reactflow')) {
+            return 'workflow-plugin';
+          }
+          
+          // 静态分块配置
+          const staticChunks = {
           // 将React相关库分离到单独的chunk
           'react-vendor': ['react', 'react-dom'],
           // 将UI组件库分离
@@ -107,7 +114,7 @@ export default defineConfig(({ mode }) => ({
             '@radix-ui/react-toggle-group',
             '@radix-ui/react-tooltip'
           ],
-          // 将ReactFlow相关库分离
+          // 将ReactFlow相关库分离到可选chunk（仅在需要时加载）
           'reactflow-vendor': [
             '@reactflow/background',
             '@reactflow/controls',
@@ -137,6 +144,14 @@ export default defineConfig(({ mode }) => ({
             'rehype-raw',
             'github-markdown-css'
           ]
+          };
+          
+          // 检查是否匹配静态分块
+          for (const [chunkName, modules] of Object.entries(staticChunks)) {
+            if (modules.some(module => id.includes(module))) {
+              return chunkName;
+            }
+          }
         },
         assetFileNames: (assetInfo) => {
           const info = assetInfo.names?.[0]?.split('.') || [];

@@ -211,6 +211,51 @@ const loadUserPreferences = () => {
 import { databaseClient } from './databaseClient';
 import { clearAllData } from './data';
 
+// 辅助函数：处理提示词和分类的映射
+const mapPromptsToCategories = async (prompts: Prompt[], isDatabaseMode: boolean): Promise<{ mappedPrompts: Prompt[], newCategories: Category[] }> => {
+  const existingCategories = loadCategories();
+  const categoryNameMap = new Map(existingCategories.map(c => [c.name.toLowerCase(), c]));
+  const newCategories: Category[] = [];
+  const mappedPrompts: Prompt[] = [];
+
+  for (const prompt of prompts) {
+    const categoryName = (prompt.category || 'general').trim().toLowerCase();
+    let categoryId: string;
+
+    if (categoryNameMap.has(categoryName)) {
+      // 分类已存在
+      categoryId = categoryNameMap.get(categoryName)!.id;
+    } else {
+      // 分类不存在，创建新分类
+      const newCategory: Category = {
+        id: generateId(),
+        name: prompt.category || 'general',
+        icon: '📁',
+        color: '#6B7280',
+      };
+      newCategories.push(newCategory);
+      categoryNameMap.set(categoryName, newCategory); // 在循环中更新map，以便后续的提示词可以复用
+      categoryId = newCategory.id;
+      
+      // 如果是数据库模式，立即写入数据库
+      if (isDatabaseMode) {
+        try {
+          await databaseClient.createCategory(newCategory);
+          console.log(`[DEBUG] DB_WRITE: Auto-created category '${newCategory.name}' (${newCategory.id}).`);
+        } catch (error: any) {
+          if (!error.message?.includes('UNIQUE constraint failed')) {
+            console.error(`[DEBUG] DB_WRITE: Failed to create category '${newCategory.name}':`, error.message);
+          }
+        }
+      }
+    }
+    
+    mappedPrompts.push({ ...prompt, category: categoryId });
+  }
+
+  return { mappedPrompts, newCategories };
+};
+
 // 从JSON导入数据
 export const importAllData = async (jsonData: string): Promise<boolean> => {
   try {
@@ -290,18 +335,36 @@ export const importAllData = async (jsonData: string): Promise<boolean> => {
     else if (Array.isArray(data)) {
       console.log("[DEBUG] importAllData: Detected prompts-only array.");
       const importedPrompts: Prompt[] = data;
-      
-      // 为导入的提示词生成新ID
-      const newPrompts = importedPrompts.map(p => ({
+
+      // 处理分类映射和创建
+      console.log("[DEBUG] importAllData: Mapping prompts to categories.");
+      const { mappedPrompts, newCategories } = await mapPromptsToCategories(importedPrompts, isDatabaseMode);
+
+      // 如果创建了新分类，则更新分类列表
+      if (newCategories.length > 0) {
+        console.log(`[DEBUG] importAllData: ${newCategories.length} new categories created.`);
+        const existingCategories = loadCategories();
+        const updatedCategories = [...existingCategories, ...newCategories];
+        saveCategories(updatedCategories);
+        console.log("[DEBUG] importAllData: Saved updated categories to localStorage.");
+      }
+
+      // 为导入的提示词生成新ID，并使用映射后的分类ID
+      const newPrompts = mappedPrompts.map(p => ({
         ...p,
-        id: generateId()
+        id: generateId(),
       }));
 
       // 如果是数据库模式，将新提示词逐条写入数据库
       if (isDatabaseMode) {
         console.log("[DEBUG] importAllData: Database mode detected. Writing new prompts to DB.");
         for (const prompt of newPrompts) {
-          await databaseClient.createPrompt(prompt);
+          try {
+            await databaseClient.createPrompt(prompt);
+            console.log(`[DEBUG] DB_WRITE: Prompt '${prompt.title}' (${prompt.id}) created with category ID '${prompt.category}'.`);
+          } catch (error: any) {
+            console.error(`[DEBUG] DB_WRITE: Failed to create prompt '${prompt.title}' (${prompt.id}):`, error.message);
+          }
         }
       }
 

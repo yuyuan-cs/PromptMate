@@ -24,7 +24,7 @@ interface WorkflowExecutorProps {
   onClose: () => void;
 }
 
-export function WorkflowExecutor({ workflow, onClose }: WorkflowExecutorProps) {
+function WorkflowExecutor({ workflow, onClose }: WorkflowExecutorProps) {
   const { showAlert, AlertComponent } = useSidebarAlert();
   const { 
     executions, 
@@ -462,3 +462,5 @@ export function WorkflowExecutor({ workflow, onClose }: WorkflowExecutorProps) {
     </div>
   );
 }
+
+export default WorkflowExecutor;

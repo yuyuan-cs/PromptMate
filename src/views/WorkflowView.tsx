@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { WorkflowsProvider, useWorkflows } from "@/hooks/useWorkflows";
-import { WorkflowList } from "@/components/workflow/WorkflowList";
-import { WorkflowBuilder } from "@/components/workflow/WorkflowBuilder";
-import { WorkflowExecutor } from "@/components/workflow/WorkflowExecutor";
+import WorkflowList from "@/components/workflow/WorkflowList";
+import WorkflowBuilder from "@/components/workflow/WorkflowBuilder";
+import WorkflowExecutor from "@/components/workflow/WorkflowExecutor";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -385,7 +385,7 @@ function WorkflowViewContent() {
   }
 }
 
-export function WorkflowView() {
+function WorkflowView() {
   return (
     <WorkflowsProvider>
       <div className="min-h-screen">
@@ -394,3 +394,5 @@ export function WorkflowView() {
     </WorkflowsProvider>
   );
 }
+
+export default WorkflowView;

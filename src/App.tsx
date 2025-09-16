@@ -12,6 +12,8 @@ import NotFoundPage from "@/components/NotFoundPage";
 import SplashScreen from "@/components/SplashScreen";
 import { useSplashScreen } from "@/hooks/useSplashScreen";
 import { useSplashScreenContext } from "@/hooks/useSplashScreenContext";
+// Import conditional workflow view
+import { ConditionalWorkflowView } from "@/components/ConditionalWorkflowView";
 
 // Lazy load the Index component (handle named export)
 const Index = lazy(() => 
@@ -20,16 +22,6 @@ const Index = lazy(() =>
     .catch(error => {
       console.error('Failed to load Index component:', error);
       return { default: () => <NotFoundPage error="Failed to load main page" /> };
-    })
-);
-
-// Lazy load the WorkflowView component (dev only)
-const WorkflowView = lazy(() => 
-  import("@/views/WorkflowView")
-    .then(module => ({ default: module.WorkflowView }))
-    .catch(error => {
-      console.error('Failed to load WorkflowView component:', error);
-      return { default: () => <NotFoundPage error="Failed to load workflow view" /> };
     })
 );
 
@@ -65,22 +57,9 @@ function AppContent() {
 
   // 根据当前视图渲染不同的组件
   const renderCurrentView = () => {
-    // 在生产环境隐藏工作流视图
-    if (!isDev && currentView === 'workflows') {
-      return (
-        <Suspense fallback={<div className="flex-1 flex items-center justify-center"><Icons.fileText className="h-8 w-8 animate-spin text-muted-foreground" /></div>}>
-          <Index sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
-        </Suspense>
-      );
-    }
-
     switch (currentView) {
       case 'workflows':
-        return (
-          <Suspense fallback={<div className="flex-1 flex items-center justify-center"><Icons.workflow className="h-8 w-8 animate-spin text-muted-foreground" /></div>}>
-            <WorkflowView />
-          </Suspense>
-        );
+        return <ConditionalWorkflowView />;
       case 'prompts':
       default:
         return (
