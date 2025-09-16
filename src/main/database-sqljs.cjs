@@ -353,14 +353,25 @@ class DatabaseServiceSqlJs {
     if (!this.isInitialized) throw new Error('数据库未初始化');
     
     try {
-      // 检查是否有数据
-      const promptCount = this.executeQueryAll('SELECT COUNT(*) as count FROM prompts')[0].count;
-      const categoryCount = this.executeQueryAll('SELECT COUNT(*) as count FROM categories')[0].count;
+      // 检查迁移状态标记
+      const result = this.executeQueryAll('SELECT value FROM settings WHERE key = ?', ['migration_status']);
       
-      if (promptCount > 0 || categoryCount > 0) {
-        return 'completed';
+      if (result.length > 0) {
+        const status = JSON.parse(result[0].value);
+        return status;
       } else {
-        return 'pending';
+        // 如果没有迁移状态记录，检查是否有数据来判断是否需要迁移
+        const promptCount = this.executeQueryAll('SELECT COUNT(*) as count FROM prompts')[0].count;
+        const categoryCount = this.executeQueryAll('SELECT COUNT(*) as count FROM categories')[0].count;
+        
+        if (promptCount > 0 || categoryCount > 0) {
+          // 有数据但没有迁移状态记录，标记为已完成（向后兼容）
+          this.executeQuery('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)', 
+            ['migration_status', JSON.stringify('completed')]);
+          return 'completed';
+        } else {
+          return 'pending';
+        }
       }
     } catch (error) {
       console.error('获取迁移状态失败:', error);
@@ -378,7 +389,10 @@ class DatabaseServiceSqlJs {
       if (data.categories && data.categories.length > 0) {
         for (const category of data.categories) {
           try {
-            this.createCategory(category);
+            this.executeQuery(
+              'INSERT OR REPLACE INTO categories (id, name, icon) VALUES (?, ?, ?)',
+              [category.id, category.name, category.icon || null]
+            );
           } catch (error) {
             console.warn('分类迁移失败:', category.id, error.message);
           }
@@ -389,24 +403,90 @@ class DatabaseServiceSqlJs {
       if (data.prompts && data.prompts.length > 0) {
         for (const prompt of data.prompts) {
           try {
-            this.createPrompt(prompt);
+            this.executeQuery(
+              `INSERT OR REPLACE INTO prompts (
+                id, title, content, category, is_favorite, 
+                created_at, updated_at, description, version, rating, rating_notes
+              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+              [
+                prompt.id,
+                prompt.title,
+                prompt.content,
+                prompt.category,
+                prompt.isFavorite ? 1 : 0,
+                prompt.createdAt,
+                prompt.updatedAt,
+                prompt.description || null,
+                prompt.version || 1,
+                prompt.rating || null,
+                prompt.ratingNotes || null
+              ]
+            );
+            
+            // 迁移标签
+            if (prompt.tags && prompt.tags.length > 0) {
+              for (const tag of prompt.tags) {
+                // 插入标签
+                this.executeQuery(
+                  'INSERT OR IGNORE INTO tags (name) VALUES (?)',
+                  [tag]
+                );
+                
+                // 关联提示词和标签
+                this.executeQuery(
+                  'INSERT OR REPLACE INTO prompt_tags (prompt_id, tag_name) VALUES (?, ?)',
+                  [prompt.id, tag]
+                );
+              }
+            }
+            
+            // 迁移图片
+            if (prompt.images && prompt.images.length > 0) {
+              for (const image of prompt.images) {
+                this.executeQuery(
+                  'INSERT OR REPLACE INTO prompt_images (id, prompt_id, data, caption) VALUES (?, ?, ?, ?)',
+                  [image.id, prompt.id, image.data, image.caption || null]
+                );
+              }
+            }
           } catch (error) {
-            console.warn('提示词迁移失败:', prompt.id, error.message);
+            console.warn(`迁移提示词失败: ${prompt.id}`, error);
           }
         }
       }
 
-        // 设置迁移状态为已完成
-      this.executeQuery('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)', 
-        'migration_status', JSON.stringify('completed'));
-      this.executeQuery('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)', 
-        'migration_date', new Date().toISOString());
-      this.executeQuery('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)', 
-        'migration_source', 'localStorage');
+      // 迁移设置
+      if (data.settings) {
+        for (const [key, value] of Object.entries(data.settings)) {
+          try {
+            this.executeQuery(
+              'INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)',
+              [key, JSON.stringify(value)]
+            );
+          } catch (error) {
+            console.warn(`迁移设置失败: ${key}`, error);
+          }
+        }
+      }
+
+      // 标记迁移完成
+      this.executeQuery(
+        'INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)',
+        ['migration_status', JSON.stringify('completed')]
+      );
       
+      this.executeQuery(
+        'INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)',
+        ['migration_date', JSON.stringify(new Date().toISOString())]
+      );
+      
+      this.executeQuery(
+        'INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)',
+        ['migration_source', JSON.stringify('localStorage')]
+      );
       
       console.log('数据迁移完成');
-      return true;
+      return { success: true };
     } catch (error) {
       console.error('数据迁移失败:', error);
       throw error;
@@ -465,7 +545,7 @@ class DatabaseServiceSqlJs {
       values.push(updates.content);
     }
     if (updates.category !== undefined) {
-      fields.push('category_id = ?');
+      fields.push('category = ?');
       values.push(updates.category);
     }
     if (updates.isFavorite !== undefined) {

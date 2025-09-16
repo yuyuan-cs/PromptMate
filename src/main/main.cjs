@@ -591,6 +591,8 @@ function createWindow() {
     minHeight: 600,
     frame: false,  // 隐藏默认窗口边框
     titleBarStyle: 'hiddenInset',
+    show: false,  // 初始不显示窗口，等页面加载完成后再显示
+    backgroundColor: '#ffffff',  // 设置窗口背景色为白色
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -624,6 +626,8 @@ function createWindow() {
     mainWindow.webContents.on('did-finish-load', () => {
       console.log('页面加载成功');
       log.info('页面加载成功');
+      // 页面加载完成后显示窗口
+      mainWindow.show();
     });
     
     mainWindow.webContents.openDevTools();
@@ -662,12 +666,19 @@ function createWindow() {
         console.log('尝试重新加载页面...');
         mainWindow.loadFile(indexPath);
       }, 1000);
+      
+      // 即使加载失败也要显示窗口，避免用户看不到任何反馈
+      if (!mainWindow.isVisible()) {
+        mainWindow.show();
+      }
     });
     
     // 监听页面加载成功
     mainWindow.webContents.on('did-finish-load', () => {
       console.log('生产环境页面加载成功');
       log.info('生产环境页面加载成功');
+      // 页面加载完成后显示窗口
+      mainWindow.show();
     });
     
     // 监听控制台消息

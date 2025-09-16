@@ -237,22 +237,39 @@ export const importAllData = async (jsonData: string): Promise<boolean> => {
             } catch (error: any) {
               console.error("[DEBUG] DB_WRITE: Error during category operation:", error);
               if (error.message && error.message.includes('UNIQUE constraint failed')) {
-                console.warn(`[DEBUG] DB_WRITE: Category '${category.name}' (${category.id}) already exists. Attempting to update.`);
-                await databaseClient.updateCategory(category.id, category);
-                console.log(`[DEBUG] DB_WRITE: Category '${category.name}' (${category.id}) updated.`);
+                console.warn(`[DEBUG] DB_WRITE: Category '${category.name}' (${category.id}) already exists. Skipping update to avoid conflicts.`);
+                // Skip updating existing categories to avoid handler issues
+                // The existing category will remain unchanged
+                console.log(`[DEBUG] DB_WRITE: Category '${category.name}' (${category.id}) skipped (already exists).`);
               } else {
-                throw error; // Re-throw other errors
+                // For non-constraint errors, log but continue with other categories
+                console.error(`[DEBUG] DB_WRITE: Failed to create category '${category.name}' (${category.id}):`, error.message);
               }
             }
           }
           console.log("[DEBUG] DB_WRITE: Finished writing categories.");
 
           console.log("[DEBUG] DB_WRITE: Writing prompts to DB...");
+          let promptsCreated = 0;
+          let promptsSkipped = 0;
           for (const prompt of data.prompts) {
-            await databaseClient.createPrompt(prompt);
-            console.log(`[DEBUG] DB_WRITE: Prompt '${prompt.title}' (${prompt.id}) created with category ID '${prompt.category}'.`);
+            try {
+              await databaseClient.createPrompt(prompt);
+              console.log(`[DEBUG] DB_WRITE: Prompt '${prompt.title}' (${prompt.id}) created with category ID '${prompt.category}'.`);
+              promptsCreated++;
+            } catch (error: any) {
+              console.error(`[DEBUG] DB_WRITE: Failed to create prompt '${prompt.title}' (${prompt.id}):`, error.message);
+              if (error.message && error.message.includes('UNIQUE constraint failed')) {
+                console.warn(`[DEBUG] DB_WRITE: Prompt '${prompt.title}' (${prompt.id}) already exists. Skipping.`);
+                promptsSkipped++;
+              } else {
+                // Log other errors but continue with remaining prompts
+                console.error(`[DEBUG] DB_WRITE: Unexpected error for prompt '${prompt.title}':`, error.message);
+                promptsSkipped++;
+              }
+            }
           }
-          console.log("[DEBUG] DB_WRITE: Finished writing prompts.");
+          console.log(`[DEBUG] DB_WRITE: Finished writing prompts. Created: ${promptsCreated}, Skipped: ${promptsSkipped}.`);
 
         } catch (dbError) {
           console.error("[DEBUG] DB_WRITE: Error during database write operation:", dbError);

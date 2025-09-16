@@ -4,7 +4,7 @@
   "version": "1.1.12",
   "type": "commonjs",
   "main": "dist-electron/main/main.cjs",
-  "buildDate": "2025-09-12T15:18:31.023Z",
+  "buildDate": "2025-09-16T15:01:08.461Z",
   "author": {
     "name": "泺源",
     "email": "yuyuan3162021@163.com"
@@ -105,6 +105,7 @@
     "@reactflow/core": "^11.11.4",
     "@reactflow/minimap": "^11.7.14",
     "@types/sql.js": "^1.4.9",
+    "@types/xlsx": "^0.0.35",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.0.0",
@@ -136,7 +137,8 @@
     "sql.js": "^1.13.0",
     "tailwind-merge": "^2.5.2",
     "tailwindcss-animate": "^1.0.7",
-    "vaul": "^0.9.3"
+    "vaul": "^0.9.3",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@electron/rebuild": "^4.0.1",

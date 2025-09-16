@@ -24,7 +24,7 @@
   </p>
 </div>
 
-![PromptMate 软件截图](URL_TO_YOUR_SCREENSHOT_OR_GIF)
+![PromptMate 软件截图](./public/images/PromptMate.png)
 
 ---
 
@@ -110,3 +110,5 @@
 ## 📄 许可证
 
 本项目基于 [MIT License](https://github.com/yy0691/PromptMate/blob/main/LICENSE) 开源。
+
+
