@@ -1,10 +1,10 @@
 {
   "name": "promptmate",
   "private": true,
-  "version": "1.1.14",
+  "version": "1.1.15",
   "type": "commonjs",
   "main": "dist-electron/main/main.cjs",
-  "buildDate": "2025-09-16T15:55:21.707Z",
+  "buildDate": "2025-09-16T16:52:52.608Z",
   "author": {
     "name": "泺源",
     "email": "yuyuan3162021@163.com"

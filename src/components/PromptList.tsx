@@ -51,6 +51,7 @@ import {
   ContextMenuTrigger
 } from "@/components/ui/context-menu";
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import ErrorBoundary from "./ErrorBoundary";
 import { useTranslation } from "react-i18next";
 import { t } from "i18next";
@@ -111,7 +112,7 @@ const PromptDetailDialog = memo(function PromptDetailDialog({
             <div>
               <h4 className="text-sm font-medium mb-2">{t('common.promptContent')}</h4>
               <div className="p-4 rounded-md bg-muted/50 text-sm whitespace-pre-wrap markdown-body">
-                <ReactMarkdown>{prompt.content}</ReactMarkdown>
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>{prompt.content}</ReactMarkdown>
               </div>
             </div>
             
@@ -620,7 +621,7 @@ export const PromptList = memo(function PromptList({
 
                   <CardContent className="pb-2">
                     <div className="text-sm text-muted-foreground line-clamp-3 h-[4.5em] markdown-body">
-                      <ReactMarkdown>{prompt.content}</ReactMarkdown>
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>{prompt.content}</ReactMarkdown>
                     </div>
                   </CardContent>
 
@@ -719,7 +720,7 @@ export const PromptList = memo(function PromptList({
                       </div>
                       
                       <div className="text-xs text-muted-foreground max-h-48 overflow-y-auto prose prose-sm max-w-none">
-                        <ReactMarkdown>
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
                           {prompt.content}
                         </ReactMarkdown>
                       </div>

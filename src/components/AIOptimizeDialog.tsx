@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Copy, Check, X, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { AIOptimizeResponse } from "@/services/aiService";
 import { useTranslation } from "react-i18next";
 
@@ -98,7 +99,7 @@ export const AIOptimizeDialog: React.FC<AIOptimizeDialogProps> = ({
               </div>
               <div className="border rounded-lg p-4">
                 <div className="prose prose-sm max-w-none">
-                  <ReactMarkdown>{streamingContent}</ReactMarkdown>
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{streamingContent}</ReactMarkdown>
                 </div>
               </div>
             </div>
@@ -158,7 +159,7 @@ export const AIOptimizeDialog: React.FC<AIOptimizeDialogProps> = ({
                 
                 <div className="bg-muted/30 rounded-lg p-4 border">
                   <div className="prose prose-sm max-w-none">
-                    <ReactMarkdown>{result.optimizedContent}</ReactMarkdown>
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{result.optimizedContent}</ReactMarkdown>
                   </div>
                 </div>
               </div>
@@ -171,7 +172,7 @@ export const AIOptimizeDialog: React.FC<AIOptimizeDialogProps> = ({
                     <h3 className="text-lg font-semibold">{t('ai_optimize.optimizing.explanation')}</h3>
                     <div className="bg-blue-50 dark:bg-blue-950/30 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
                       <div className="prose prose-sm max-w-none text-blue-900 dark:text-blue-100">
-                        <ReactMarkdown>{result.explanation}</ReactMarkdown>
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>{result.explanation}</ReactMarkdown>
                       </div>
                     </div>
                   </div>
@@ -195,7 +196,7 @@ export const AIOptimizeDialog: React.FC<AIOptimizeDialogProps> = ({
                           </Badge>
                           <div className="text-sm text-green-900 dark:text-green-100 flex-1">
                             <div className="prose prose-sm max-w-none">
-                              <ReactMarkdown>{suggestion}</ReactMarkdown>
+                              <ReactMarkdown remarkPlugins={[remarkGfm]}>{suggestion}</ReactMarkdown>
                             </div>
                           </div>
                         </div>

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import {
   Popover,
   PopoverContent,
@@ -90,7 +91,7 @@ export const PromptPreview: React.FC<PromptPreviewProps> = ({
           <div className="space-y-3">
             <div className="text-xs text-muted-foreground">t('variableForm.variableReplacement')</div>
             <div className="markdown-body">
-              <ReactMarkdown>{previewContent}</ReactMarkdown>
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>{previewContent}</ReactMarkdown>
             </div>
           </div>
         )}

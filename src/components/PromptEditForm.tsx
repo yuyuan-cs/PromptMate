@@ -1,5 +1,6 @@
 import React from "react";
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -200,7 +201,7 @@ export const PromptEditForm: React.FC<PromptEditFormProps> = ({
           <div className="border rounded-md min-h-[200px] p-4 bg-muted/30 overflow-auto">
             {state.content ? (
               <div className="markdown-body">
-                <ReactMarkdown>{state.content}</ReactMarkdown>
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>{state.content}</ReactMarkdown>
               </div>
             ) : (
               <div className="text-muted-foreground text-sm">

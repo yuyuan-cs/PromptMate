@@ -41,6 +41,7 @@ import {
 } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { useTranslation } from "react-i18next";
 
 // 防抖函数
@@ -688,7 +689,7 @@ export function PromptEditor() {
                   <div className="mt-2 p-2 border rounded bg-muted/30">
                     <div className="text-xs text-muted-foreground mb-1">{t('common.markdownPreview')}: </div>
                     <div className="markdown-body">
-                      <ReactMarkdown>{content}</ReactMarkdown>
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
                     </div>
                   </div>
                 </div>
@@ -835,7 +836,7 @@ export function PromptEditor() {
             {!isEditing && (
               <>
                 <div className="bg-muted/30 rounded-md p-4 mb-4 markdown-body">
-                  <ReactMarkdown>{selectedPrompt.content}</ReactMarkdown>
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{selectedPrompt.content}</ReactMarkdown>
                 </div>
                 
                 {/* 图片预览区域（只读模式） */}
