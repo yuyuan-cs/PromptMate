@@ -870,6 +870,7 @@
     "unique": "唯一",
     "completed": "已完成",
     "pending": "个待填写",
+    "variableCount": "已填写",
     "variableFill": "变量填写",
     "fillExample": "填充示例",
     "clear": "清空",

@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Prompt } from "@/types";
 import { VariableDisplay } from "./VariableHighlighter";
 import { VariableForm } from "./VariableForm";
+import { VariableReplacementDisplay } from "./VariableReplacementDisplay";
 import { applyVariableValues } from "@/lib/variableUtils";
 import { useTranslation } from "react-i18next";
 
@@ -64,47 +65,45 @@ export const PromptPreview: React.FC<PromptPreviewProps> = ({
       {/* 内容预览区域 */}
       <div className="flex-1 bg-muted/30 rounded-md p-4 space-y-4 overflow-hidden">
         <div className="flex items-center justify-between">
-          
           <h3 className="text-sm font-medium">
             {Object.keys(safeVariableValues).length > 0 ? t('variableForm.finalContent') : t('variableForm.originalContent')}
           </h3>
           {Object.keys(safeVariableValues).length > 0 && (
             <div className="text-xs text-muted-foreground">
-              t(variable.completed) {Object.keys(safeVariableValues).length} t('variableHighlighter.variableCount')
+              {t('variableForm.variableCount')}: {Object.keys(safeVariableValues).length}
             </div>
           )}
         </div>
 
-        {/* 原始内容（带变量高亮） */}
-        {!Object.keys(safeVariableValues).length && (
-          <div className="space-y-3">
-            {/* <div className="text-xs text-muted-foreground">变量占位符高亮显示：</div> */}
+        {/* markdown+变量高亮显示 */}
+        {/* <div className="markdown-body">
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>{previewContent}</ReactMarkdown>
+        </div> */}
+
+        {/* 统一的内容显示 */}
+        <div className="space-y-3">
+          {Object.keys(safeVariableValues).length > 0 ? (
+            // 显示带变量高亮的替换后内容
+            <VariableReplacementDisplay
+              originalContent={prompt.content}
+              variableValues={safeVariableValues}
+            />
+          ) : (
+            // 显示原始内容（带变量高亮）
             <VariableDisplay
               content={prompt.content}
               showVariableCount={true}
             />
-          </div>
-        )}
-
-        {/* 最终预览内容 */}
-        {Object.keys(safeVariableValues).length > 0 && (
-          <div className="space-y-3">
-            <div className="text-xs text-muted-foreground">t('variableForm.variableReplacement')</div>
-            <div className="markdown-body">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>{previewContent}</ReactMarkdown>
-            </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
-
-    
 
       
       
       {/* 图片预览区域 */}
       {prompt.images && prompt.images.length > 0 && (
         <div className="flex-shrink-0 space-y-3 mt-4">
-          <h3 className="text-sm font-medium">t('common.imageUpload')</h3>
+          <h3 className="text-sm font-medium">{t('common.imageUpload')}</h3>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
             {prompt.images.map((image, index) => (
               <Popover key={image.id}>
@@ -124,7 +123,7 @@ export const PromptPreview: React.FC<PromptPreviewProps> = ({
                     className="w-full mb-2 rounded" 
                   />
                   <div className="text-xs text-muted-foreground">
-                    {image.caption || `$t('common.imageCaptionPlaceholder') ${index + 1}`}
+                    {image.caption || `${t('common.imageCaptionPlaceholder')} ${index + 1}`}
                   </div>
                 </PopoverContent>
               </Popover>

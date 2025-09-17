@@ -69,36 +69,123 @@ export const VariableHighlighter: React.FC<VariableHighlighterProps> = ({
   }, [content, variables]);
   
   return (
-    <span className={className}>
-      {highlightedContent.map((element, index) => {
-        if (element.type === 'variable' && element.variable) {
-          return (
-            <span
-              key={index}
-              className={cn(
-                'variable-highlight inline-block px-0.5 py-0.25 mx-0.5 rounded text-sm font-mono',
-                'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
-                'border border-blue-200 dark:border-blue-800',
-                'cursor-pointer hover:bg-blue-200 dark:hover:bg-blue-800/50',
-                'transition-colors duration-200',
-                highlightClassName
-              )}
-              onClick={() => onVariableClick?.(element.variable!)}
-              title={`${t('variableHighlighter.variableLabel')}: ${element.variable.name}`}
-              data-variable={element.variable.name}
-            >
-              {element.content}
-            </span>
-          );
-        }
-        
-        return (
-          <span key={index}>
-            {element.content}
-          </span>
-        );
-      })}
-    </span>
+    <div className={cn('prose prose-sm max-w-none', className)}>
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        rehypePlugins={[rehypeRaw]}
+        components={{
+          // Headers
+          h1: ({node, ...props}) => <h1 className="text-2xl font-bold mt-6 mb-4 pb-2 border-b border-border/50" {...props} />,
+          h2: ({node, ...props}) => <h2 className="text-xl font-bold mt-5 mb-3 pb-2 border-b border-border/30" {...props} />,
+          h3: ({node, ...props}) => <h3 className="text-lg font-semibold mt-4 mb-2" {...props} />,
+          h4: ({node, ...props}) => <h4 className="text-base font-medium mt-3 mb-2" {...props} />,
+          
+          // Paragraphs
+          p: ({node, ...props}) => <p className="my-3 leading-relaxed" {...props} />,
+          
+          // Lists
+          ul: ({node, ...props}) => <ul className="list-disc pl-6 my-2 space-y-1" {...props} />,
+          ol: ({node, ...props}) => <ol className="list-decimal pl-6 my-2 space-y-1" {...props} />,
+          li: ({node, ...props}) => <li className="my-1 pl-1" {...props} />,
+          
+          // Code blocks
+          pre: ({node, ...props}) => (
+            <pre className="bg-muted/50 dark:bg-muted/20 p-4 rounded-lg overflow-x-auto my-4 text-sm border border-border/20" {...props} />
+          ),
+          code: ({node, className, children, ...props}: any) => {
+            const inline = !className;
+            if (inline) {
+              // Check if it's a variable
+              const content = String(children);
+              const varMatch = content.match(/^\{\{([^}]+)\}\}$/);
+              if (varMatch) {
+                const varName = varMatch[1];
+                const variable = variables.find(v => v.name === varName);
+                
+                if (variable) {
+                  return (
+                    <span
+                      className={cn(
+                        'variable-highlight inline-flex items-center px-2 py-1 mx-0.5 rounded-md text-sm font-mono',
+                        'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300',
+                        'border border-blue-200 dark:border-blue-800/50',
+                        'cursor-pointer hover:bg-blue-200 dark:hover:bg-blue-800/60',
+                        'transition-all duration-200 hover:scale-105',
+                        highlightClassName
+                      )}
+                      onClick={() => onVariableClick?.(variable)}
+                      title={`${t('variableHighlighter.variableLabel')}: ${variable.name}`}
+                      data-variable={variable.name}
+                    >
+                      {content}
+                    </span>
+                  );
+                }
+              }
+              
+              // Regular inline code
+              return (
+                <code className="bg-muted/60 dark:bg-muted/40 px-1.5 py-0.5 rounded text-sm font-mono text-foreground/90 border border-border/20" {...props}>
+                  {children}
+                </code>
+              );
+            }
+            
+            // Code blocks
+            return (
+              <code className={className} {...props}>
+                {children}
+              </code>
+            );
+          },
+          
+          // Blockquotes
+          blockquote: ({node, ...props}) => (
+            <blockquote 
+              className="border-l-4 border-primary/50 bg-muted/30 dark:bg-muted/10 pl-4 py-2 my-4 text-muted-foreground italic rounded-r-md" 
+              {...props} 
+            />
+          ),
+          
+          // Links
+          a: ({node, ...props}) => (
+            <a 
+              className="text-primary underline underline-offset-4 hover:text-primary/80 transition-colors decoration-primary/50 hover:decoration-primary" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              {...props} 
+            />
+          ),
+          
+          // Tables
+          table: ({node, ...props}) => (
+            <div className="my-4 border rounded-lg overflow-hidden shadow-sm">
+              <table className="w-full border-collapse" {...props} />
+            </div>
+          ),
+          thead: ({node, ...props}) => <thead className="bg-muted/50 dark:bg-muted/30" {...props} />,
+          th: ({node, ...props}) => <th className="p-3 text-left border-b font-semibold text-foreground/90" {...props} />,
+          td: ({node, ...props}) => <td className="p-3 border-t border-border/30" {...props} />,
+          tr: ({node, ...props}) => <tr className="hover:bg-muted/30 transition-colors" {...props} />,
+          
+          // Horizontal rule
+          hr: ({node, ...props}) => <hr className="my-6 border-t border-border/50" {...props} />,
+          
+          // Images
+          img: ({node, ...props}) => (
+            <div className="my-4 rounded-lg overflow-hidden border border-border/20 shadow-sm">
+              <img className="max-w-full h-auto" {...props} />
+            </div>
+          ),
+          
+          // Strong and emphasis
+          strong: ({node, ...props}) => <strong className="font-semibold text-foreground" {...props} />,
+          em: ({node, ...props}) => <em className="italic text-foreground/90" {...props} />,
+        }}
+      >
+        {content}
+      </ReactMarkdown>
+    </div>
   );
 };
 
@@ -388,49 +475,125 @@ export const VariableDisplay: React.FC<VariableDisplayProps> = ({
   }, [content, variables]);
 
   return (
-    <div className={cn('relative', className)}>
-      <div className="prose dark:prose-invert max-w-none whitespace-pre-wrap break-words">
-        <ReactMarkdown
-          remarkPlugins={[remarkGfm]}
-          rehypePlugins={[rehypeRaw]}
-          components={{
-            var: ({ node, ...props }) => {
-              // 从新的属性名获取变量名
-              const encodedName = node.properties?.dataVariableName as string;
-              const name = encodedName ? decodeURIComponent(encodedName) : 
-                          (node.properties?.dataName as string); // 向后兼容
-              
-              const originalText = node.children?.[0]?.type === 'text' ? 
-                                  node.children[0].value : 
-                                  (typeof node.children?.[0] === 'string' ? node.children[0] : '');
-              
-              if (!name) return <span>{originalText}</span>;
-              
-              const variable = variables.find(v => v.name === name);
-              if (!variable) return <span>{originalText}</span>;
-
+    <div className={cn('relative prose prose-sm max-w-none', className)}>
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        rehypePlugins={[rehypeRaw]}
+        components={{
+          // Headers
+          h1: ({node, ...props}) => <h1 className="text-2xl font-bold mt-6 mb-4 pb-2 border-b border-border/50" {...props} />,
+          h2: ({node, ...props}) => <h2 className="text-xl font-bold mt-5 mb-3 pb-2 border-b border-border/30" {...props} />,
+          h3: ({node, ...props}) => <h3 className="text-lg font-semibold mt-4 mb-2" {...props} />,
+          h4: ({node, ...props}) => <h4 className="text-base font-medium mt-3 mb-2" {...props} />,
+          
+          // Paragraphs
+          p: ({node, ...props}) => <p className="my-3 leading-relaxed" {...props} />,
+          
+          // Lists
+          ul: ({node, ...props}) => <ul className="list-disc pl-6 my-2 space-y-1" {...props} />,
+          ol: ({node, ...props}) => <ol className="list-decimal pl-6 my-2 space-y-1" {...props} />,
+          li: ({node, ...props}) => <li className="my-1 pl-1" {...props} />,
+          
+          // Code blocks
+          pre: ({node, ...props}) => (
+            <pre className="bg-muted/50 dark:bg-muted/20 p-4 rounded-lg overflow-x-auto my-4 text-sm border border-border/20" {...props} />
+          ),
+          code: ({node, className, children, ...props}: any) => {
+            const inline = !className;
+            if (inline) {
               return (
-                <span
-                  className={cn(
-                    'variable-highlight inline-block px-0.5 py-0.25 mx-0.5 rounded text-sm font-mono',
-                    'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
-                    'border border-blue-200 dark:border-blue-800',
-                    'cursor-pointer hover:bg-blue-200 dark:hover:bg-blue-800/50',
-                    'transition-colors duration-200'
-                  )}
-                  onClick={() => onVariableClick?.(variable)}
-                  title={`${t('variableHighlighter.variableLabel')}: ${name}`}
-                  data-variable={name}
-                >
-                  {originalText}
-                </span>
+                <code className="bg-muted/60 dark:bg-muted/40 px-1.5 py-0.5 rounded text-sm font-mono text-foreground/90 border border-border/20" {...props}>
+                  {children}
+                </code>
               );
-            },
-          }}
-        >
-          {processedContent}
-        </ReactMarkdown>
-      </div>
+            }
+            return (
+              <code className={className} {...props}>
+                {children}
+              </code>
+            );
+          },
+          
+          // Blockquotes
+          blockquote: ({node, ...props}) => (
+            <blockquote 
+              className="border-l-4 border-primary/50 bg-muted/30 dark:bg-muted/10 pl-4 py-2 my-4 text-muted-foreground italic rounded-r-md" 
+              {...props} 
+            />
+          ),
+          
+          // Links
+          a: ({node, ...props}) => (
+            <a 
+              className="text-primary underline underline-offset-4 hover:text-primary/80 transition-colors decoration-primary/50 hover:decoration-primary" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              {...props} 
+            />
+          ),
+          
+          // Tables
+          table: ({node, ...props}) => (
+            <div className="my-4 border rounded-lg overflow-hidden shadow-sm">
+              <table className="w-full border-collapse" {...props} />
+            </div>
+          ),
+          thead: ({node, ...props}) => <thead className="bg-muted/50 dark:bg-muted/30" {...props} />,
+          th: ({node, ...props}) => <th className="p-3 text-left border-b font-semibold text-foreground/90" {...props} />,
+          td: ({node, ...props}) => <td className="p-3 border-t border-border/30" {...props} />,
+          tr: ({node, ...props}) => <tr className="hover:bg-muted/30 transition-colors" {...props} />,
+          
+          // Horizontal rule
+          hr: ({node, ...props}) => <hr className="my-6 border-t border-border/50" {...props} />,
+          
+          // Images
+          img: ({node, ...props}) => (
+            <div className="my-4 rounded-lg overflow-hidden border border-border/20 shadow-sm">
+              <img className="max-w-full h-auto" {...props} />
+            </div>
+          ),
+          
+          // Strong and emphasis
+          strong: ({node, ...props}) => <strong className="font-semibold text-foreground" {...props} />,
+          em: ({node, ...props}) => <em className="italic text-foreground/90" {...props} />,
+          
+          // Variables
+          var: ({ node, ...props }) => {
+            // 从新的属性名获取变量名
+            const encodedName = node.properties?.dataVariableName as string;
+            const name = encodedName ? decodeURIComponent(encodedName) : 
+                        (node.properties?.dataName as string); // 向后兼容
+            
+            const originalText = node.children?.[0]?.type === 'text' ? 
+                                node.children[0].value : 
+                                (typeof node.children?.[0] === 'string' ? node.children[0] : '');
+            
+            if (!name) return <span>{originalText}</span>;
+            
+            const variable = variables.find(v => v.name === name);
+            if (!variable) return <span>{originalText}</span>;
+
+            return (
+              <span
+                className={cn(
+                  'variable-highlight inline-flex items-center px-2 py-1 mx-0.5 rounded-md text-sm font-mono',
+                  'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300',
+                  'border border-blue-200 dark:border-blue-800/50',
+                  'cursor-pointer hover:bg-blue-200 dark:hover:bg-blue-800/60',
+                  'transition-all duration-200 hover:scale-105'
+                )}
+                onClick={() => onVariableClick?.(variable)}
+                title={`${t('variableHighlighter.variableLabel')}: ${name}`}
+                data-variable={name}
+              >
+                {originalText}
+              </span>
+            );
+          },
+        }}
+      >
+        {processedContent}
+      </ReactMarkdown>
       
       {showVariableCount && variables.length > 0 && (
         <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
