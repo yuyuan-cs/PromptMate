@@ -6,3 +6,7 @@ node_modules
 .env.local
 /@docs/.obsidian
 .DS_Store
+PromptMate_browser-extension.zip
+browser-extension/dist
+browser-extension/node_modules
+browser-extension.zip
