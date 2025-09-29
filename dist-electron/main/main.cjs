@@ -597,7 +597,7 @@ function createWindow() {
       nodeIntegration: false,
       contextIsolation: true,
       preload: preloadPath,  // 启用preload脚本
-      webSecurity: process.env.NODE_ENV !== 'development',  // 生产环境启用web安全
+      webSecurity: false,  // 禁用web安全以支持本地MCP服务连接
       allowRunningInsecureContent: process.env.NODE_ENV === 'development',  // 仅在开发环境允许运行不安全内容
       enableRemoteModule: false,  // 禁用远程模块
       worldSafeExecuteJavaScript: true  // 启用安全的JavaScript执行

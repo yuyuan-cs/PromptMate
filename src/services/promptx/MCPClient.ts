@@ -69,18 +69,27 @@ class MCPClientImpl {
     const url = ep.url;
     console.log(`[MCP] Testing connection to: ${url}`);
     
-    // HTTP(S) health-check fallback
+    // For HTTP endpoints, send a valid JSON-RPC request to test.
     if (url.startsWith('http://') || url.startsWith('https://')) {
       try {
-        const response = await fetch(url, { 
-          method: 'GET',
+        const response = await fetch(url, {
+          method: 'POST',
           mode: 'cors',
           headers: {
-            'Accept': 'application/json'
-          }
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            jsonrpc: '2.0',
+            method: 'mcp.discover',
+            params: {},
+            id: `test-${Date.now()}`,
+          }),
         });
-        console.log(`[MCP] HTTP test result: ${response.status} ${response.statusText}`);
-        return { ok: response.ok, error: response.ok ? undefined : `HTTP ${response.status}: ${response.statusText}` };
+
+        // A valid JSON-RPC server should respond, even with an error.
+        // Any response that is valid JSON is a success.
+        await response.json();
+        return { ok: true };
       } catch (e: any) {
         console.error(`[MCP] HTTP test failed:`, e);
         return { ok: false, error: e?.message || 'HTTP connection failed' };

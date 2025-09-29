@@ -19,9 +19,9 @@ function defaultEndpoints(): MCPEndpoint[] {
       id: 'local-managed',
       name: 'Local MCP (Managed)',
       type: 'managed-local',
-      url: 'http://127.0.0.1:5204/mcp',
+      url: 'http://127.0.0.1:5203/mcp',
       command: 'npx',
-      args: ['@promptx/mcp-server', '--transport', 'http', '--port', '5204', '--cors'],
+      args: ['@promptx/mcp-server', '--transport', 'http', '--port', '5203', '--cors'],
       cwd: undefined,
       requiresAuth: false,
       autoStart: true,
@@ -45,9 +45,9 @@ export class MCPConfigStore {
         this._endpoints = JSON.parse(raw);
         // 强制更新默认端点的URL到新端口
         const defaultEp = this._endpoints.find(e => e.id === 'local-managed');
-        if (defaultEp && (defaultEp.url.includes(':5203') || defaultEp.url === 'http://127.0.0.1:5204')) {
-          defaultEp.url = 'http://127.0.0.1:5204/mcp';
-          defaultEp.args = ['@promptx/mcp-server', '--transport', 'http', '--port', '5204', '--cors'];
+        if (defaultEp && (defaultEp.url.includes(':5203') || defaultEp.url === 'http://127.0.0.1:5203')) {
+          defaultEp.url = 'http://127.0.0.1:5203/mcp';
+          defaultEp.args = ['@promptx/mcp-server', '--transport', 'http', '--port', '5203', '--cors'];
           this.save(); // 保存更新
         }
       }

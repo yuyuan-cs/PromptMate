@@ -5,6 +5,8 @@
 
 import { RoleInstance } from './ProfessionalRoles';
 import { professionalRolesManager } from './ProfessionalRoles';
+import { aiService } from '@/services/aiService';
+import { mcpConfigStore } from './MCPConfig';
 
 // 导入现有的 AI 服务（假设已存在）
 // import { aiService } from '@/services/AIService';
@@ -57,19 +59,73 @@ export class AIRoleService {
         { role: 'user', content: message }
       ];
 
-      // 检查是否有可用的 AI 配置
+      // 优先尝试通过本地 PromptX MCP 服务对话（若可用）
+      const mcpReply = await this.tryMCPChat(activeRole.roleId, messages);
+      if (mcpReply) {
+        return mcpReply;
+      }
+
+      // MCP 不可用则回退至直连 AI 服务
       const aiConfig = this.getAIConfiguration();
       if (!aiConfig) {
         throw new Error('AI 服务未配置，请先在设置中配置 AI 服务');
       }
 
-      // 调用 AI 服务
       const response = await this.callAIService(messages, aiConfig);
       
       return response;
     } catch (error) {
       console.error('AI 角色服务调用失败:', error);
       throw error;
+    }
+  }
+
+  /**
+   * 尝试通过本地 PromptX MCP 服务进行对话（HTTP 模式）
+   * 约定：POST {endpoint}/chat，body: { roleId, messages }
+   */
+  private async tryMCPChat(roleId: string, messages: AIRoleMessage[]): Promise<AIRoleResponse | null> {
+    try {
+      const ep = mcpConfigStore.getActive();
+      if (!ep || !ep.url || !(ep.url.startsWith('http://') || ep.url.startsWith('https://'))) {
+        return null;
+      }
+
+      const response = await fetch(ep.url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          method: 'chat.completion',
+          params: { roleId, messages },
+          id: `chat-${Date.now()}`,
+        }),
+      });
+
+      if (!response.ok) return null;
+
+      const rpcResponse = await response.json();
+
+      if (rpcResponse.error) {
+        console.error('[MCP Chat] Received RPC error:', rpcResponse.error);
+        return null;
+      }
+
+      const result = rpcResponse.result;
+      if (!result) return null;
+
+      const content = result.content || result.reply || result.message || '';
+      if (!content) return null;
+
+      return {
+        content,
+        usage: result.usage,
+        model: result.model,
+        finishReason: result.finishReason || result.stop_reason,
+      };
+    } catch (e) {
+      console.warn('[MCP Chat] Failed to call MCP chat endpoint:', e);
+      return null;
     }
   }
 
@@ -111,20 +167,22 @@ export class AIRoleService {
    */
   private getAIConfiguration() {
     try {
-      // 从 localStorage 获取 AI 配置
-      const aiSettings = localStorage.getItem('ai-settings');
-      if (!aiSettings) {
-        return null;
+      // 首选统一服务：AISettings.tsx -> aiService.saveConfig()/getConfig()
+      const cfg = aiService.getConfig();
+      if (cfg && cfg.apiKey && cfg.provider) {
+        return cfg;
       }
 
-      const config = JSON.parse(aiSettings);
-      
-      // 验证配置完整性
-      if (!config.apiKey || !config.provider) {
-        return null;
-      }
-
-      return config;
+      // 兼容旧存储：读取 'ai-settings' 或回退 'ai-config'
+      const rawSettings = localStorage.getItem('ai-settings') || localStorage.getItem('ai-config');
+      if (!rawSettings) return null;
+      const parsed = JSON.parse(rawSettings);
+      const provider = parsed.provider || parsed.vendor || 'openai';
+      const apiKey = parsed.apiKey || parsed.key || '';
+      const baseUrl = parsed.baseUrl || parsed.endpoint || '';
+      const model = parsed.model || parsed.modelName || '';
+      if (!apiKey || !provider) return null;
+      return { provider, apiKey, baseUrl, model };
     } catch (error) {
       console.error('获取 AI 配置失败:', error);
       return null;
@@ -202,6 +260,8 @@ export class AIRoleService {
         return await this.callOpenAI(messages, { apiKey, baseUrl, model });
       case 'anthropic':
         return await this.callAnthropic(messages, { apiKey, model });
+      case 'gemini':
+        return await this.callGemini(messages, { apiKey, baseUrl, model });
       case 'custom':
         return await this.callCustomAPI(messages, config);
       default:
@@ -217,7 +277,13 @@ export class AIRoleService {
     config: { apiKey: string; baseUrl?: string; model?: string }
   ): Promise<AIRoleResponse> {
     
-    const url = `${config.baseUrl || 'https://api.openai.com'}/v1/chat/completions`;
+    let url = config.baseUrl || 'https://api.openai.com';
+    // 如果给的是根域名，则补齐端点
+    if (url === 'https://api.openai.com' || url === 'https://api.openai.com/') {
+      url = 'https://api.openai.com/v1/chat/completions';
+    } else if (!url.includes('/v1/') && !url.includes('/chat/completions')) {
+      url = `${url.replace(/\/$/, '')}/v1/chat/completions`;
+    }
     
     const response = await fetch(url, {
       method: 'POST',
@@ -299,6 +365,48 @@ export class AIRoleService {
   }
 
   /**
+   * 调用 Gemini API（Google Generative Language）
+   */
+  private async callGemini(
+    messages: AIRoleMessage[],
+    config: { apiKey: string; baseUrl?: string; model?: string }
+  ): Promise<AIRoleResponse> {
+    const base = (config.baseUrl && config.baseUrl.includes('generativelanguage.googleapis.com'))
+      ? config.baseUrl.replace(/\/$/, '')
+      : 'https://generativelanguage.googleapis.com';
+
+    const model = config.model || 'gemini-1.5-pro';
+    // 组合系统提示与会话消息：Gemini没有原生system role，合并进第一条
+    const system = messages.find(m => m.role === 'system')?.content || '';
+    const userTurns = messages.filter(m => m.role !== 'system');
+
+    const contents = userTurns.map(m => ({
+      role: m.role === 'assistant' ? 'model' : 'user',
+      parts: [{ text: (m.role === 'user' && system) ? `${system}\n\n${m.content}` : m.content }]
+    }));
+
+    let url = `${base}/v1beta/models/${encodeURIComponent(model)}:generateContent`;
+    const sep = url.includes('?') ? '&' : '?';
+    url = `${url}${sep}key=${encodeURIComponent(config.apiKey)}`;
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ contents, generationConfig: { maxOutputTokens: 2000, temperature: 0.7 } })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Gemini API 调用失败: ${response.status} ${errorText}`);
+    }
+
+    const data = await response.json();
+    const parts = data?.candidates?.[0]?.content?.parts;
+    const content = Array.isArray(parts) ? parts.map((p: any) => p?.text || '').join('') : '';
+    return { content, usage: data.usage, model: data.model, finishReason: data?.candidates?.[0]?.finishReason };
+  }
+
+  /**
    * 调用自定义 API
    */
   private async callCustomAPI(
@@ -306,7 +414,16 @@ export class AIRoleService {
     config: any
   ): Promise<AIRoleResponse> {
     
-    const response = await fetch(config.baseUrl, {
+    // 对常见OpenAI兼容服务（如SiliconFlow）自动补全端点
+    let url: string = config.baseUrl;
+    if (typeof url === 'string') {
+      const clean = url.replace(/\/$/, '');
+      if (clean.includes('siliconflow')) {
+        url = clean.includes('/v1/') ? clean : `${clean}/v1/chat/completions`;
+      }
+    }
+
+    const response = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

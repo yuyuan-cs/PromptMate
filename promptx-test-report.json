@@ -1,5 +1,5 @@
 {
-  "timestamp": "2025-09-28T07:21:17.847Z",
+  "timestamp": "2025-09-29T13:42:53.623Z",
   "testResults": [
     {
       "id": 1,
@@ -8,7 +8,7 @@
       "result": {
         "roleId": "product-manager",
         "name": "产品经理",
-        "confidence": 0.8575996922730197,
+        "confidence": 0.9003414090512959,
         "message": "我需要产品经理专家帮我分析用户需求"
       }
     },
@@ -19,7 +19,7 @@
       "result": {
         "roleId": "architect",
         "name": "系统架构师",
-        "confidence": 0.9288107146031509,
+        "confidence": 0.8826184098838441,
         "message": "需要系统架构师指导技术方案设计"
       }
     },
@@ -36,7 +36,7 @@
       "result": {
         "roleId": "ui-designer",
         "name": "UI设计师",
-        "confidence": 0.8599341602930436,
+        "confidence": 0.9284480107738392,
         "message": "需要UI设计师优化界面体验"
       }
     },

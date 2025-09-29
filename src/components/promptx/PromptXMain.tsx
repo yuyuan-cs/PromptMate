@@ -75,20 +75,20 @@ export const PromptXMain: React.FC<PromptXMainProps> = ({
   const allRoles = professionalRolesManager.getAllRoles();
 
   // MCP status state
-  const [mcpConnected, setMcpConnected] = useState(false);
-  const [mcpUrl, setMcpUrl] = useState(mcpConfigStore.getActive()?.url || '');
+  const [mcpStatus, setMcpStatus] = useState<{ connected: boolean; url?: string; error?: string }>({ connected: false });
 
   useEffect(() => {
     // Subscribe to MCP status changes
-    const off = MCPClient.onStatusChange(({ connected, url }) => {
-      setMcpConnected(connected);
-      if (url) setMcpUrl(url);
+    const off = MCPClient.onStatusChange(status => {
+      setMcpStatus(status);
     });
     // Try lazy-connect to active endpoint on mount (non-blocking)
     (async () => {
       const ep = mcpConfigStore.getActive();
       if (ep) {
-        try { await MCPClient.connect(ep); } catch {}
+        try { await MCPClient.connect(ep); } catch (e: any) {
+          setMcpStatus({ connected: false, error: e?.message || 'Failed to connect' });
+        }
       }
     })();
     return () => { off(); };
@@ -193,8 +193,7 @@ export const PromptXMain: React.FC<PromptXMainProps> = ({
               onEndSession={() => activatorRef.current?.deactivate()}
             />
             <MCPStatusCard
-              connected={mcpConnected}
-              serverUrl={mcpUrl}
+              status={mcpStatus}
               onTestConnection={handleTestMCP}
               onOpenSettings={() => {
                 // Dispatch a global event for Sidebar to open settings at MCP tab
@@ -280,8 +279,8 @@ export const PromptXMain: React.FC<PromptXMainProps> = ({
               </CardContent>
             </Card>
 
-            {/* MCP 状态（PR1占位） */}
-            <MCPStatusCard />
+            {/* MCP 状态 */}
+            <MCPStatusCard status={mcpStatus} onTestConnection={handleTestMCP} />
           </div>
         )}
       </div>

@@ -122,7 +122,7 @@ export const MCPSettingsPanel: React.FC = () => {
       <div className="flex items-center justify-between gap-2">
         <div>
           <h3 className="text-sm font-medium">MCP 端点</h3>
-          <div className="text-xs text-muted-foreground mt-1">本地服务由用户自行启动，例如：npx @promptx/mcp-server --transport http --port 5204 --cors</div>
+          <div className="text-xs text-muted-foreground mt-1">本地服务由用户自行启动，例如：npx @promptx/mcp-server --transport http --port 5203 --cors</div>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={handleClearCache}>重置配置</Button>
