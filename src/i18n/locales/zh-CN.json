@@ -784,6 +784,83 @@
       "gemini": "Gemini"
     }
   },
+  "promptx": {
+    "title": "PromptX",
+    "heroTitle": "PromptX 专业角色平台",
+    "heroSubtitle": "用自然语言激活专业角色，获得行业专家级别的 AI 协作体验",
+    "activeRole": {
+      "title": "已激活角色"
+    },
+    "quickStart": {
+      "title": "快速开始",
+      "step1Title": "1. 描述需求",
+      "step1Desc": "用自然语言描述您需要什么帮助",
+      "step2Title": "2. 激活角色",
+      "step2Desc": "系统自动识别并激活相应专业角色",
+      "step3Title": "3. 专业对话",
+      "step3Desc": "与专业角色进行深度对话交流"
+    },
+    "availableRoles": {
+      "title": "可用角色",
+      "more": "还有 {count} 个角色..."
+    },
+    "domains": {
+      "title": "专业领域"
+    },
+    "roleLibrary": {
+      "title": "角色库",
+      "activate": "激活",
+      "detail": "详情",
+      "favorite": "收藏",
+      "unfavorite": "取消收藏",
+      "pin": "置顶",
+      "unpin": "取消置顶"
+    },
+    "roleDetail": {
+      "title": "角色详情",
+      "persona": "角色画像",
+      "capabilities": "能力列表",
+      "knowledge": "知识体系",
+      "examples": "示例问题",
+      "communication_style": "沟通风格",
+      "decision_making": "决策方式",
+      "work_approach": "工作方法",
+      "traits": "特质",
+      "domains": "领域",
+      "methodologies": "方法论",
+      "tools": "工具",
+      "frameworks": "框架"
+    },
+    "filters": {
+      "title": "筛选与排序",
+      "favoritesOnly": "仅显示收藏",
+      "sort": "排序",
+      "sort_recent": "最近",
+      "sort_az": "名称 A-Z",
+      "sort_za": "名称 Z-A",
+      "sort_pinned": "置顶优先"
+    },
+    "actions": {
+      "continueChat": "继续对话",
+      "switchRole": "切换角色",
+      "endSession": "结束会话"
+    },
+    "mcp": {
+      "title": "MCP 连接状态",
+      "connected": "已连接",
+      "disconnected": "未连接",
+      "serverUrl": "服务器",
+      "testConnection": "测试连接",
+      "openSettings": "去配置"
+    },
+    "detail": {
+      "title": "角色详情"
+    },
+    "empty": {
+      "noResults": "没有匹配的角色",
+      "tryAdjust": "尝试更换搜索词或清空筛选"
+    }
+  },
   "errors": {
     "generic": "发生未知错误",
     "networkError": "网络连接错误",

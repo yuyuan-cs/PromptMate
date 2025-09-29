@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, ReactNode } from "react";
 
-export type AppView = 'prompts' | 'workflows';
+export type AppView = 'prompts' | 'workflows' | 'promptx';
 
 interface AppViewContextType {
   currentView: AppView;

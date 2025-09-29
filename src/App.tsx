@@ -14,6 +14,7 @@ import { useSplashScreen } from "@/hooks/useSplashScreen";
 import { useSplashScreenContext } from "@/hooks/useSplashScreenContext";
 // Import conditional workflow view
 import { ConditionalWorkflowView } from "@/components/ConditionalWorkflowView";
+import { PromptXView } from "@/components/promptx/PromptXView";
 
 // Lazy load the Index component (handle named export)
 const Index = lazy(() => 
@@ -60,6 +61,8 @@ function AppContent() {
     switch (currentView) {
       case 'workflows':
         return <ConditionalWorkflowView />;
+      case 'promptx':
+        return <PromptXView sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />;
       case 'prompts':
       default:
         return (
@@ -83,7 +86,7 @@ function AppContent() {
   }
 
   return (
-    <main className="h-screen flex flex-col" data-testid="main-app">
+    <main className="min-h-screen flex flex-col" data-testid="main-app">
       <Header />
       <div className="flex-1 flex min-h-0 overflow-hidden app-content">
         {renderCurrentView()}
