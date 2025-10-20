@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 const fs = require('fs').promises;
+const fsSync = require('fs');
 const path = require('path');
 const chokidar = require('chokidar');
 const os = require('os');
@@ -19,15 +20,43 @@ class PromptMateSyncHost {
     this.setupMessageHandling();
   }
 
-  // 获取同步数据文件路径（跨平台，兼容 Windows 注册表自定义目录）
+  // 获取默认应用数据目录
+  getDefaultUserDataDir() {
+    const home = os.homedir();
+    if (process.platform === 'win32') {
+      return path.join(home, 'AppData', 'Roaming', 'PromptMate');
+    } else if (process.platform === 'darwin') {
+      return path.join(home, 'Library', 'Application Support', 'PromptMate');
+    } else {
+      return path.join(home, '.config', 'PromptMate');
+    }
+  }
+
+  // 获取同步数据文件路径（优先使用 sync-settings.json 中的自定义路径；兼容 Windows 注册表自定义目录）
   getSyncDataPath() {
     let baseDir = null;
 
+    // 1) 优先读取默认目录下的 sync-settings.json
+    try {
+      const defaultDir = this.getDefaultUserDataDir();
+      const settingsFile = path.join(defaultDir, 'sync-settings.json');
+      if (fsSync.existsSync(settingsFile)) {
+        const content = fsSync.readFileSync(settingsFile, 'utf-8');
+        const config = JSON.parse(content);
+        if (config && typeof config.dataPath === 'string' && config.dataPath.trim()) {
+          return config.dataPath; // 已经是完整文件路径
+        }
+      }
+    } catch (_) {
+      // 忽略配置读取错误，继续其他判断
+    }
+
+    // 2) Windows 下读取注册表自定义目录
     if (process.platform === 'win32') {
       try {
         const result = execSync('reg query "HKCU\\Software\\PromptMate" /v DataDirectory', { encoding: 'utf8', stdio: 'pipe' });
         const match = result.match(/DataDirectory\s+REG_SZ\s+(.+)/);
-        if (match && match[1] && require('fs').existsSync(match[1].trim())) {
+        if (match && match[1] && fsSync.existsSync(match[1].trim())) {
           baseDir = match[1].trim();
         }
       } catch (_) {
@@ -35,15 +64,9 @@ class PromptMateSyncHost {
       }
     }
 
+    // 3) 默认目录
     if (!baseDir) {
-      const home = os.homedir();
-      if (process.platform === 'win32') {
-        baseDir = path.join(home, 'AppData', 'Roaming', 'PromptMate');
-      } else if (process.platform === 'darwin') {
-        baseDir = path.join(home, 'Library', 'Application Support', 'PromptMate');
-      } else {
-        baseDir = path.join(home, '.config', 'PromptMate');
-      }
+      baseDir = this.getDefaultUserDataDir();
     }
 
     return path.join(baseDir, 'sync-data.json');
