@@ -72,6 +72,7 @@ export const useDataSync = () => {
   const [pendingConflict, setPendingConflict] = useState<SyncConflict | null>(null);
   const [syncManager, setSyncManager] = useState<any>(null);
   const [isElectronEnv, setIsElectronEnv] = useState(false);
+  const [syncSettings, setSyncSettings] = useState<any>(null);
   const { prompts, categories, settings, refreshData } = usePrompts();
   const { toast } = useToast();
 
@@ -100,6 +101,11 @@ export const useDataSync = () => {
               lastSync: status.lastSync,
               hasConflicts: status.hasConflicts
             }));
+
+            // 获取并保存当前同步设置
+            if (typeof manager.getSyncSettings === 'function') {
+              setSyncSettings(manager.getSyncSettings());
+            }
 
             // 设置事件监听器
             setupEventListeners(manager);
@@ -224,6 +230,7 @@ export const useDataSync = () => {
         ...prev,
         enabled: settings.enabled
       }));
+      setSyncSettings(settings);
     });
   }, [toast]);
 
@@ -335,13 +342,15 @@ export const useDataSync = () => {
     if (!syncManager || !isElectronEnv) return;
     syncManager.updateSyncSettings({ enabled });
     setSyncStatus(prev => ({ ...prev, enabled }));
-  }, [syncManager, isElectronEnv]);
+    if (syncSettings) setSyncSettings({ ...syncSettings, enabled });
+  }, [syncManager, isElectronEnv, syncSettings]);
 
   // 更新同步设置
   const updateSyncSettings = useCallback((settings: any) => {
     if (!syncManager || !isElectronEnv) return;
     syncManager.updateSyncSettings(settings);
-  }, [syncManager, isElectronEnv]);
+    if (syncSettings) setSyncSettings({ ...syncSettings, ...settings });
+  }, [syncManager, isElectronEnv, syncSettings]);
 
   // 自动同步数据变更
   useEffect(() => {
@@ -362,6 +371,7 @@ export const useDataSync = () => {
 
   return {
     syncStatus,
+    syncSettings,
     pendingConflict,
     manualSync,
     resolveConflict,

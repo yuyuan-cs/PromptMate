@@ -1,7 +1,7 @@
 {
   "version": "1.1.11",
-  "buildDate": "2025-10-20T02:51:38.825Z",
-  "buildTime": "2025-10-20T02:51:38.826Z",
-  "gitCommit": "756de0c",
-  "gitBranch": "verify-cloud-storage"
+  "buildDate": "2025-10-20T03:49:05.470Z",
+  "buildTime": "2025-10-20T03:49:05.471Z",
+  "gitCommit": "139c33d",
+  "gitBranch": "feat/settings-data-management-cloud-sync-ui-storage"
 }

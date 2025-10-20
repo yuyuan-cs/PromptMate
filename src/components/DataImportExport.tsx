@@ -18,6 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 
 interface DataImportExportProps {
   open?: boolean;
@@ -50,23 +51,33 @@ export function DataImportExport({
   const [showConfirmReset, setShowConfirmReset] = useState(false);
   
   // 同步相关状态
-  const { syncStatus, pendingConflict, manualSync, resolveConflict, toggleSync } = useDataSync();
+  const { syncStatus, syncSettings, pendingConflict, manualSync, resolveConflict, toggleSync, updateSyncSettings } = useDataSync();
   const [showConflictDialog, setShowConflictDialog] = useState(false);
   
-  // 云同步相关状态（预留）
+  // 云同步相关状态
   const [cloudSyncEnabled, setCloudSyncEnabled] = useState(false);
   const [cloudProvider, setCloudProvider] = useState<'google' | 'dropbox' | 'onedrive' | null>(null);
   const [autoSyncEnabled, setAutoSyncEnabled] = useState(false);
   const [syncInterval, setSyncInterval] = useState<'realtime' | 'hourly' | 'daily'>('hourly');
+  const [customPath, setCustomPath] = useState<string>("");
 
-  // 组件挂载时强制渲染
+  // 组件挂载时
   useEffect(() => {
-    // 确保组件首次渲染时内容可见
-    const forceRender = () => {};
-    forceRender();
-    
     console.log(t('dataManagement.message.loading'), { inline, activeCategory, open });
   }, []);
+
+  // 同步同步设置到本地状态
+  useEffect(() => {
+    if (syncSettings) {
+      setCloudSyncEnabled(Boolean(syncSettings.enabled));
+      setAutoSyncEnabled(Boolean(syncSettings.autoSync));
+      setCloudProvider(syncSettings.cloudProvider || null);
+      setSyncInterval(syncSettings.syncInterval || 'hourly');
+      if (syncSettings.dataPath) setCustomPath(syncSettings.dataPath);
+    } else {
+      setCloudSyncEnabled(syncStatus.enabled);
+    }
+  }, [syncSettings, syncStatus.enabled]);
   
   // 主动监听分类变化
   useEffect(() => {
@@ -319,7 +330,14 @@ export function DataImportExport({
             <Switch
               id="cloud-sync"
               checked={cloudSyncEnabled}
-              onCheckedChange={setCloudSyncEnabled}
+              onCheckedChange={(checked) => {
+                setCloudSyncEnabled(checked);
+                toggleSync(checked);
+                toast({
+                  title: checked ? t('dataManagement.cloudSyncEnabled') : t('dataManagement.cloudSyncDisabled'),
+                  variant: checked ? 'success' : 'default'
+                });
+              }}
             />
           </div>
         </CardContent>
@@ -339,7 +357,11 @@ export function DataImportExport({
         <Button
                 variant={cloudProvider === 'google' ? "default" : "outline"}
                 className="h-20 flex-col"
-                onClick={() => setCloudProvider('google')}
+                onClick={() => {
+                  setCloudProvider('google');
+                  updateSyncSettings({ cloudProvider: 'google' });
+                  toast({ title: t('dataManagement.cloudProviderSelected', { provider: 'Google Drive' }) });
+                }}
               >
                 <Icons.google className="h-6 w-6 mb-2" />
                 Google Drive
@@ -347,7 +369,11 @@ export function DataImportExport({
         <Button
                 variant={cloudProvider === 'dropbox' ? "default" : "outline"}
                 className="h-20 flex-col"
-                onClick={() => setCloudProvider('dropbox')}
+                onClick={() => {
+                  setCloudProvider('dropbox');
+                  updateSyncSettings({ cloudProvider: 'dropbox' });
+                  toast({ title: t('dataManagement.cloudProviderSelected', { provider: 'Dropbox' }) });
+                }}
               >
                 <Icons.dropbox className="h-6 w-6 mb-2" />
                 Dropbox
@@ -355,7 +381,11 @@ export function DataImportExport({
         <Button
                 variant={cloudProvider === 'onedrive' ? "default" : "outline"}
                 className="h-20 flex-col"
-                onClick={() => setCloudProvider('onedrive')}
+                onClick={() => {
+                  setCloudProvider('onedrive');
+                  updateSyncSettings({ cloudProvider: 'onedrive' });
+                  toast({ title: t('dataManagement.cloudProviderSelected', { provider: 'OneDrive' }) });
+                }}
               >
                 <Icons.microsoft className="h-6 w-6 mb-2" />
                 OneDrive
@@ -390,42 +420,88 @@ export function DataImportExport({
                 <p className="text-sm text-muted-foreground">
                   {t('dataManagement.autoSyncDescription')}
                 </p>
-          </div>
+            </div>
               <Switch
                 id="auto-sync"
                 checked={autoSyncEnabled}
-                onCheckedChange={setAutoSyncEnabled}
+                onCheckedChange={(checked) => {
+                  setAutoSyncEnabled(checked);
+                  updateSyncSettings({ autoSync: checked });
+                }}
               />
             </div>
             
             {autoSyncEnabled && (
               <div className="space-y-2">
                 <Label>{t('dataManagement.syncInterval')}</Label>
-            <div className="flex space-x-2">
+                <div className="flex space-x-2">
                   <Button
                     variant={syncInterval === 'realtime' ? "default" : "outline"}
                     size="sm"
-                    onClick={() => setSyncInterval('realtime')}
+                    onClick={() => {
+                      setSyncInterval('realtime');
+                      updateSyncSettings({ syncInterval: 'realtime' });
+                    }}
                   >
                     {t('dataManagement.realtime')}
                   </Button>
                   <Button
                     variant={syncInterval === 'hourly' ? "default" : "outline"}
                     size="sm"
-                    onClick={() => setSyncInterval('hourly')}
+                    onClick={() => {
+                      setSyncInterval('hourly');
+                      updateSyncSettings({ syncInterval: 'hourly' });
+                    }}
                   >
                     {t('dataManagement.hourly')}
-              </Button>
+                  </Button>
                   <Button
                     variant={syncInterval === 'daily' ? "default" : "outline"}
                     size="sm"
-                    onClick={() => setSyncInterval('daily')}
+                    onClick={() => {
+                      setSyncInterval('daily');
+                      updateSyncSettings({ syncInterval: 'daily' });
+                    }}
                   >
                     {t('dataManagement.daily')}
-              </Button>
-            </div>
+                  </Button>
+                </div>
               </div>
             )}
+
+            {/* 云端同步文件路径设置 */}
+            <div className="space-y-2">
+              <Label>云端同步文件路径</Label>
+              <div className="flex gap-2">
+                <Input
+                  placeholder={"/path/to/your/cloud/folder/sync-data.json"}
+                  value={customPath}
+                  onChange={(e) => setCustomPath(e.target.value)}
+                />
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    let p = (customPath || '').trim();
+                    if (!p) return;
+                    if (!p.toLowerCase().endsWith('.json')) {
+                      // 允许用户输入目录，自动补全文件名
+                      if (p.endsWith('/') || p.endsWith('\\')) {
+                        p = p + 'sync-data.json';
+                      } else {
+                        p = p + '/sync-data.json';
+                      }
+                    }
+                    updateSyncSettings({ dataPath: p, cloudProvider: null });
+                    toast({ title: '已更新云同步路径', description: p });
+                  }}
+                >
+                  应用路径
+                </Button>
+              </div>
+              {syncSettings?.dataPath && (
+                <p className="text-xs text-muted-foreground">当前：{syncSettings.dataPath}</p>
+              )}
+            </div>
           </CardContent>
         </Card>
       )}

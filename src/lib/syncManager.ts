@@ -1,6 +1,6 @@
 import { Prompt, Category, Settings } from '../types';
 import { promises as fs } from 'fs';
-import { join } from 'path';
+import { join, dirname } from 'path';
 import { EventEmitter } from 'events';
 import { watch } from 'chokidar';
 import * as os from 'os';
@@ -19,11 +19,13 @@ export interface SyncData {
 
 export interface SyncSettings {
   enabled: boolean;
-  dataPath: string;
+  dataPath: string; // 完整文件路径
   autoSync: boolean;
   conflictResolution: 'timestamp' | 'manual' | 'merge';
   backupEnabled: boolean;
   maxBackups: number;
+  cloudProvider?: 'google' | 'dropbox' | 'onedrive' | null;
+  syncInterval?: 'realtime' | 'hourly' | 'daily';
 }
 
 export class SyncManager extends EventEmitter {
@@ -32,11 +34,15 @@ export class SyncManager extends EventEmitter {
   private dataPath: string;
   private watcher: any;
   private lastKnownChecksum: string = '';
+  private lastSyncTime: string | null = null;
 
   private constructor() {
     super();
+    // 初始化默认设置
     this.syncSettings = this.getDefaultSyncSettings();
-    this.dataPath = this.getSyncDataPath();
+    // 尝试从磁盘加载配置
+    this.loadSettingsFromDisk().catch(() => void 0);
+    this.dataPath = this.syncSettings.dataPath || this.getDefaultSyncDataPath();
   }
 
   public static getInstance(): SyncManager {
@@ -50,34 +56,110 @@ export class SyncManager extends EventEmitter {
   private getDefaultSyncSettings(): SyncSettings {
     return {
       enabled: true,
-      dataPath: this.getSyncDataPath(),
+      dataPath: this.getDefaultSyncDataPath(),
       autoSync: true,
       conflictResolution: 'timestamp',
       backupEnabled: true,
-      maxBackups: 5
+      maxBackups: 5,
+      cloudProvider: null,
+      syncInterval: 'hourly'
     };
   }
 
-  // 获取同步数据文件路径
-  private getSyncDataPath(): string {
-    // 避免直接依赖 electron.app，按平台推导 userData 目录
+  // 获取应用数据根目录（不含文件名）
+  private getUserDataDir(): string {
     const home = os.homedir();
-    let userDataPath: string;
-
     if (process.platform === 'win32') {
-      userDataPath = join(home, 'AppData', 'Roaming', 'PromptMate');
+      return join(home, 'AppData', 'Roaming', 'PromptMate');
     } else if (process.platform === 'darwin') {
-      userDataPath = join(home, 'Library', 'Application Support', 'PromptMate');
+      return join(home, 'Library', 'Application Support', 'PromptMate');
     } else {
-      userDataPath = join(home, '.config', 'PromptMate');
+      return join(home, '.config', 'PromptMate');
     }
+  }
 
-    return join(userDataPath, 'sync-data.json');
+  // 获取默认的同步数据文件路径
+  private getDefaultSyncDataPath(): string {
+    return join(this.getUserDataDir(), 'sync-data.json');
+  }
+
+  // 配置文件路径
+  private getSettingsFilePath(): string {
+    return join(this.getUserDataDir(), 'sync-settings.json');
+  }
+
+  // 根据云服务商返回建议的目录（目录，不含文件名）
+  private getSuggestedCloudDir(provider: NonNullable<SyncSettings['cloudProvider']>): string {
+    const home = os.homedir();
+    if (process.platform === 'win32') {
+      switch (provider) {
+        case 'onedrive':
+          return join(home, 'OneDrive', 'PromptMate');
+        case 'dropbox':
+          return join(home, 'Dropbox', 'Apps', 'PromptMate');
+        case 'google':
+          // Google Drive 桌面版可能使用独立盘符或用户目录，提供一个常见路径作为建议
+          return join(home, 'Google Drive', 'PromptMate');
+      }
+    } else if (process.platform === 'darwin') {
+      // macOS 下常见的 CloudStorage 目录
+      switch (provider) {
+        case 'onedrive':
+          return join(home, 'Library', 'CloudStorage', 'OneDrive-Personal', 'PromptMate');
+        case 'dropbox':
+          return join(home, 'Library', 'CloudStorage', 'Dropbox', 'Apps', 'PromptMate');
+        case 'google':
+          return join(home, 'Library', 'CloudStorage', 'GoogleDrive', 'PromptMate');
+      }
+    } else {
+      // Linux 常见路径（需用户自行调整）
+      switch (provider) {
+        case 'onedrive':
+          return join(home, 'OneDrive', 'PromptMate');
+        case 'dropbox':
+          return join(home, 'Dropbox', 'Apps', 'PromptMate');
+        case 'google':
+          return join(home, 'GoogleDrive', 'PromptMate');
+      }
+    }
+    return this.getUserDataDir();
+  }
+
+  // 将目录转换为文件路径（附加文件名）
+  private asDataFilePath(dir: string): string {
+    return dir.endsWith('.json') ? dir : join(dir, 'sync-data.json');
+  }
+
+  // 从磁盘加载配置
+  private async loadSettingsFromDisk(): Promise<void> {
+    try {
+      const file = this.getSettingsFilePath();
+      const content = await fs.readFile(file, 'utf-8');
+      const saved = JSON.parse(content) as Partial<SyncSettings>;
+      this.syncSettings = { ...this.getDefaultSyncSettings(), ...saved };
+    } catch (_) {
+      // 无配置文件时忽略
+      this.syncSettings = this.getDefaultSyncSettings();
+    }
+  }
+
+  // 持久化配置
+  private async persistSettings(): Promise<void> {
+    try {
+      const file = this.getSettingsFilePath();
+      await fs.mkdir(dirname(file), { recursive: true });
+      await fs.writeFile(file, JSON.stringify(this.syncSettings, null, 2), 'utf-8');
+    } catch (error) {
+      console.error('保存同步配置失败:', error);
+    }
   }
 
   // 初始化同步管理器
   async initialize(): Promise<void> {
     try {
+      // 使用配置中的 dataPath
+      this.dataPath = this.syncSettings.dataPath || this.getDefaultSyncDataPath();
+
       // 确保数据目录存在
       await fs.mkdir(join(this.dataPath, '..'), { recursive: true });
 
@@ -139,7 +221,7 @@ export class SyncManager extends EventEmitter {
     try {
       const content = await fs.readFile(this.dataPath, 'utf-8');
       const data = JSON.parse(content) as SyncData;
-      
+
       // 验证数据完整性
       if (this.validateSyncData(data)) {
         return data;
@@ -185,6 +267,7 @@ export class SyncManager extends EventEmitter {
       const content = JSON.stringify(syncData, null, 2);
       await fs.writeFile(this.dataPath, content, 'utf-8');
 
+      this.lastSyncTime = new Date().toISOString();
       this.emit('dataSynced', syncData);
     } catch (error) {
       console.error('写入同步数据失败:', error);
@@ -265,7 +348,7 @@ export class SyncManager extends EventEmitter {
       categories: data.categories,
       settings: data.settings
     });
-    
+
     // 简单的校验和算法
     let hash = 0;
     for (let i = 0; i < content.length; i++) {
@@ -286,7 +369,7 @@ export class SyncManager extends EventEmitter {
     // 比较修改时间
     const localTime = new Date(localData.lastModified).getTime();
     const remoteTime = new Date(remoteData.lastModified).getTime();
-    
+
     // 如果时间差小于1秒，认为是冲突
     return Math.abs(localTime - remoteTime) < 1000;
   }
@@ -311,7 +394,7 @@ export class SyncManager extends EventEmitter {
   private resolveByTimestamp(localData: SyncData, remoteData: SyncData): SyncData {
     const localTime = new Date(localData.lastModified).getTime();
     const remoteTime = new Date(remoteData.lastModified).getTime();
-    
+
     return localTime > remoteTime ? localData : remoteData;
   }
 
@@ -319,7 +402,7 @@ export class SyncManager extends EventEmitter {
   private mergeData(localData: SyncData, remoteData: SyncData): SyncData {
     // 合并提示词（以ID为准，保留最新的）
     const mergedPrompts = new Map<string, Prompt>();
-    
+
     [...localData.prompts, ...remoteData.prompts].forEach(prompt => {
       const existing = mergedPrompts.get(prompt.id);
       if (!existing || new Date(prompt.updatedAt) > new Date(existing.updatedAt)) {
@@ -334,8 +417,8 @@ export class SyncManager extends EventEmitter {
     });
 
     // 设置使用最新的
-    const settings = new Date(localData.lastModified) > new Date(remoteData.lastModified) 
-      ? localData.settings 
+    const settings = new Date(localData.lastModified) > new Date(remoteData.lastModified)
+      ? localData.settings
       : remoteData.settings;
 
     const mergedData: SyncData = {
@@ -358,22 +441,52 @@ export class SyncManager extends EventEmitter {
   getSyncStatus(): { enabled: boolean; lastSync: string | null; hasConflicts: boolean } {
     return {
       enabled: this.syncSettings.enabled,
-      lastSync: null, // TODO: 实现最后同步时间跟踪
+      lastSync: this.lastSyncTime,
       hasConflicts: false // TODO: 实现冲突状态跟踪
     };
   }
 
+  // 获取当前同步设置
+  getSyncSettings(): SyncSettings {
+    return { ...this.syncSettings };
+  }
+
   // 更新同步设置
   updateSyncSettings(settings: Partial<SyncSettings>): void {
+    const prev = { ...this.syncSettings };
+    // 处理云服务商到路径的映射
+    if (settings.cloudProvider && settings.cloudProvider !== this.syncSettings.cloudProvider) {
+      const suggestedDir = this.getSuggestedCloudDir(settings.cloudProvider);
+      settings.dataPath = this.asDataFilePath(suggestedDir);
+    }
+
     this.syncSettings = { ...this.syncSettings, ...settings };
-    
-    if (settings.enabled !== undefined) {
-      if (settings.enabled && settings.autoSync) {
+
+    // 如果 dataPath 变化，更新内部路径并重启观察
+    if (settings.dataPath && settings.dataPath !== this.dataPath) {
+      this.dataPath = settings.dataPath;
+      // 确保目录存在
+      fs.mkdir(join(this.dataPath, '..'), { recursive: true }).catch(() => void 0);
+      // 重启监听器
+      this.stopFileWatcher();
+      if (this.syncSettings.enabled && this.syncSettings.autoSync) {
+        this.startFileWatcher();
+      }
+    }
+
+    // 根据 enabled/autoSync 的变化决定是否监听
+    const enabledChanged = settings.enabled !== undefined && settings.enabled !== prev.enabled;
+    const autoChanged = settings.autoSync !== undefined && settings.autoSync !== prev.autoSync;
+    if (enabledChanged || autoChanged) {
+      if (this.syncSettings.enabled && this.syncSettings.autoSync) {
         this.startFileWatcher();
       } else {
         this.stopFileWatcher();
       }
     }
+
+    // 持久化到磁盘
+    this.persistSettings();
 
     this.emit('settingsChanged', this.syncSettings);
   }
