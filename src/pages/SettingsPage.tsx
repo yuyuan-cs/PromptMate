@@ -2,10 +2,11 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Settings, Sparkles, ArrowLeft, Puzzle } from "lucide-react";
+import { Settings, Sparkles, ArrowLeft, Puzzle, Cloud } from "lucide-react";
 import { AISettings } from "@/components/AISettings";
 import { PluginSettings } from "@/components/PluginSettings";
 import { useTranslation } from "react-i18next";
+import { DataImportExport } from "@/components/DataImportExport";
 
 interface SettingsPageProps {
   onBack?: () => void;
@@ -38,10 +39,14 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
 
       {/* 设置选项卡 */}
       <Tabs defaultValue="ai" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="ai" className="flex items-center gap-2">
             <Sparkles className="h-4 w-4" />
             AI设置
+          </TabsTrigger>
+          <TabsTrigger value="cloud" className="flex items-center gap-2">
+            <Cloud className="h-4 w-4" />
+            云同步
           </TabsTrigger>
           <TabsTrigger value="plugins" className="flex items-center gap-2">
             <Puzzle className="h-4 w-4" />
@@ -99,6 +104,24 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                   <li>请勿与他人分享您的API密钥</li>
                 </ul>
               </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* 云同步选项卡 */}
+        <TabsContent value="cloud" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Cloud className="h-5 w-5" />
+                云端同步
+              </CardTitle>
+              <CardDescription>
+                配置跨设备的数据同步、冲突解决与备份
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <DataImportExport inline />
             </CardContent>
           </Card>
         </TabsContent>
