@@ -7,11 +7,12 @@ import { Prompt, Category, Settings } from '../types';
 let SyncManager: any = null;
 let SyncData: any = null;
 
-// 检查是否在Electron环境中
+// 检查是否在Electron环境中（优先检测 preload 注入的 electronAPI，其次检测 Electron 版本标识）
 const isElectron = () => {
-  return typeof window !== 'undefined' && 
-         window.process && 
-         window.process.type === 'renderer';
+  const w = typeof window !== 'undefined' ? (window as any) : {};
+  const hasPreloadAPI = !!w.electronAPI;
+  const isElectronRuntime = typeof process !== 'undefined' && !!(process as any).versions?.electron;
+  return hasPreloadAPI || isElectronRuntime;
 };
 
 // 临时类型定义
