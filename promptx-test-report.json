@@ -1,0 +1,67 @@
+{
+  "timestamp": "2025-09-29T13:42:53.623Z",
+  "testResults": [
+    {
+      "id": 1,
+      "message": "我需要产品经理专家帮我分析用户需求",
+      "success": true,
+      "result": {
+        "roleId": "product-manager",
+        "name": "产品经理",
+        "confidence": 0.9003414090512959,
+        "message": "我需要产品经理专家帮我分析用户需求"
+      }
+    },
+    {
+      "id": 2,
+      "message": "需要系统架构师指导技术方案设计",
+      "success": true,
+      "result": {
+        "roleId": "architect",
+        "name": "系统架构师",
+        "confidence": 0.8826184098838441,
+        "message": "需要系统架构师指导技术方案设计"
+      }
+    },
+    {
+      "id": 3,
+      "message": "请文案策划帮我写个营销文案",
+      "success": false,
+      "result": null
+    },
+    {
+      "id": 4,
+      "message": "需要UI设计师优化界面体验",
+      "success": true,
+      "result": {
+        "roleId": "ui-designer",
+        "name": "UI设计师",
+        "confidence": 0.9284480107738392,
+        "message": "需要UI设计师优化界面体验"
+      }
+    },
+    {
+      "id": 5,
+      "message": "请数据分析师帮我分析用户行为",
+      "success": false,
+      "result": null
+    },
+    {
+      "id": 6,
+      "message": "我想要一个专业的帮助",
+      "success": false,
+      "result": null
+    },
+    {
+      "id": 7,
+      "message": "你好，今天天气怎么样？",
+      "success": false,
+      "result": null
+    }
+  ],
+  "summary": {
+    "total": 7,
+    "success": 3,
+    "failed": 4
+  }
+}

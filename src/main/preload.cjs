@@ -38,6 +38,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // 数据库相关API
   getDatabaseStatus: () => ipcRenderer.invoke('get-database-status'),
   initializeDatabase: () => ipcRenderer.invoke('initialize-database'),
+  getMigrationStatus: () => ipcRenderer.invoke('db-get-migration-status'),
   
   // 数据库重置API
   clearAllData: () => ipcRenderer.invoke('db-clear-all-data'),

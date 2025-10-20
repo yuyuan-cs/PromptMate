@@ -4,9 +4,10 @@
  */
 
 // 变量占位符的正则表达式模式
+// 注意：双花括号必须在单花括号之前，避免重叠匹配
 const VARIABLE_PATTERNS = [
+  /\{\{([^}]+)\}\}/g,       // {{variable}} 格式 - 优先匹配
   /\{([^}]+)\}/g,           // {variable} 格式
-  /\{\{([^}]+)\}\}/g,       // {{variable}} 格式
   /\[([^\]]+)\]/g,          // [variable] 格式
   /\$([a-zA-Z_][a-zA-Z0-9_]*)/g, // $variable 格式
 ];
@@ -104,7 +105,7 @@ export function extractVariables(text: string): VariableInfo[] {
   const variables: VariableInfo[] = [];
   
   VARIABLE_PATTERNS.forEach((pattern, patternIndex) => {
-    const patternType = ['curly', 'double_curly', 'bracket', 'dollar'][patternIndex];
+    const patternType = ['double_curly', 'curly', 'bracket', 'dollar'][patternIndex];
     let match;
     
     // 重置正则表达式状态
@@ -131,6 +132,17 @@ export function extractVariables(text: string): VariableInfo[] {
           continue;
         }
       }
+      
+      // 检查是否与已有变量重叠（避免双花括号被单花括号重复匹配）
+      const isOverlapping = variables.some(existing => {
+        return (matchPosition >= existing.startIndex && matchPosition < existing.endIndex) ||
+               (match.index + originalText.length > existing.startIndex && 
+                match.index + originalText.length <= existing.endIndex) ||
+               (matchPosition <= existing.startIndex && 
+                match.index + originalText.length >= existing.endIndex);
+      });
+      
+      if (isOverlapping) continue;
       
       variables.push({
         name: variableName.trim(),

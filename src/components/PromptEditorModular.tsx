@@ -1,3 +1,22 @@
+{/**
+  角色：容器组件，是提示词编辑器的入口
+  主要功能：
+    管理编辑器的整体状态
+    处理保存、删除、复制等操作
+    包含顶部操作栏（保存、删除、复制等按钮）
+    根据编辑/预览模式切换显示内容
+
+  PromptEditorModular (容器)
+  ├── 管理状态和操作
+  ├── 切换编辑/预览模式
+  │
+  ├── 编辑模式 → 显示 PromptEditForm
+  │   └── 包含完整的编辑表单
+  │       └── 使用 PromptFormFields 渲染字段
+  │
+  └── 预览模式 → 显示 PromptPreview
+      └── 显示渲染后的提示词预览
+*/}
 import React, { useRef, useState } from "react";
 import { usePrompts } from "@/hooks/usePrompts";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
@@ -173,23 +192,6 @@ export function PromptEditorModular() {
                 </TooltipContent>
               </Tooltip>
 
-              {/* 收藏按钮 */}
-              {/* <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleToggleFavorite}
-                    className={state.isFavorite ? "text-yellow-500" : ""}
-                  >
-                    <Star className={`h-4 w-4 ${state.isFavorite ? "fill-current" : ""}`} />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  {state.isFavorite ? t("promptEditorModular.unfavorite") : t("promptEditorModular.favorite")}
-                </TooltipContent>
-              </Tooltip> */}
-
               {/* 复制按钮 - 合并复制功能 */}
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -206,20 +208,6 @@ export function PromptEditorModular() {
                 </TooltipContent>
               </Tooltip>
 
-              {/* 手动保存按钮 */}
-              {/* <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleManualSave}
-                    disabled={!state.hasChanges}
-                  >
-                    <Save className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>{t("promptEditorModular.saveChanges")}</TooltipContent>
-              </Tooltip> */}
 
               {/* 删除按钮 */}
               <Tooltip>

@@ -20,7 +20,7 @@ interface WorkflowListProps {
   onExecute: (workflow: Workflow) => void;
 }
 
-export function WorkflowList({ onCreateNew, onEdit, onExecute }: WorkflowListProps) {
+function WorkflowList({ onCreateNew, onEdit, onExecute }: WorkflowListProps) {
   const {
     filteredWorkflows,
     selectedWorkflow,
@@ -212,3 +212,5 @@ export function WorkflowList({ onCreateNew, onEdit, onExecute }: WorkflowListPro
     </div>
   );
 }
+
+export default WorkflowList;

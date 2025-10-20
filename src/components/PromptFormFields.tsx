@@ -1,5 +1,14 @@
+{/*
+  角色：可重用的表单字段组件
+  主要功能：
+    包含所有可配置的表单字段
+    支持通过 showFields 属性控制显示哪些字段
+    提供标签建议功能
+    处理图片上传和预览
+*/}
 import React from "react";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from 'remark-gfm';
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -177,45 +186,27 @@ export const PromptFormFields: React.FC<PromptFormFieldsProps> = ({
               onChange={(value) => onFieldChange('content', value)}
               placeholder={t('prompteditform.promptContentPlaceholder')}
               showVariables={mode === 'create'}
+              showMarkdownPreview={showMarkdownPreview}
+              previewMode="tabs"
               minHeight={120}
               maxHeight={500}
               enableResize={false}
               className="pr-12"
             />
             
-            {/* AI优化按钮 */}
-            {showAIOptimization && (
-              <div className="absolute bottom-2 right-2 z-10">
-                <AIOptimizeButton
-                  content={state.content}
-                  title={state.title}
-                  onOptimize={onAIOptimize}
-                  onOpenSettings={onOpenAISettings}
-                  variant="inline"
-                />
-              </div>
-            )}
+              {/* AI优化按钮 */}
+              {showAIOptimization && (
+                <div className="absolute bottom-2 right-2 z-10">
+                  <AIOptimizeButton
+                    content={state.content}
+                    title={state.title}
+                    onOptimize={onAIOptimize}
+                    onOpenSettings={onOpenAISettings}
+                    variant="inline"
+                  />
+                </div>
+              )}
           </div>
-
-          {/* Markdown 预览 */}
-          {showMarkdownPreview && state.content && (
-            <div className="space-y-2">
-              <Label className="text-xs text-muted-foreground">
-                {t('common.markdownPreview')}
-              </Label>
-              <div className="border rounded-md min-h-[150px] p-4 bg-muted/30 overflow-auto">
-                {state.content ? (
-                  <div className="markdown-body">
-                    <ReactMarkdown>{state.content}</ReactMarkdown>
-                  </div>
-                ) : (
-                  <div className="text-muted-foreground text-sm">
-                    {t('common.markdownPreviewPlaceholder')}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
         </div>
       )}
 

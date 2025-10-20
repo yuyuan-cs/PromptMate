@@ -769,6 +769,83 @@
       "gemini": "Gemini"
     }
   },
+  "promptx": {
+    "title": "PromptX",
+    "heroTitle": "PromptX Professional Roles Platform",
+    "heroSubtitle": "Activate professional roles with natural language for expert-level AI collaboration",
+    "activeRole": {
+      "title": "Active Role"
+    },
+    "quickStart": {
+      "title": "Quick Start",
+      "step1Title": "1. Describe Needs",
+      "step1Desc": "Describe what help you need in natural language",
+      "step2Title": "2. Activate Role",
+      "step2Desc": "System auto-detects and activates the right role",
+      "step3Title": "3. Professional Chat",
+      "step3Desc": "Have in-depth conversation with the role"
+    },
+    "availableRoles": {
+      "title": "Available Roles",
+      "more": "{count} more roles..."
+    },
+    "domains": {
+      "title": "Domains"
+    },
+    "roleLibrary": {
+      "title": "Role Library",
+      "activate": "Activate",
+      "detail": "Detail",
+      "favorite": "Favorite",
+      "unfavorite": "Unfavorite",
+      "pin": "Pin",
+      "unpin": "Unpin"
+    },
+    "detail": {
+      "title": "Role Details",
+      "persona": "Persona",
+      "capabilities": "Capabilities",
+      "knowledge": "Knowledge Base",
+      "examples": "Examples",
+      "communication_style": "Communication Style",
+      "decision_making": "Decision Making",
+      "work_approach": "Work Approach",
+      "traits": "Traits",
+      "domains": "Domains",
+      "methodologies": "Methodologies",
+      "tools": "Tools",
+      "frameworks": "Frameworks"
+    },
+    "filters": {
+      "title": "Filters & Sort",
+      "favoritesOnly": "Favorites Only",
+      "sort": "Sort",
+      "sort_recent": "Recent",
+      "sort_az": "Name A-Z",
+      "sort_za": "Name Z-A",
+      "sort_pinned": "Pinned First"
+    },
+    "actions": {
+      "continueChat": "Continue Chat",
+      "switchRole": "Switch Role",
+      "endSession": "End Session"
+    },
+    "mcp": {
+      "title": "MCP Connection",
+      "connected": "Connected",
+      "disconnected": "Disconnected",
+      "serverUrl": "Server",
+      "testConnection": "Test Connection",
+      "openSettings": "Open Settings"
+    },
+    "detail": {
+      "title": "Role Details"
+    },
+    "empty": {
+      "noResults": "No matching roles",
+      "tryAdjust": "Try another search or clear filters"
+    }
+  },
   "errors": {
     "generic": "An unknown error occurred",
     "networkError": "Network connection error",
@@ -846,32 +923,6 @@
     "image": "Image",
     "imageCaption": "Image Caption",
     "imageCaptionPlaceholder": "Add description for this image..."
-  },
-  "variableForm": {
-    "noVariables": "No variable placeholders found in current prompt",
-    "supportedFormats": "Supported formats:",
-    "variableStats": "Variable Statistics",
-    "total": "Total",
-    "unique": "Unique",
-    "completed": "Completed",
-    "pending": "pending",
-    "variableFill": "Variable Fill",
-    "fillExample": "Fill Example",
-    "clear": "Clear",
-    "originalContent": "Original Content",
-    "finalContent": "Final Content",
-    "searchSuggestions": "Search suggestions...",
-    "noSuggestions": "No suggestions found",
-    "hidePreview": "Hide Preview",
-    "showPreview": "Show Preview",
-    "copyPreview": "Copy Preview Content",
-    "livePreview": "Live Preview",
-    "variableReplacement": "Variable replacement status:",
-    "fillVariablesHint": "After filling variables, the replaced content will be displayed here",
-    "historyRecords": "History Records",
-    "noHistory": "No history records",
-    "suggestions": "Suggestions",
-    "noHistoryOrSuggestions": "No history records or suggestions"
   },
   "variableHighlighter": {
     "variableLabel": "Variable",
@@ -1092,6 +1143,8 @@
   "variableFill": "Variable Fill",
   "fillExample": "Fill Example",
   "clear": "Clear",
+  "originalContent": "Original Content",
+  "finalContent": "Final Content",
   "searchSuggestions": "Search suggestions...",
   "noSuggestions": "No suggestions found",
   "hidePreview": "Hide Preview",
@@ -1099,7 +1152,11 @@
   "copyPreview": "Copy Preview Content",
   "livePreview": "Live Preview",
   "variableReplacement": "Variable replacement status:",
-  "fillVariablesHint": "After filling variables, the replaced content will be displayed here"
+  "fillVariablesHint": "After filling variables, the replaced content will be displayed here",
+  "historyRecords": "History Records",
+  "noHistory": "No history records",
+  "suggestions": "Suggestions",
+  "noHistoryOrSuggestions": "No history records or suggestions"
 },
 "variableHighlighter": {
   "variableLabel": "Variable",

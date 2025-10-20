@@ -11,6 +11,10 @@ import ErrorBoundary from "@/components/ErrorBoundary";
 import NotFoundPage from "@/components/NotFoundPage";
 import SplashScreen from "@/components/SplashScreen";
 import { useSplashScreen } from "@/hooks/useSplashScreen";
+import { useSplashScreenContext } from "@/hooks/useSplashScreenContext";
+// Import conditional workflow view
+import { ConditionalWorkflowView } from "@/components/ConditionalWorkflowView";
+import { PromptXView } from "@/components/promptx/PromptXView";
 
 // Lazy load the Index component (handle named export)
 const Index = lazy(() => 
@@ -22,18 +26,9 @@ const Index = lazy(() =>
     })
 );
 
-// Lazy load the WorkflowView component (dev only)
-const WorkflowView = lazy(() => 
-  import("@/views/WorkflowView")
-    .then(module => ({ default: module.WorkflowView }))
-    .catch(error => {
-      console.error('Failed to load WorkflowView component:', error);
-      return { default: () => <NotFoundPage error="Failed to load workflow view" /> };
-    })
-);
-
 function AppContent() {
   const { currentView } = useAppView();
+  const { setAppReady } = useSplashScreenContext();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const isDev = import.meta.env.DEV;
   
@@ -50,6 +45,12 @@ function AppContent() {
     }
   });
 
+  useEffect(() => {
+    requestAnimationFrame(() => {
+      setAppReady();
+    });
+  }, [setAppReady]);
+
   // 切换侧边栏显示状态 (Memoized with useCallback)
   const toggleSidebar = useCallback(() => {
     setSidebarOpen(prev => !prev);
@@ -57,22 +58,11 @@ function AppContent() {
 
   // 根据当前视图渲染不同的组件
   const renderCurrentView = () => {
-    // 在生产环境隐藏工作流视图
-    if (!isDev && currentView === 'workflows') {
-      return (
-        <Suspense fallback={<div className="flex-1 flex items-center justify-center"><Icons.fileText className="h-8 w-8 animate-spin text-muted-foreground" /></div>}>
-          <Index sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
-        </Suspense>
-      );
-    }
-
     switch (currentView) {
       case 'workflows':
-        return (
-          <Suspense fallback={<div className="flex-1 flex items-center justify-center"><Icons.workflow className="h-8 w-8 animate-spin text-muted-foreground" /></div>}>
-            <WorkflowView />
-          </Suspense>
-        );
+        return <ConditionalWorkflowView />;
+      case 'promptx':
+        return <PromptXView sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />;
       case 'prompts':
       default:
         return (
@@ -96,7 +86,7 @@ function AppContent() {
   }
 
   return (
-    <main className="h-screen flex flex-col" data-testid="main-app">
+    <main className="min-h-screen flex flex-col" data-testid="main-app">
       <Header />
       <div className="flex-1 flex min-h-0 overflow-hidden app-content">
         {renderCurrentView()}

@@ -1,5 +1,14 @@
+{/* 
+  角色：编辑表单组件
+  主要功能：
+    提供完整的提示词编辑表单
+    包含标题、分类、标签、内容等输入字段
+    处理图片上传和管理
+    提供 Markdown 预览功能
+*/}
 import React from "react";
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -16,7 +25,13 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Plus, X } from "lucide-react";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
+import { Plus, X, Edit, Eye } from "lucide-react";
 import { PromptEditorState } from "@/hooks/usePromptEditor";
 import { Category } from "@/types";
 import { AIOptimizeButton } from "./AIOptimizeButton";
@@ -145,23 +160,30 @@ export const PromptEditForm: React.FC<PromptEditFormProps> = ({
         </Select>
       </div>
 
-      {/* 内容编辑 - 左右分屏显示 */}
-      <div className="flex flex-col gap-6">
-        {/* 内容编辑器区域 */}
-        <div className="space-y-4">
-          <label className="text-sm font-medium">{t('prompteditform.promptContent')}</label>
-          <div className="space-y-2">
-            {/* 注释掉变量占位符说明，避免编辑时显示未填充变量内容 */}
-            {/* <div className="text-xs text-muted-foreground">
-              支持变量占位符：&#123;variable&#125;、&#123;&#123;variable&#125;&#125;、[variable]、$variable
-            </div> */}
+      {/* 内容编辑 - 标签切换模式 */}
+      <div className="space-y-4">
+        <label className="text-sm font-medium">{t('prompteditform.promptContent')}</label>
+        
+        <Tabs defaultValue="edit" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="edit" className="flex items-center gap-2">
+              <Edit className="h-4 w-4" />
+              {t('common.edit')}
+            </TabsTrigger>
+            <TabsTrigger value="preview" className="flex items-center gap-2">
+              <Eye className="h-4 w-4" />
+              {t('common.markdownPreview')}
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="edit" className="mt-4">
             <div className="relative">
               <VariableTextArea
                 value={state.content}
                 onChange={(value) => onFieldChange('content', value)}
                 placeholder={t('prompteditform.promptContentPlaceholder')}
                 showVariables={false}
-                minHeight={120}
+                minHeight={200}
                 maxHeight={500}
                 enableResize={false}
               />
@@ -176,39 +198,22 @@ export const PromptEditForm: React.FC<PromptEditFormProps> = ({
                 />
               </div>
             </div>
-          </div>
-        </div>
-
-        {/* 变量表单 */}
-        {/* <div className="space-y-4">
-          <VariableForm
-            content={state.content}
-            onVariableChange={(values) => {
-              // 这里可以保存变量值到状态中
-              console.log('Variable values changed:', values);
-            }}
-            onPreviewChange={(previewContent) => {
-              // 这里可以更新预览内容
-              console.log('Preview content changed:', previewContent);
-            }}
-          />
-        </div> */}
-
-        {/* Markdown 预览 - 编辑模式下注释掉，避免显示未填充变量内容 */}
-        <div className="space-y-2">
-          <div className="text-xs text-muted-foreground">{t('common.markdownPreview')}</div>
-          <div className="border rounded-md min-h-[200px] p-4 bg-muted/30 overflow-auto">
-            {state.content ? (
-              <div className="markdown-body">
-                <ReactMarkdown>{state.content}</ReactMarkdown>
-              </div>
-            ) : (
-              <div className="text-muted-foreground text-sm">
-                {t('common.markdownPreviewPlaceholder')}
-              </div>
-            )}
-          </div>
-        </div>
+          </TabsContent>
+          
+          <TabsContent value="preview" className="mt-4">
+            <div className="border rounded-md min-h-[200px] p-4 bg-muted/30 overflow-auto">
+              {state.content ? (
+                <div className="markdown-body">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{state.content}</ReactMarkdown>
+                </div>
+              ) : (
+                <div className="text-muted-foreground text-sm">
+                  {t('common.markdownPreviewPlaceholder')}
+                </div>
+              )}
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
 
       {/* 标签输入 */}

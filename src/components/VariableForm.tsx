@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -228,19 +229,7 @@ export const VariableForm: React.FC<VariableFormProps> = ({
               </Badge>
             </CardTitle>
           </CardHeader>
-          {/* <CardContent className="pt-0">
-            <div className="flex flex-wrap gap-2 text-xs">
-              <Badge variant="secondary">
-                {t('variableForm.total')}: {stats.totalVariables}
-              </Badge>
-              <Badge variant="secondary">
-                {t('variableForm.unique')}: {stats.uniqueVariables}
-              </Badge>
-              <Badge variant={validation.isValid ? "default" : "destructive"}>
-                {validation.isValid ? t('variableForm.completed') : `${validation.missingVariables.length} ${t('variableForm.pending')}`}
-              </Badge>
-            </div>
-          </CardContent> */}
+
         </Card>
       </div>
       {/* 变量填写表单 */}

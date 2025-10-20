@@ -208,27 +208,181 @@ const loadUserPreferences = () => {
   }
 };
 
+import { databaseClient } from './databaseClient';
+import { clearAllData } from './data';
+
+// 辅助函数：处理提示词和分类的映射
+const mapPromptsToCategories = async (prompts: Prompt[], isDatabaseMode: boolean): Promise<{ mappedPrompts: Prompt[], newCategories: Category[] }> => {
+  const existingCategories = loadCategories();
+  const categoryNameMap = new Map(existingCategories.map(c => [c.name.toLowerCase(), c]));
+  const newCategories: Category[] = [];
+  const mappedPrompts: Prompt[] = [];
+
+  for (const prompt of prompts) {
+    const categoryName = (prompt.category || 'general').trim().toLowerCase();
+    let categoryId: string;
+
+    if (categoryNameMap.has(categoryName)) {
+      // 分类已存在
+      categoryId = categoryNameMap.get(categoryName)!.id;
+    } else {
+      // 分类不存在，创建新分类
+      const newCategory: Category = {
+        id: generateId(),
+        name: prompt.category || 'general',
+        icon: '📁',
+        color: '#6B7280',
+      };
+      newCategories.push(newCategory);
+      categoryNameMap.set(categoryName, newCategory); // 在循环中更新map，以便后续的提示词可以复用
+      categoryId = newCategory.id;
+      
+      // 如果是数据库模式，立即写入数据库
+      if (isDatabaseMode) {
+        try {
+          await databaseClient.createCategory(newCategory);
+          console.log(`[DEBUG] DB_WRITE: Auto-created category '${newCategory.name}' (${newCategory.id}).`);
+        } catch (error: any) {
+          if (!error.message?.includes('UNIQUE constraint failed')) {
+            console.error(`[DEBUG] DB_WRITE: Failed to create category '${newCategory.name}':`, error.message);
+          }
+        }
+      }
+    }
+    
+    mappedPrompts.push({ ...prompt, category: categoryId });
+  }
+
+  return { mappedPrompts, newCategories };
+};
+
 // 从JSON导入数据
-export const importAllData = (jsonData: string): boolean => {
+export const importAllData = async (jsonData: string): Promise<boolean> => {
   try {
+    console.log("[DEBUG] importAllData: Starting import.");
     const data = JSON.parse(jsonData);
-    
-    // 验证数据结构
-    if (!data.prompts || !Array.isArray(data.prompts)) {
-      throw new Error("提示词数据无效");
+    const isDatabaseMode = databaseClient.isAvailable();
+
+    // 1. 如果是完整备份 (包含prompts和categories)
+    if (data.prompts && data.categories && Array.isArray(data.prompts) && Array.isArray(data.categories)) {
+      console.log("[DEBUG] importAllData: Detected full backup file.");
+
+      // 如果是数据库模式，则清空数据库并写入新数据
+      if (isDatabaseMode) {
+        try {
+          console.log("[DEBUG] DB_WRITE: Database mode detected. Clearing all data.");
+          await clearAllData();
+          console.log("[DEBUG] DB_WRITE: Database cleared successfully.");
+
+          console.log("[DEBUG] DB_WRITE: Writing categories to DB...");
+          for (const category of data.categories) {
+            try {
+              await databaseClient.createCategory(category);
+              console.log(`[DEBUG] DB_WRITE: Category '${category.name}' (${category.id}) created.`);
+            } catch (error: any) {
+              console.error("[DEBUG] DB_WRITE: Error during category operation:", error);
+              if (error.message && error.message.includes('UNIQUE constraint failed')) {
+                console.warn(`[DEBUG] DB_WRITE: Category '${category.name}' (${category.id}) already exists. Skipping update to avoid conflicts.`);
+                // Skip updating existing categories to avoid handler issues
+                // The existing category will remain unchanged
+                console.log(`[DEBUG] DB_WRITE: Category '${category.name}' (${category.id}) skipped (already exists).`);
+              } else {
+                // For non-constraint errors, log but continue with other categories
+                console.error(`[DEBUG] DB_WRITE: Failed to create category '${category.name}' (${category.id}):`, error.message);
+              }
+            }
+          }
+          console.log("[DEBUG] DB_WRITE: Finished writing categories.");
+
+          console.log("[DEBUG] DB_WRITE: Writing prompts to DB...");
+          let promptsCreated = 0;
+          let promptsSkipped = 0;
+          for (const prompt of data.prompts) {
+            try {
+              await databaseClient.createPrompt(prompt);
+              console.log(`[DEBUG] DB_WRITE: Prompt '${prompt.title}' (${prompt.id}) created with category ID '${prompt.category}'.`);
+              promptsCreated++;
+            } catch (error: any) {
+              console.error(`[DEBUG] DB_WRITE: Failed to create prompt '${prompt.title}' (${prompt.id}):`, error.message);
+              if (error.message && error.message.includes('UNIQUE constraint failed')) {
+                console.warn(`[DEBUG] DB_WRITE: Prompt '${prompt.title}' (${prompt.id}) already exists. Skipping.`);
+                promptsSkipped++;
+              } else {
+                // Log other errors but continue with remaining prompts
+                console.error(`[DEBUG] DB_WRITE: Unexpected error for prompt '${prompt.title}':`, error.message);
+                promptsSkipped++;
+              }
+            }
+          }
+          console.log(`[DEBUG] DB_WRITE: Finished writing prompts. Created: ${promptsCreated}, Skipped: ${promptsSkipped}.`);
+
+        } catch (dbError) {
+          console.error("[DEBUG] DB_WRITE: Error during database write operation:", dbError);
+          throw dbError; // re-throw the error to be caught by the outer try-catch
+        }
+      }
+
+      // 始终保存到localStorage作为备份或在非数据库模式下使用
+      console.log("[DEBUG] importAllData: Saving full backup to localStorage.");
+      savePrompts(data.prompts);
+      saveCategories(data.categories);
+      if (data.settings) saveSettings(data.settings);
+      if (data.userPreferences) saveUserPreferences(data.userPreferences);
+      
+      return true;
+    } 
+    // 2. 如果是仅提示词列表 (一个数组)
+    else if (Array.isArray(data)) {
+      console.log("[DEBUG] importAllData: Detected prompts-only array.");
+      const importedPrompts: Prompt[] = data;
+
+      // 处理分类映射和创建
+      console.log("[DEBUG] importAllData: Mapping prompts to categories.");
+      const { mappedPrompts, newCategories } = await mapPromptsToCategories(importedPrompts, isDatabaseMode);
+
+      // 如果创建了新分类，则更新分类列表
+      if (newCategories.length > 0) {
+        console.log(`[DEBUG] importAllData: ${newCategories.length} new categories created.`);
+        const existingCategories = loadCategories();
+        const updatedCategories = [...existingCategories, ...newCategories];
+        saveCategories(updatedCategories);
+        console.log("[DEBUG] importAllData: Saved updated categories to localStorage.");
+      }
+
+      // 为导入的提示词生成新ID，并使用映射后的分类ID
+      const newPrompts = mappedPrompts.map(p => ({
+        ...p,
+        id: generateId(),
+      }));
+
+      // 如果是数据库模式，将新提示词逐条写入数据库
+      if (isDatabaseMode) {
+        console.log("[DEBUG] importAllData: Database mode detected. Writing new prompts to DB.");
+        for (const prompt of newPrompts) {
+          try {
+            await databaseClient.createPrompt(prompt);
+            console.log(`[DEBUG] DB_WRITE: Prompt '${prompt.title}' (${prompt.id}) created with category ID '${prompt.category}'.`);
+          } catch (error: any) {
+            console.error(`[DEBUG] DB_WRITE: Failed to create prompt '${prompt.title}' (${prompt.id}):`, error.message);
+          }
+        }
+      }
+
+      // 与localStorage中现有的提示词合并
+      const existingPrompts = loadPrompts();
+      console.log("[DEBUG] importAllData: Existing prompts count:", existingPrompts.length);
+      console.log("[DEBUG] importAllData: Imported prompts count:", newPrompts.length);
+      const allPrompts = [...existingPrompts, ...newPrompts];
+      console.log("[DEBUG] importAllData: Total prompts to save to localStorage:", allPrompts.length);
+      savePrompts(allPrompts);
+      
+      return true;
     }
-    
-    if (!data.categories || !Array.isArray(data.categories)) {
-      throw new Error("分类数据无效");
+    // 3. 无法识别的格式
+    else {
+      console.error("[DEBUG] Unrecognized data structure:", data);
+      throw new Error("无法识别的导入文件格式");
     }
-    
-    // 保存导入的数据
-    if (data.prompts) savePrompts(data.prompts);
-    if (data.categories) saveCategories(data.categories);
-    if (data.settings) saveSettings(data.settings);
-    if (data.userPreferences) saveUserPreferences(data.userPreferences);
-    
-    return true;
   } catch (error) {
     console.error("导入数据时出错:", error);
     return false;

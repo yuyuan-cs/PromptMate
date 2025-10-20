@@ -38,39 +38,25 @@ import { CreatePromptDialog } from "./CreatePromptDialog";
 import { AISettings } from "./AISettings";
 import { useToast } from "@/hooks/use-toast";
 import { useAppView } from "@/hooks/useAppView";
-import { useTranslation } from 'react-i18next';
 import { LanguageSelector } from "@/components/ui/LanguageSelector";
 import { useSidebarAlert } from "@/hooks/useSidebarAlert";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { PreferencesPanel } from "./PreferencesPanel";
 import { CardContent } from "./ui/card";
+import { useTranslation } from 'react-i18next';
+import { MCPSettingsPanel } from '@/components/promptx/MCPSettingsPanel';
 
 // 侧边栏显示模式类型
 type SidebarMode = "expanded" | "collapsed";
 
 export function Sidebar({ className }: { className?: string }) {
-  
-  // 在组件顶部添加这个调试代码
-  const renderCount = useRef(0);
-  renderCount.current++;
-  
-  // ⚠️ 修复：activeCategory、showFavorites、showRecommended 必须在 usePrompts 解构后才能使用
-  // 所以将此调试代码移动到 usePrompts 解构之后
-
-  // 追踪 useSidebarAlert 的影响
-  const alertResult = useSidebarAlert();
-  console.log('[Sidebar] useSidebarAlert result:', {
-    showAlert: !!alertResult.showAlert,
-    showConfirm: !!alertResult.showConfirm,
-    AlertComponent: !!alertResult.AlertComponent
-  });
-  
+  // Hooks and shared state
   const { t } = useTranslation();
   const { showAlert, showConfirm, AlertComponent } = useSidebarAlert();
   const {
     activeCategory,
     setActiveCategory,
-    categories, 
+    categories,
     showFavorites,
     setShowFavorites,
     showRecommended,
@@ -87,21 +73,14 @@ export function Sidebar({ className }: { className?: string }) {
     updateCategory,
     deleteCategory,
     updateCategoriesOrder,
-    allTags
+    allTags,
   } = usePrompts();
-  
+
   const { settings, toggleTheme, updateSettings, availableFonts } = useSettings();
   const { preferences, updatePreference, loading: preferencesLoading } = useUserPreferences();
   const { toast } = useToast();
   const { currentView, setCurrentView } = useAppView();
   const isDev = import.meta.env.DEV;
-
-  // ✅ 第一步：添加这个新的 state
-  const [deletingCategoryId, setDeletingCategoryId] = useState<string | null>(null);
-  // 新建提示词对话框状态
-  const [showNewPromptDialog, setShowNewPromptDialog] = useState(false);
-  const [newPromptCategoryId, setNewPromptCategoryId] = useState<string | null>(null);
-
   const [showDataImportExport, setShowDataImportExport] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [sidebarWidth, setSidebarWidth] = useState(preferences.ui.sidebarWidth); 
@@ -109,7 +88,7 @@ export function Sidebar({ className }: { className?: string }) {
   const [sidebarMode, setSidebarMode] = useState<SidebarMode>(
     preferences.ui.sidebarExpanded ? "expanded" : "collapsed"
   );
-  const [settingsPanel, setSettingsPanel] = useState<"appearance" | "data" | "ai" | "about" | "preferences">("appearance");
+  const [settingsPanel, setSettingsPanel] = useState<"appearance" | "data" | "ai" | "mcp" | "about" | "preferences">("appearance");
   const [showCategoryManager, setShowCategoryManager] = useState(false);
   const [editingCategory, setEditingCategory] = useState<string | null>(null);
   const [editingName, setEditingName] = useState("");
@@ -124,6 +103,8 @@ export function Sidebar({ className }: { className?: string }) {
     }
   );
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [showNewPromptDialog, setShowNewPromptDialog] = useState(false);
+  const [newPromptCategoryId, setNewPromptCategoryId] = useState<string | null>(null);
 
   // 处理点击全部提示词
   const handleAllPromptsClick = useCallback(() => {
@@ -142,6 +123,21 @@ export function Sidebar({ className }: { className?: string }) {
       return () => clearTimeout(timer);
     }
   }, [showSettings]);
+
+  // 监听全局事件以便从其他组件打开到指定设置面板（如MCP）
+  useEffect(() => {
+    const handler = (e: Event) => {
+      try {
+        const detail = (e as CustomEvent).detail as any;
+        if (detail?.panel) {
+          setShowSettings(true);
+          setSettingsPanel(detail.panel);
+        }
+      } catch {}
+    };
+    window.addEventListener('open-settings-panel' as any, handler);
+    return () => window.removeEventListener('open-settings-panel' as any, handler);
+  }, []);
 
   // 同步用户偏好设置的变化
   useEffect(() => {
@@ -288,6 +284,7 @@ export function Sidebar({ className }: { className?: string }) {
 
   // 数据变更后刷新
   const handleDataChanged = async () => {
+    console.log("[DEBUG] handleDataChanged: Entered. Calling reloadData.");
     // 重新加载数据
     await reloadData();
     // 重置为默认视图
@@ -424,55 +421,6 @@ export function Sidebar({ className }: { className?: string }) {
       setEditingCategory(null);
     }
   };
-
-  // 添加删除处理函数
-  // const handleDelete = (categoryId: string) => {
-  //   console.log(`[Sidebar] handleDelete called for categoryId: ${categoryId}`);
-    
-  //   // 找到要删除的分类
-  //   const categoryToDelete = categories.find(cat => cat.id === categoryId);
-  //   if (!categoryToDelete) {
-  //     console.warn(`[Sidebar] Category with id ${categoryId} not found`);
-  //     return;
-  //   }
-    
-  //   console.log(`[Sidebar] About to show confirm dialog for category: ${categoryToDelete.name}`);
-    
-  //   // 确认删除
-  //   showConfirm(
-  //     t("sidebar.message.deleteCategory").replace("{name}", categoryToDelete.name),
-  //     t("common.confirmDelete"),
-  //     () => {
-  //       debugger; // 在这里暂停
-  //       console.log(`[Sidebar] Confirmed deletion for categoryId: ${categoryId}`);
-  //       console.log(`[Sidebar] Calling deleteCategory function...`);
-  //       try {
-  //         // 确认后执行删除
-  //         deleteCategory(categoryId);
-  //         console.log(`[Sidebar] deleteCategory called successfully`);
-          
-  //         // 如果删除的是当前选中的分类，切换到全部提示词
-  //         if (activeCategory === categoryId) {
-  //           console.log(`[Sidebar] Switching to all prompts view`);
-  //           handleAllPromptsClick();
-  //         }
-          
-  //         toast({
-  //           title: "删除成功",
-  //           description: `分类 "${categoryToDelete.name}" 已删除`,
-  //         });
-  //       } catch (error) {
-  //         console.error(`[Sidebar] Error deleting category:`, error);
-  //         showAlert("删除失败，请重试", "错误");
-  //       }
-  //     },
-  //     () => {
-  //       debugger; // 在这里暂停
-  //       // 取消则不执行任何操作
-  //       console.log(`[Sidebar] Cancelled deletion for categoryId: ${categoryId}`);
-  //     }
-  //   );
-  // };
 
 
 
@@ -784,6 +732,31 @@ export function Sidebar({ className }: { className?: string }) {
                   </Tooltip>
                 </TooltipProvider>
               )}
+
+              <TooltipProvider delayDuration={100}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant={currentView === 'promptx' ? "default" : "ghost"}
+                      className={cn(
+                        "rounded-xl group hover:scale-105 transition-transform",
+                        isCollapsed
+                          ? "h-9 w-9 p-0 mx-auto flex items-center justify-center"
+                          : "w-full justify-start py-1 px-3"
+                      )}
+                      onClick={() => setCurrentView('promptx')}
+                    >
+                      <Icons.zap className="h-4 w-4" />
+                      {!isCollapsed && t('promptx.title')}
+                    </Button>
+                  </TooltipTrigger>
+                  {isCollapsed && (
+                    <TooltipContent side="right">
+                      {t('promptx.title')}
+                    </TooltipContent>
+                  )}
+                </Tooltip>
+              </TooltipProvider>
             </div>
           </div>
           
@@ -1142,17 +1115,18 @@ export function Sidebar({ className }: { className?: string }) {
               onClick={() => setSettingsPanel("ai")}
               className="flex items-center"
             >
-              <Icons.star className="mr-2 h-4 w-4" />
+              <Icons.star className="w-4 h-4 mr-2" />
               {t('common.aiSettings')}
             </Button>
             <Button 
-              variant={settingsPanel === "about" ? "default" : "outline"} 
-              onClick={() => setSettingsPanel("about")}
+              variant={settingsPanel === "mcp" ? "default" : "outline"} 
+              onClick={() => setSettingsPanel("mcp")}
               className="flex items-center"
             >
-              <Icons.info className="mr-2 h-4 w-4" />
-              {t('common.about')}
+              <Icons.zap className="w-4 h-4 mr-2" />
+              MCP设置
             </Button>
+            {/* PromptX settings tab removed; use main view via sidebar button */}
           </div>
           
           {/* 外观设置面板 */}
@@ -1247,9 +1221,6 @@ export function Sidebar({ className }: { className?: string }) {
             <div className="py-2 h-[60vh] overflow-y-auto">
               <CardContent className="text-sm font-medium mb-2 text-muted-foreground color-green-500">{t('dataManagement.cloudSyncDescription2')}</CardContent>
               <DataImportExport 
-                inline={true} 
-                open={true} 
-                onOpenChange={() => {}} 
                 onDataChanged={handleDataChanged}
               />
             </div>
@@ -1263,6 +1234,17 @@ export function Sidebar({ className }: { className?: string }) {
               </div>
             </ScrollArea>
           )}
+
+          {/* MCP 设置面板 */}
+          {settingsPanel === "mcp" && (
+            <ScrollArea className="h-[60vh] pr-4">
+              <div className="py-2">
+                <MCPSettingsPanel />
+              </div>
+            </ScrollArea>
+          )}
+
+          {/* PromptX settings panel removed; use main view via sidebar button */}
 
           {/* 用户偏好设置面板 */}
           {settingsPanel === "preferences" && (
@@ -1316,6 +1298,7 @@ export function Sidebar({ className }: { className?: string }) {
           }
         }}
       />
+
     </div>
   );
 }

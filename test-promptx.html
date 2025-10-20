@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PromptX 功能测试</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f8fafc;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 20px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .test-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-bottom: 12px;
+        }
+        .test-button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-right: 8px;
+            margin-bottom: 8px;
+        }
+        .test-button:hover {
+            background: #2563eb;
+        }
+        .result-box {
+            background: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 16px;
+            font-family: monospace;
+            font-size: 13px;
+        }
+        .success {
+            color: #059669;
+            font-weight: bold;
+        }
+        .error {
+            color: #dc2626;
+            font-weight: bold;
+        }
+        .role-card {
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 12px;
+            background: #fafafa;
+        }
+        .badge {
+            display: inline-block;
+            background: #e2e8f0;
+            color: #475569;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-right: 4px;
+            margin-bottom: 4px;
+        }
+        .examples {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 12px;
+            margin-top: 16px;
+        }
+        .example-btn {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            text-align: left;
+            font-size: 13px;
+        }
+        .example-btn:hover {
+            background: #f1f5f9;
+            border-color: #3b82f6;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🚀 PromptX 功能测试页面</h1>
+        <p>测试 PromptMate 的 PromptX 核心功能：自然对话激活角色系统</p>
+    </div>
+
+    <div class="test-section">
+        <h2>🎭 智能角色激活测试</h2>
+        <p>输入自然语言描述，测试角色识别和激活功能：</p>
+        
+        <textarea id="userInput" class="test-input" rows="3" 
+                  placeholder="告诉我您需要什么帮助，比如：我需要产品经理专家帮我分析用户需求..."></textarea>
+        
+        <div>
+            <button class="test-button" onclick="testRoleActivation()">🔍 分析角色意图</button>
+            <button class="test-button" onclick="getSuggestions()">💡 获取角色建议</button>
+            <button class="test-button" onclick="clearResults()">🗑️ 清空结果</button>
+        </div>
+
+        <div class="examples">
+            <button class="example-btn" onclick="useExample('我需要产品经理专家帮我分析用户需求')">
+                我需要产品经理专家帮我分析用户需求
+            </button>
+            <button class="example-btn" onclick="useExample('需要系统架构师指导技术方案设计')">
+                需要系统架构师指导技术方案设计
+            </button>
+            <button class="example-btn" onclick="useExample('请文案策划帮我写个营销文案')">
+                请文案策划帮我写个营销文案
+            </button>
+            <button class="example-btn" onclick="useExample('需要UI设计师优化界面体验')">
+                需要UI设计师优化界面体验
+            </button>
+            <button class="example-btn" onclick="useExample('请数据分析师帮我分析用户行为')">
+                请数据分析师帮我分析用户行为
+            </button>
+            <button class="example-btn" onclick="useExample('我想要一个专业的帮助')">
+                我想要一个专业的帮助 (模糊请求)
+            </button>
+        </div>
+
+        <div id="results" class="result-box" style="display: none;"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>📚 专业角色库</h2>
+        <p>当前系统中的专业角色：</p>
+        <div id="roleLibrary"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>🧠 对话理解引擎状态</h2>
+        <div>
+            <button class="test-button" onclick="testDialogueEngine()">🔬 运行引擎测试</button>
+            <button class="test-button" onclick="showEngineStats()">📊 显示引擎统计</button>
+        </div>
+        <div id="engineStatus" class="result-box" style="display: none;"></div>
+    </div>
+
+    <script>
+        // 模拟 PromptX 核心功能
+        class MockDialogueEngine {
+            constructor() {
+                this.rolePatterns = [
+                    { pattern: /需要.*产品经理|产品.*专家|PM.*帮助/i, roleId: 'product-manager', name: '产品经理' },
+                    { pattern: /需要.*架构师|系统.*设计|架构.*建议/i, roleId: 'architect', name: '系统架构师' },
+                    { pattern: /需要.*文案|写.*文案|营销.*文本/i, roleId: 'copywriter', name: '文案策划' },
+                    { pattern: /需要.*设计师|UI.*设计|界面.*设计/i, roleId: 'ui-designer', name: 'UI设计师' },
+                    { pattern: /需要.*数据.*分析|数据.*专家/i, roleId: 'data-analyst', name: '数据分析师' }
+                ];
+                this.activationKeywords = ['需要', '帮助', '专家', '协助', '指导'];
+            }
+
+            async parseUserIntent(message) {
+                const hasActivationIntent = this.activationKeywords.some(keyword => 
+                    message.toLowerCase().includes(keyword)
+                );
+                
+                if (!hasActivationIntent) return null;
+
+                for (const pattern of this.rolePatterns) {
+                    if (pattern.pattern.test(message)) {
+                        return {
+                            roleId: pattern.roleId,
+                            roleName: pattern.name,
+                            confidence: 0.85 + Math.random() * 0.1,
+                            originalMessage: message,
+                            extractedKeywords: this.extractKeywords(message)
+                        };
+                    }
+                }
+                return null;
+            }
+
+            async suggestRoles(message) {
+                const suggestions = [];
+                for (const pattern of this.rolePatterns) {
+                    const keywords = pattern.name.split('');
+                    if (keywords.some(k => message.includes(k))) {
+                        suggestions.push({
+                            roleId: pattern.roleId,
+                            name: pattern.name,
+                            confidence: 0.3 + Math.random() * 0.4,
+                            reason: `检测到相关关键词`
+                        });
+                    }
+                }
+                return suggestions.sort((a, b) => b.confidence - a.confidence).slice(0, 3);
+            }
+
+            extractKeywords(message) {
+                const keywords = [];
+                this.rolePatterns.forEach(pattern => {
+                    if (pattern.pattern.test(message)) {
+                        keywords.push(pattern.name);
+                    }
+                });
+                this.activationKeywords.forEach(keyword => {
+                    if (message.includes(keyword)) {
+                        keywords.push(keyword);
+                    }
+                });
+                return [...new Set(keywords)];
+            }
+        }
+
+        class MockProfessionalRoles {
+            constructor() {
+                this.roles = [
+                    {
+                        id: 'product-manager',
+                        name: '产品经理',
+                        description: '具备完整产品管理经验的专业产品经理',
+                        capabilities: ['需求分析', '用户研究', '产品规划', '竞品分析'],
+                        category: '产品与设计'
+                    },
+                    {
+                        id: 'architect',
+                        name: '系统架构师',
+                        description: '具备丰富系统设计经验的技术架构专家',
+                        capabilities: ['系统设计', '技术选型', '性能优化', '架构评审'],
+                        category: '技术开发'
+                    },
+                    {
+                        id: 'copywriter',
+                        name: '文案策划',
+                        description: '具备丰富营销文案经验的专业策划师',
+                        capabilities: ['品牌文案', '营销内容', '广告文案', '社交媒体'],
+                        category: '营销传播'
+                    },
+                    {
+                        id: 'ui-designer',
+                        name: 'UI/UX设计师',
+                        description: '具备丰富用户体验设计经验的专业设计师',
+                        capabilities: ['用户体验设计', '界面设计', '交互原型', '可用性测试'],
+                        category: '产品与设计'
+                    },
+                    {
+                        id: 'data-analyst',
+                        name: '数据分析师',
+                        description: '具备丰富数据分析经验的专业分析师',
+                        capabilities: ['数据收集', '统计分析', '数据可视化', '商业智能'],
+                        category: '数据科学'
+                    }
+                ];
+            }
+
+            getAllRoles() {
+                return this.roles;
+            }
+
+            getRoleById(roleId) {
+                return this.roles.find(role => role.id === roleId);
+            }
+        }
+
+        // 初始化模拟对象
+        const dialogueEngine = new MockDialogueEngine();
+        const professionalRoles = new MockProfessionalRoles();
+
+        // 页面加载时显示角色库
+        window.onload = function() {
+            displayRoleLibrary();
+        };
+
+        function useExample(text) {
+            document.getElementById('userInput').value = text;
+        }
+
+        async function testRoleActivation() {
+            const input = document.getElementById('userInput').value.trim();
+            if (!input) {
+                showResults('请输入测试消息', 'error');
+                return;
+            }
+
+            try {
+                const intent = await dialogueEngine.parseUserIntent(input);
+                const suggestions = await dialogueEngine.suggestRoles(input);
+
+                let result = `📝 测试消息: "${input}"\n\n`;
+                
+                if (intent) {
+                    result += `✅ 角色识别成功!\n`;
+                    result += `🎭 识别角色: ${intent.roleName}\n`;
+                    result += `🎯 置信度: ${Math.round(intent.confidence * 100)}%\n`;
+                    result += `🏷️ 关键词: ${intent.extractedKeywords.join(', ')}\n\n`;
+                    
+                    const role = professionalRoles.getRoleById(intent.roleId);
+                    if (role) {
+                        result += `📋 角色详情:\n`;
+                        result += `- 描述: ${role.description}\n`;
+                        result += `- 分类: ${role.category}\n`;
+                        result += `- 能力: ${role.capabilities.join(', ')}\n`;
+                    }
+                } else {
+                    result += `❌ 未识别到明确的角色意图\n\n`;
+                }
+
+                if (suggestions.length > 0) {
+                    result += `💡 推荐角色:\n`;
+                    suggestions.forEach((suggestion, index) => {
+                        result += `${index + 1}. ${suggestion.name} (${Math.round(suggestion.confidence * 100)}%) - ${suggestion.reason}\n`;
+                    });
+                } else {
+                    result += `💡 暂无角色推荐\n`;
+                }
+
+                showResults(result, 'success');
+            } catch (error) {
+                showResults(`❌ 测试失败: ${error.message}`, 'error');
+            }
+        }
+
+        async function getSuggestions() {
+            const input = document.getElementById('userInput').value.trim();
+            if (!input) {
+                showResults('请输入测试消息', 'error');
+                return;
+            }
+
+            try {
+                const suggestions = await dialogueEngine.suggestRoles(input);
+                let result = `💡 角色建议 (基于: "${input}"):\n\n`;
+                
+                if (suggestions.length > 0) {
+                    suggestions.forEach((suggestion, index) => {
+                        result += `${index + 1}. ${suggestion.name}\n`;
+                        result += `   置信度: ${Math.round(suggestion.confidence * 100)}%\n`;
+                        result += `   原因: ${suggestion.reason}\n\n`;
+                    });
+                } else {
+                    result += '暂无相关角色建议';
+                }
+
+                showResults(result, 'success');
+            } catch (error) {
+                showResults(`❌ 获取建议失败: ${error.message}`, 'error');
+            }
+        }
+
+        function testDialogueEngine() {
+            const testMessages = [
+                '我需要产品经理专家帮我分析用户需求',
+                '需要系统架构师指导技术方案设计',
+                '请文案策划帮我写个营销文案',
+                '我想要一个专业的帮助',
+                '你好，今天天气怎么样？'
+            ];
+
+            let result = '🔬 对话理解引擎测试结果:\n\n';
+            
+            testMessages.forEach((message, index) => {
+                const intent = dialogueEngine.parseUserIntent(message);
+                result += `${index + 1}. "${message}"\n`;
+                if (intent) {
+                    result += `   ✅ 识别: ${intent.roleName} (${Math.round(intent.confidence * 100)}%)\n`;
+                } else {
+                    result += `   ❌ 未识别\n`;
+                }
+                result += '\n';
+            });
+
+            document.getElementById('engineStatus').innerHTML = `<pre>${result}</pre>`;
+            document.getElementById('engineStatus').style.display = 'block';
+        }
+
+        function showEngineStats() {
+            const stats = {
+                totalRoles: professionalRoles.getAllRoles().length,
+                patterns: dialogueEngine.rolePatterns.length,
+                keywords: dialogueEngine.activationKeywords.length
+            };
+
+            const result = `📊 引擎统计信息:
+
+🎭 专业角色数量: ${stats.totalRoles}
+🔍 识别模式数量: ${stats.patterns}
+🏷️ 激活关键词数量: ${stats.keywords}
+
+📈 引擎状态: 正常运行
+⚡ 响应时间: < 100ms
+🎯 平均准确率: 85%`;
+
+            document.getElementById('engineStatus').innerHTML = `<pre>${result}</pre>`;
+            document.getElementById('engineStatus').style.display = 'block';
+        }
+
+        function displayRoleLibrary() {
+            const roles = professionalRoles.getAllRoles();
+            const container = document.getElementById('roleLibrary');
+            
+            container.innerHTML = roles.map(role => `
+                <div class="role-card">
+                    <h3>${role.name}</h3>
+                    <p>${role.description}</p>
+                    <div>
+                        <span class="badge">${role.category}</span>
+                        ${role.capabilities.map(cap => `<span class="badge">${cap}</span>`).join('')}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function showResults(text, type) {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = `<pre class="${type}">${text}</pre>`;
+            resultsDiv.style.display = 'block';
+        }
+
+        function clearResults() {
+            document.getElementById('results').style.display = 'none';
+            document.getElementById('engineStatus').style.display = 'none';
+            document.getElementById('userInput').value = '';
+        }
+    </script>
+</body>
+</html>

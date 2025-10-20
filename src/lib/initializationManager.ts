@@ -24,27 +24,46 @@ export class InitializationManager {
   private error?: string;
   private callbacks: ((progress: InitializationProgress) => void)[] = [];
 
+  private tasksInitialized = false;
+
   constructor() {
-    this.initializeTasks();
+    // 任务初始化将在startInitialization中异步进行
   }
 
-  private initializeTasks() {
+  private async initializeTasks() {
     // 检查是否在Electron环境中
     const isElectron = typeof window !== 'undefined' && window.electronAPI;
     
     if (isElectron) {
-      // Electron环境：完整的初始化任务
+      // 检查是否需要数据迁移
+      let needsMigration = false;
+      try {
+        const migrationStatus = await window.electronAPI.getMigrationStatus();
+        needsMigration = migrationStatus === 'pending';
+      } catch (error) {
+        console.warn('无法检查迁移状态:', error);
+      }
+
+      // 根据迁移状态动态构建任务列表
       this.tasks = [
         {
           id: 'database-init',
           name: '初始化数据库',
           status: 'pending'
-        },
-        {
+        }
+      ];
+
+      // 只有需要迁移时才添加迁移任务
+      if (needsMigration) {
+        this.tasks.push({
           id: 'data-migration',
           name: '迁移数据',
           status: 'pending'
-        },
+        });
+      }
+
+      // 添加其他任务
+      this.tasks.push(
         {
           id: 'load-prompts',
           name: '加载提示词',
@@ -60,7 +79,7 @@ export class InitializationManager {
           name: '加载设置',
           status: 'pending'
         }
-      ];
+      );
     } else {
       // 浏览器环境：简化的初始化任务
       this.tasks = [
@@ -106,6 +125,13 @@ export class InitializationManager {
     try {
       this.isLoading = true;
       this.error = undefined;
+      
+      // 如果任务还未初始化，先初始化任务列表
+      if (!this.tasksInitialized) {
+        await this.initializeTasks();
+        this.tasksInitialized = true;
+      }
+      
       this.notify();
 
       // 执行初始化任务
@@ -134,8 +160,9 @@ export class InitializationManager {
         this.progress = ((i + 1) / this.tasks.length) * 100;
         this.notify();
 
-        // 添加小延迟，让用户看到进度变化
-        await new Promise(resolve => setTimeout(resolve, 200));
+        // 根据任务类型调整延迟
+        const delay = this.getTaskDelay(task.id);
+        await new Promise(resolve => setTimeout(resolve, delay));
       }
 
       // 检查是否有错误任务
@@ -187,6 +214,8 @@ export class InitializationManager {
           throw new Error(result.error || '数据库初始化失败');
         }
         console.log('数据库初始化成功');
+        // 数据库初始化通常很快，减少延迟
+        await new Promise(resolve => setTimeout(resolve, 100));
       } catch (error) {
         console.warn('数据库初始化失败，将使用localStorage:', error);
         // 数据库初始化失败不应该阻止应用启动
@@ -194,8 +223,8 @@ export class InitializationManager {
     } else {
       // 非Electron环境，使用localStorage，直接完成
       console.log('非Electron环境，使用localStorage');
-      // 添加短暂延迟模拟初始化过程
-      await new Promise(resolve => setTimeout(resolve, 300));
+      // 减少模拟延迟
+      await new Promise(resolve => setTimeout(resolve, 100));
     }
   }
 
@@ -206,12 +235,13 @@ export class InitializationManager {
         const migrationStatus = await window.electronAPI.getMigrationStatus();
         if (migrationStatus === 'pending') {
           console.log('开始数据迁移...');
-          // 这里可以添加具体的数据迁移逻辑
-          // 目前只是模拟
-          await new Promise(resolve => setTimeout(resolve, 600));
+          // 实际迁移过程，根据数据量调整时间
+          await new Promise(resolve => setTimeout(resolve, 800));
           console.log('数据迁移完成');
         } else {
-          console.log('无需数据迁移');
+          console.log('无需数据迁移，跳过迁移步骤');
+          // 无需迁移时，几乎立即完成
+          await new Promise(resolve => setTimeout(resolve, 50));
         }
       } catch (error) {
         console.warn('数据迁移失败:', error);
@@ -220,14 +250,14 @@ export class InitializationManager {
     } else {
       // 非Electron环境，无需迁移，直接完成
       console.log('非Electron环境，无需数据迁移');
-      await new Promise(resolve => setTimeout(resolve, 200));
+      await new Promise(resolve => setTimeout(resolve, 50));
     }
   }
 
   private async loadPrompts(): Promise<void> {
     // 等待主应用内容加载完成
-    // 这里需要等待usePrompts hook完成初始化
-    await new Promise(resolve => setTimeout(resolve, 800));
+    // 减少初始等待时间
+    await new Promise(resolve => setTimeout(resolve, 300));
     
     // 检查主应用是否已经加载
     const checkAppLoaded = () => {
@@ -238,9 +268,9 @@ export class InitializationManager {
       return !!appElement;
     };
     
-    // 等待主应用加载，最多等待2秒
+    // 等待主应用加载，最多等待1秒
     let attempts = 0;
-    const maxAttempts = 10; // 2秒 / 100ms = 20次
+    const maxAttempts = 10; // 1秒 / 100ms = 10次
     
     while (!checkAppLoaded() && attempts < maxAttempts) {
       await new Promise(resolve => setTimeout(resolve, 100));
@@ -252,7 +282,7 @@ export class InitializationManager {
 
   private async loadCategories(): Promise<void> {
     // 等待分类数据加载
-    await new Promise(resolve => setTimeout(resolve, 300));
+    await new Promise(resolve => setTimeout(resolve, 200));
     
     // 检查分类数据是否已加载
     const checkCategoriesLoaded = () => {
@@ -263,9 +293,9 @@ export class InitializationManager {
       return categoryElements.length > 0;
     };
     
-    // 等待分类加载，最多等待1秒
+    // 等待分类加载，最多等待0.5秒
     let attempts = 0;
-    const maxAttempts = 10;
+    const maxAttempts = 5;
     
     while (!checkCategoriesLoaded() && attempts < maxAttempts) {
       await new Promise(resolve => setTimeout(resolve, 100));
@@ -277,7 +307,7 @@ export class InitializationManager {
 
   private async loadSettings(): Promise<void> {
     // 等待设置数据加载
-    await new Promise(resolve => setTimeout(resolve, 200));
+    await new Promise(resolve => setTimeout(resolve, 100));
     
     // 检查设置是否已加载
     const checkSettingsLoaded = () => {
@@ -289,6 +319,24 @@ export class InitializationManager {
     };
     
     console.log('设置数据加载完成');
+  }
+
+  private getTaskDelay(taskId: string): number {
+    // 根据任务类型返回不同的延迟时间
+    switch (taskId) {
+      case 'database-init':
+        return 100; // 数据库初始化很快
+      case 'data-migration':
+        return 150; // 迁移任务稍长，但如果无需迁移会很快
+      case 'load-prompts':
+        return 200; // 加载提示词需要一些时间
+      case 'load-categories':
+        return 100; // 分类加载较快
+      case 'load-settings':
+        return 50;  // 设置加载最快
+      default:
+        return 150; // 默认延迟
+    }
   }
 
   public getProgress(): InitializationProgress {

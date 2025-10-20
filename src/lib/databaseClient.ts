@@ -20,6 +20,7 @@ class DatabaseClient {
     const result: DatabaseResponse<T> = await api.invoke(channel, ...args);
 
     if (!result?.success) {
+      console.error("[DEBUG] DatabaseClient invoke error result:", result);
       throw new Error(result?.error || '数据库操作失败');
     }
 
@@ -103,6 +104,10 @@ class DatabaseClient {
 
   async createCategory(category: any) {
     return await this.invoke<any>('db-create-category', category);
+  }
+
+  async updateCategory(id: string, updates: any) {
+    return await this.invoke<any>('db-update-category', id, updates);
   }
 
   async updateCategoryLanguage(language: string) {

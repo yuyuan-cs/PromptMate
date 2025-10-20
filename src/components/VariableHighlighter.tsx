@@ -69,36 +69,123 @@ export const VariableHighlighter: React.FC<VariableHighlighterProps> = ({
   }, [content, variables]);
   
   return (
-    <span className={className}>
-      {highlightedContent.map((element, index) => {
-        if (element.type === 'variable' && element.variable) {
-          return (
-            <span
-              key={index}
-              className={cn(
-                'variable-highlight inline-block px-0.5 py-0.25 mx-0.5 rounded text-sm font-mono',
-                'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
-                'border border-blue-200 dark:border-blue-800',
-                'cursor-pointer hover:bg-blue-200 dark:hover:bg-blue-800/50',
-                'transition-colors duration-200',
-                highlightClassName
-              )}
-              onClick={() => onVariableClick?.(element.variable!)}
-              title={`${t('variableHighlighter.variableLabel')}: ${element.variable.name}`}
-              data-variable={element.variable.name}
-            >
-              {element.content}
-            </span>
-          );
-        }
-        
-        return (
-          <span key={index}>
-            {element.content}
-          </span>
-        );
-      })}
-    </span>
+    <div className={cn('prose prose-sm max-w-none', className)}>
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        rehypePlugins={[rehypeRaw]}
+        components={{
+          // Headers
+          h1: ({node, ...props}) => <h1 className="text-2xl font-bold mt-6 mb-4 pb-2 border-b border-border/50" {...props} />,
+          h2: ({node, ...props}) => <h2 className="text-xl font-bold mt-5 mb-3 pb-2 border-b border-border/30" {...props} />,
+          h3: ({node, ...props}) => <h3 className="text-lg font-semibold mt-4 mb-2" {...props} />,
+          h4: ({node, ...props}) => <h4 className="text-base font-medium mt-3 mb-2" {...props} />,
+          
+          // Paragraphs
+          p: ({node, ...props}) => <p className="my-3 leading-relaxed" {...props} />,
+          
+          // Lists
+          ul: ({node, ...props}) => <ul className="list-disc pl-6 my-2 space-y-1" {...props} />,
+          ol: ({node, ...props}) => <ol className="list-decimal pl-6 my-2 space-y-1" {...props} />,
+          li: ({node, ...props}) => <li className="my-1 pl-1" {...props} />,
+          
+          // Code blocks
+          pre: ({node, ...props}) => (
+            <pre className="bg-muted/50 dark:bg-muted/20 p-4 rounded-lg overflow-x-auto my-4 text-sm border border-border/20" {...props} />
+          ),
+          code: ({node, className, children, ...props}: any) => {
+            const inline = !className;
+            if (inline) {
+              // Check if it's a variable
+              const content = String(children);
+              const varMatch = content.match(/^\{\{([^}]+)\}\}$/);
+              if (varMatch) {
+                const varName = varMatch[1];
+                const variable = variables.find(v => v.name === varName);
+                
+                if (variable) {
+                  return (
+                    <span
+                      className={cn(
+                        'variable-highlight inline-flex items-center px-2 py-1 mx-0.5 rounded-md text-sm font-mono',
+                        'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300',
+                        'border border-blue-200 dark:border-blue-800/50',
+                        'cursor-pointer hover:bg-blue-200 dark:hover:bg-blue-800/60',
+                        'transition-all duration-200 hover:scale-105',
+                        highlightClassName
+                      )}
+                      onClick={() => onVariableClick?.(variable)}
+                      title={`${t('variableHighlighter.variableLabel')}: ${variable.name}`}
+                      data-variable={variable.name}
+                    >
+                      {content}
+                    </span>
+                  );
+                }
+              }
+              
+              // Regular inline code
+              return (
+                <code className="bg-muted/60 dark:bg-muted/40 px-1.5 py-0.5 rounded text-sm font-mono text-foreground/90 border border-border/20" {...props}>
+                  {children}
+                </code>
+              );
+            }
+            
+            // Code blocks
+            return (
+              <code className={className} {...props}>
+                {children}
+              </code>
+            );
+          },
+          
+          // Blockquotes
+          blockquote: ({node, ...props}) => (
+            <blockquote 
+              className="border-l-4 border-primary/50 bg-muted/30 dark:bg-muted/10 pl-4 py-2 my-4 text-muted-foreground italic rounded-r-md" 
+              {...props} 
+            />
+          ),
+          
+          // Links
+          a: ({node, ...props}) => (
+            <a 
+              className="text-primary underline underline-offset-4 hover:text-primary/80 transition-colors decoration-primary/50 hover:decoration-primary" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              {...props} 
+            />
+          ),
+          
+          // Tables
+          table: ({node, ...props}) => (
+            <div className="my-4 border rounded-lg overflow-hidden shadow-sm">
+              <table className="w-full border-collapse" {...props} />
+            </div>
+          ),
+          thead: ({node, ...props}) => <thead className="bg-muted/50 dark:bg-muted/30" {...props} />,
+          th: ({node, ...props}) => <th className="p-3 text-left border-b font-semibold text-foreground/90" {...props} />,
+          td: ({node, ...props}) => <td className="p-3 border-t border-border/30" {...props} />,
+          tr: ({node, ...props}) => <tr className="hover:bg-muted/30 transition-colors" {...props} />,
+          
+          // Horizontal rule
+          hr: ({node, ...props}) => <hr className="my-6 border-t border-border/50" {...props} />,
+          
+          // Images
+          img: ({node, ...props}) => (
+            <div className="my-4 rounded-lg overflow-hidden border border-border/20 shadow-sm">
+              <img className="max-w-full h-auto" {...props} />
+            </div>
+          ),
+          
+          // Strong and emphasis
+          strong: ({node, ...props}) => <strong className="font-semibold text-foreground" {...props} />,
+          em: ({node, ...props}) => <em className="italic text-foreground/90" {...props} />,
+        }}
+      >
+        {content}
+      </ReactMarkdown>
+    </div>
   );
 };
 
@@ -111,6 +198,8 @@ interface VariableTextAreaProps {
   rows?: number;
   disabled?: boolean;
   showVariables?: boolean;
+  showMarkdownPreview?: boolean; // 是否显示Markdown预览
+  previewMode?: 'split' | 'tabs'; // 预览模式：分屏或标签页
   minHeight?: number; // 最小高度（像素）
   maxHeight?: number; // 最大高度（像素）
   enableResize?: boolean; // 是否允许手动调整大小
@@ -124,58 +213,217 @@ export const VariableTextArea: React.FC<VariableTextAreaProps> = ({
   rows = 4,
   disabled = false,
   showVariables = true,
+  showMarkdownPreview = false,
+  previewMode = 'tabs',
   minHeight = 120,
   maxHeight = 400,
   enableResize = false,
 }) => {
   const { t } = useTranslation();
+  const [activeTab, setActiveTab] = React.useState<'edit' | 'preview'>('edit');
+  
   // 提取变量信息用于显示
   const variables = useMemo(() => extractVariables(value), [value]);
   
-  return (
-    <div className="relative">
-      {/* 文本输入区域 - 使用动态高度组件 */}
-      <DynamicTextarea
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        className={cn(
-          'w-full border rounded-md p-3',
-          'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent',
-          'bg-background text-foreground',
-          'placeholder:text-muted-foreground',
-          'disabled:opacity-50 disabled:cursor-not-allowed',
-          className
-        )}
-        minHeight={minHeight}
-        maxHeight={maxHeight}
-        enableResize={enableResize}
-        disabled={disabled}
-      />
-      
-      {/* 变量高亮覆盖层（仅显示，不可编辑） */}
-      {showVariables && variables.length > 0 && (
-        <div
+  // 如果不显示Markdown预览，使用原来的简单模式
+  if (!showMarkdownPreview) {
+    return (
+      <div className="relative">
+        {/* 文本输入区域 - 使用动态高度组件 */}
+        <DynamicTextarea
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={placeholder}
           className={cn(
-            'variable-highlight-overlay',
-            'text-foreground'
+            'w-full border rounded-md p-3',
+            'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent',
+            'bg-background text-foreground',
+            'placeholder:text-muted-foreground',
+            'disabled:opacity-50 disabled:cursor-not-allowed',
+            className
           )}
-        >
-          <VariableHighlighter
-            content={value}
-            highlightClassName="!bg-transparent !border-transparent !text-transparent"
+          minHeight={minHeight}
+          maxHeight={maxHeight}
+          enableResize={enableResize}
+          disabled={disabled}
+        />
+        
+        {/* 变量高亮覆盖层（仅显示，不可编辑） */}
+        {showVariables && variables.length > 0 && (
+          <div
+            className={cn(
+              'variable-highlight-overlay',
+              'text-foreground'
+            )}
+          >
+            <VariableHighlighter
+              content={value}
+              highlightClassName="!bg-transparent !border-transparent !text-transparent"
+            />
+          </div>
+        )}
+        
+        {/* 变量统计信息 */}
+        {showVariables && variables.length > 0 && (
+          <div className="absolute top-2 right-2 pointer-events-none">
+            <div className="bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400 text-xs px-2 py-1 rounded-full">
+              {variables.length} {t('variableHighlighter.variableCount')}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // 带Markdown预览的增强模式
+  if (previewMode === 'split') {
+    return (
+      <div className={cn('grid grid-cols-2 gap-4', className)}>
+        {/* 左侧：编辑区域 */}
+        <div className="relative">
+          <div className="text-xs text-muted-foreground mb-2">{t('common.edit')}</div>
+          <DynamicTextarea
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder={placeholder}
+            className={cn(
+              'w-full border rounded-md p-3',
+              'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent',
+              'bg-background text-foreground',
+              'placeholder:text-muted-foreground',
+              'disabled:opacity-50 disabled:cursor-not-allowed'
+            )}
+            minHeight={minHeight}
+            maxHeight={maxHeight}
+            enableResize={enableResize}
+            disabled={disabled}
           />
+          
+          {/* 变量统计信息 */}
+          {showVariables && variables.length > 0 && (
+            <div className="absolute top-8 right-2 pointer-events-none">
+              <div className="bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400 text-xs px-2 py-1 rounded-full">
+                {variables.length} {t('variableHighlighter.variableCount')}
+              </div>
+            </div>
+          )}
         </div>
-      )}
-      
-      {/* 变量统计信息 */}
-      {showVariables && variables.length > 0 && (
-        <div className="absolute top-2 right-2 pointer-events-none">
-          <div className="bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400 text-xs px-2 py-1 rounded-full">
-            {variables.length} {t('variableHighlighter.variableCount')}
+        
+        {/* 右侧：预览区域 */}
+        <div className="relative">
+          <div className="text-xs text-muted-foreground mb-2">{t('common.markdownPreview')}</div>
+          <div 
+            className="border rounded-md p-3 bg-muted/30 overflow-auto"
+            style={{ minHeight, maxHeight }}
+          >
+            {value ? (
+              <VariableDisplay
+                content={value}
+                showVariableCount={false}
+                className="prose prose-sm max-w-none"
+              />
+            ) : (
+              <div className="text-muted-foreground text-sm">
+                {t('common.markdownPreviewPlaceholder')}
+              </div>
+            )}
           </div>
         </div>
-      )}
+      </div>
+    );
+  }
+
+  // 标签页模式
+  return (
+    <div className={cn('space-y-2', className)}>
+      {/* 标签页切换 */}
+      <div className="flex border-b">
+        <button
+          type="button"
+          className={cn(
+            'px-3 py-2 text-sm font-medium border-b-2 transition-colors',
+            activeTab === 'edit'
+              ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+              : 'border-transparent text-muted-foreground hover:text-foreground'
+          )}
+          onClick={() => setActiveTab('edit')}
+        >
+          {t('common.edit')}
+          {showVariables && variables.length > 0 && (
+            <span className="ml-2 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400 text-xs px-1.5 py-0.5 rounded-full">
+              {variables.length}
+            </span>
+          )}
+        </button>
+        <button
+          type="button"
+          className={cn(
+            'px-3 py-2 text-sm font-medium border-b-2 transition-colors',
+            activeTab === 'preview'
+              ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+              : 'border-transparent text-muted-foreground hover:text-foreground'
+          )}
+          onClick={() => setActiveTab('preview')}
+        >
+          {t('common.markdownPreview')}
+        </button>
+      </div>
+      
+      {/* 内容区域 */}
+      <div className="relative">
+        {activeTab === 'edit' ? (
+          <div className="relative">
+            <DynamicTextarea
+              value={value}
+              onChange={(e) => onChange(e.target.value)}
+              placeholder={placeholder}
+              className={cn(
+                'w-full border rounded-md p-3',
+                'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent',
+                'bg-background text-foreground',
+                'placeholder:text-muted-foreground',
+                'disabled:opacity-50 disabled:cursor-not-allowed'
+              )}
+              minHeight={minHeight}
+              maxHeight={maxHeight}
+              enableResize={enableResize}
+              disabled={disabled}
+            />
+            
+            {/* 变量高亮覆盖层（仅显示，不可编辑） */}
+            {showVariables && variables.length > 0 && (
+              <div
+                className={cn(
+                  'variable-highlight-overlay',
+                  'text-foreground'
+                )}
+              >
+                <VariableHighlighter
+                  content={value}
+                  highlightClassName="!bg-transparent !border-transparent !text-transparent"
+                />
+              </div>
+            )}
+          </div>
+        ) : (
+          <div 
+            className="border rounded-md p-3 bg-muted/30 overflow-auto"
+            style={{ minHeight, maxHeight }}
+          >
+            {value ? (
+              <VariableDisplay
+                content={value}
+                showVariableCount={showVariables}
+                className="prose prose-sm max-w-none"
+              />
+            ) : (
+              <div className="text-muted-foreground text-sm">
+                {t('common.markdownPreviewPlaceholder')}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 };
@@ -227,49 +475,125 @@ export const VariableDisplay: React.FC<VariableDisplayProps> = ({
   }, [content, variables]);
 
   return (
-    <div className={cn('relative', className)}>
-      <div className="prose dark:prose-invert max-w-none whitespace-pre-wrap break-words">
-        <ReactMarkdown
-          remarkPlugins={[remarkGfm]}
-          rehypePlugins={[rehypeRaw]}
-          components={{
-            var: ({ node, ...props }) => {
-              // 从新的属性名获取变量名
-              const encodedName = node.properties?.dataVariableName as string;
-              const name = encodedName ? decodeURIComponent(encodedName) : 
-                          (node.properties?.dataName as string); // 向后兼容
-              
-              const originalText = node.children?.[0]?.type === 'text' ? 
-                                  node.children[0].value : 
-                                  (typeof node.children?.[0] === 'string' ? node.children[0] : '');
-              
-              if (!name) return <span>{originalText}</span>;
-              
-              const variable = variables.find(v => v.name === name);
-              if (!variable) return <span>{originalText}</span>;
-
+    <div className={cn('relative prose prose-sm max-w-none', className)}>
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        rehypePlugins={[rehypeRaw]}
+        components={{
+          // Headers
+          h1: ({node, ...props}) => <h1 className="text-2xl font-bold mt-6 mb-4 pb-2 border-b border-border/50" {...props} />,
+          h2: ({node, ...props}) => <h2 className="text-xl font-bold mt-5 mb-3 pb-2 border-b border-border/30" {...props} />,
+          h3: ({node, ...props}) => <h3 className="text-lg font-semibold mt-4 mb-2" {...props} />,
+          h4: ({node, ...props}) => <h4 className="text-base font-medium mt-3 mb-2" {...props} />,
+          
+          // Paragraphs
+          p: ({node, ...props}) => <p className="my-3 leading-relaxed" {...props} />,
+          
+          // Lists
+          ul: ({node, ...props}) => <ul className="list-disc pl-6 my-2 space-y-1" {...props} />,
+          ol: ({node, ...props}) => <ol className="list-decimal pl-6 my-2 space-y-1" {...props} />,
+          li: ({node, ...props}) => <li className="my-1 pl-1" {...props} />,
+          
+          // Code blocks
+          pre: ({node, ...props}) => (
+            <pre className="bg-muted/50 dark:bg-muted/20 p-4 rounded-lg overflow-x-auto my-4 text-sm border border-border/20" {...props} />
+          ),
+          code: ({node, className, children, ...props}: any) => {
+            const inline = !className;
+            if (inline) {
               return (
-                <span
-                  className={cn(
-                    'variable-highlight inline-block px-0.5 py-0.25 mx-0.5 rounded text-sm font-mono',
-                    'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
-                    'border border-blue-200 dark:border-blue-800',
-                    'cursor-pointer hover:bg-blue-200 dark:hover:bg-blue-800/50',
-                    'transition-colors duration-200'
-                  )}
-                  onClick={() => onVariableClick?.(variable)}
-                  title={`${t('variableHighlighter.variableLabel')}: ${name}`}
-                  data-variable={name}
-                >
-                  {originalText}
-                </span>
+                <code className="bg-muted/60 dark:bg-muted/40 px-1.5 py-0.5 rounded text-sm font-mono text-foreground/90 border border-border/20" {...props}>
+                  {children}
+                </code>
               );
-            },
-          }}
-        >
-          {processedContent}
-        </ReactMarkdown>
-      </div>
+            }
+            return (
+              <code className={className} {...props}>
+                {children}
+              </code>
+            );
+          },
+          
+          // Blockquotes
+          blockquote: ({node, ...props}) => (
+            <blockquote 
+              className="border-l-4 border-primary/50 bg-muted/30 dark:bg-muted/10 pl-4 py-2 my-4 text-muted-foreground italic rounded-r-md" 
+              {...props} 
+            />
+          ),
+          
+          // Links
+          a: ({node, ...props}) => (
+            <a 
+              className="text-primary underline underline-offset-4 hover:text-primary/80 transition-colors decoration-primary/50 hover:decoration-primary" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              {...props} 
+            />
+          ),
+          
+          // Tables
+          table: ({node, ...props}) => (
+            <div className="my-4 border rounded-lg overflow-hidden shadow-sm">
+              <table className="w-full border-collapse" {...props} />
+            </div>
+          ),
+          thead: ({node, ...props}) => <thead className="bg-muted/50 dark:bg-muted/30" {...props} />,
+          th: ({node, ...props}) => <th className="p-3 text-left border-b font-semibold text-foreground/90" {...props} />,
+          td: ({node, ...props}) => <td className="p-3 border-t border-border/30" {...props} />,
+          tr: ({node, ...props}) => <tr className="hover:bg-muted/30 transition-colors" {...props} />,
+          
+          // Horizontal rule
+          hr: ({node, ...props}) => <hr className="my-6 border-t border-border/50" {...props} />,
+          
+          // Images
+          img: ({node, ...props}) => (
+            <div className="my-4 rounded-lg overflow-hidden border border-border/20 shadow-sm">
+              <img className="max-w-full h-auto" {...props} />
+            </div>
+          ),
+          
+          // Strong and emphasis
+          strong: ({node, ...props}) => <strong className="font-semibold text-foreground" {...props} />,
+          em: ({node, ...props}) => <em className="italic text-foreground/90" {...props} />,
+          
+          // Variables
+          var: ({ node, ...props }) => {
+            // 从新的属性名获取变量名
+            const encodedName = node.properties?.dataVariableName as string;
+            const name = encodedName ? decodeURIComponent(encodedName) : 
+                        (node.properties?.dataName as string); // 向后兼容
+            
+            const originalText = node.children?.[0]?.type === 'text' ? 
+                                node.children[0].value : 
+                                (typeof node.children?.[0] === 'string' ? node.children[0] : '');
+            
+            if (!name) return <span>{originalText}</span>;
+            
+            const variable = variables.find(v => v.name === name);
+            if (!variable) return <span>{originalText}</span>;
+
+            return (
+              <span
+                className={cn(
+                  'variable-highlight inline-flex items-center px-2 py-1 mx-0.5 rounded-md text-sm font-mono',
+                  'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300',
+                  'border border-blue-200 dark:border-blue-800/50',
+                  'cursor-pointer hover:bg-blue-200 dark:hover:bg-blue-800/60',
+                  'transition-all duration-200 hover:scale-105'
+                )}
+                onClick={() => onVariableClick?.(variable)}
+                title={`${t('variableHighlighter.variableLabel')}: ${name}`}
+                data-variable={name}
+              >
+                {originalText}
+              </span>
+            );
+          },
+        }}
+      >
+        {processedContent}
+      </ReactMarkdown>
       
       {showVariableCount && variables.length > 0 && (
         <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
