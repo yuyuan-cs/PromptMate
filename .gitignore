@@ -12,3 +12,4 @@ browser-extension/node_modules
 browser-extension.zip
 *.local
 src/build-info.json
+src/build-info.json
