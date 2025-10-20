@@ -10,3 +10,5 @@ PromptMate_browser-extension.zip
 browser-extension/dist
 browser-extension/node_modules
 browser-extension.zip
+*.local
+src/build-info.json
