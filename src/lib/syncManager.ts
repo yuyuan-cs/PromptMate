@@ -1,9 +1,9 @@
 import { Prompt, Category, Settings } from '../types';
 import { promises as fs } from 'fs';
 import { join } from 'path';
-import { app } from 'electron';
 import { EventEmitter } from 'events';
 import { watch } from 'chokidar';
+import * as os from 'os';
 
 export interface SyncData {
   version: string;
@@ -60,23 +60,18 @@ export class SyncManager extends EventEmitter {
 
   // 获取同步数据文件路径
   private getSyncDataPath(): string {
-    // 使用与主进程相同的逻辑获取自定义数据路径
-    let userDataPath = app.getPath('userData');
-    
+    // 避免直接依赖 electron.app，按平台推导 userData 目录
+    const home = os.homedir();
+    let userDataPath: string;
+
     if (process.platform === 'win32') {
-      try {
-        const { execSync } = require('child_process');
-        const result = execSync('reg query "HKCU\\Software\\PromptMate" /v DataDirectory', { encoding: 'utf8', stdio: 'pipe' });
-        const match = result.match(/DataDirectory\s+REG_SZ\s+(.+)/);
-        if (match && match[1] && require('fs').existsSync(match[1].trim())) {
-          userDataPath = match[1].trim();
-        }
-      } catch (error) {
-        // 如果读取失败，使用默认路径
-        console.log('未找到自定义数据路径，使用默认路径');
-      }
+      userDataPath = join(home, 'AppData', 'Roaming', 'PromptMate');
+    } else if (process.platform === 'darwin') {
+      userDataPath = join(home, 'Library', 'Application Support', 'PromptMate');
+    } else {
+      userDataPath = join(home, '.config', 'PromptMate');
     }
-    
+
     return join(userDataPath, 'sync-data.json');
   }
 
