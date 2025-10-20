@@ -2,8 +2,9 @@
 
 const fs = require('fs').promises;
 const path = require('path');
-const { app } = require('electron');
 const chokidar = require('chokidar');
+const os = require('os');
+const { execSync } = require('child_process');
 
 class PromptMateSyncHost {
   constructor() {
@@ -18,11 +19,34 @@ class PromptMateSyncHost {
     this.setupMessageHandling();
   }
 
-  // 获取同步数据文件路径
+  // 获取同步数据文件路径（跨平台，兼容 Windows 注册表自定义目录）
   getSyncDataPath() {
-    const os = require('os');
-    const userDataPath = path.join(os.homedir(), 'AppData', 'Roaming', 'PromptMate');
-    return path.join(userDataPath, 'sync-data.json');
+    let baseDir = null;
+
+    if (process.platform === 'win32') {
+      try {
+        const result = execSync('reg query "HKCU\\Software\\PromptMate" /v DataDirectory', { encoding: 'utf8', stdio: 'pipe' });
+        const match = result.match(/DataDirectory\s+REG_SZ\s+(.+)/);
+        if (match && match[1] && require('fs').existsSync(match[1].trim())) {
+          baseDir = match[1].trim();
+        }
+      } catch (_) {
+        // ignore and fallback
+      }
+    }
+
+    if (!baseDir) {
+      const home = os.homedir();
+      if (process.platform === 'win32') {
+        baseDir = path.join(home, 'AppData', 'Roaming', 'PromptMate');
+      } else if (process.platform === 'darwin') {
+        baseDir = path.join(home, 'Library', 'Application Support', 'PromptMate');
+      } else {
+        baseDir = path.join(home, '.config', 'PromptMate');
+      }
+    }
+
+    return path.join(baseDir, 'sync-data.json');
   }
 
   // 设置消息处理
