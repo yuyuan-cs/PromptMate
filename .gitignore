@@ -13,3 +13,4 @@ browser-extension.zip
 *.local
 src/build-info.json
 src/build-info.json
+*.local
