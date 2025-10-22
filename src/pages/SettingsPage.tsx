@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Settings, Sparkles, ArrowLeft, Puzzle, Cloud } from "lucide-react";
 import { AISettings } from "@/components/AISettings";
 import { PluginSettings } from "@/components/PluginSettings";
+import { CloudStorageSettings } from "@/components/CloudStorageSettings";
 import { useTranslation } from "react-i18next";
 import { DataImportExport } from "@/components/DataImportExport";
 
@@ -114,10 +115,22 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Cloud className="h-5 w-5" />
-                云端同步
+                第三方云盘同步
               </CardTitle>
               <CardDescription>
-                配置跨设备的数据同步、冲突解决与备份
+                配置第三方云存储服务，实现跨设备数据同步
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <CloudStorageSettings />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>数据管理</CardTitle>
+              <CardDescription>
+                本地数据备份、导入导出和高级同步功能
               </CardDescription>
             </CardHeader>
             <CardContent>

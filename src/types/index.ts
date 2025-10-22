@@ -97,3 +97,45 @@ export interface RecommendedPrompt {
   category: string;
   tags: string[];
 }
+
+// 云存储相关类型定义
+export type CloudStorageProvider = 'none' | 'webdav' | 'onedrive';
+
+export interface WebDAVConfig {
+  url: string;
+  username: string;
+  password: string;
+  remotePath: string;
+}
+
+export interface OneDriveConfig {
+  clientId: string;
+  accessToken?: string;
+  refreshToken?: string;
+  remotePath: string;
+  expiresAt?: string;
+}
+
+export interface CloudStorageSettings {
+  enabled: boolean;
+  provider: CloudStorageProvider;
+  autoSync: boolean;
+  syncInterval: number; // 分钟
+  lastSyncTime?: string;
+  webdav?: WebDAVConfig;
+  onedrive?: OneDriveConfig;
+}
+
+export interface CloudSyncStatus {
+  syncing: boolean;
+  lastSync?: string;
+  lastError?: string;
+  filesCount?: number;
+}
+
+export interface CloudFileInfo {
+  name: string;
+  size: number;
+  lastModified: string;
+  path: string;
+}
