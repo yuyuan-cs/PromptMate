@@ -46,3 +46,5 @@ LangString UNINSTALL_KEEP_DATA ${LANG_SIMPCHINESE} "选择"否"将保留您的�
 LangString UNINSTALL_DELETE_DATA ${LANG_SIMPCHINESE} "选择"是"将删除所有用户数据。"
 
 
+
+
