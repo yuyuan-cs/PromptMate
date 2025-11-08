@@ -206,6 +206,7 @@
       "favoritePrompts": "Favorite",
       "categoryPrompts": "Category",
       "recommendedPrompts": "Recommended",
+      "templates": "Templates",
       "manageCategories": "Manage Categories",
       "workflows": "Workflows"
     },
@@ -1306,5 +1307,26 @@
     "saveChanges": "Save Changes",
     "confirmDelete": "Confirm Delete",
     "confirmDeleteDescription": "This action will permanently delete this prompt, and the operation cannot be undone."
+  },
+  "template": {
+    "title": "Prompt Template Library",
+    "subtitle": "Get the latest prompt templates from the cloud without updating the app",
+    "searchPlaceholder": "Search templates...",
+    "allCategories": "All Categories",
+    "featured": "Featured",
+    "content": "Template Content",
+    "version": "Version",
+    "copy": "Copy",
+    "useTemplate": "Use Template",
+    "usageCount": "Used {{count}} times",
+    "noTemplates": "No templates available",
+    "loadError": "Failed to load templates",
+    "refreshSuccess": "Refreshed successfully",
+    "refreshError": "Refresh failed",
+    "copySuccess": "Copied to clipboard",
+    "copyError": "Copy failed",
+    "useSuccess": "Template added to prompts",
+    "addedToPrompts": "Template successfully added to prompt library",
+    "addError": "Failed to add template"
   }
 }

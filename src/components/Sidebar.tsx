@@ -707,6 +707,32 @@ export function Sidebar({ className }: { className?: string }) {
                 </Tooltip>
               </TooltipProvider>
 
+              <TooltipProvider delayDuration={100}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant={currentView === 'templates' ? "default" : "ghost"}
+                      className={cn(
+                        "rounded-xl group hover:scale-105 transition-transform",
+                        currentView === 'templates' ? "" : "hover:bg-accent hover:text-accent-foreground",
+                        isCollapsed
+                          ? "h-9 w-9 p-0 mx-auto flex items-center justify-center"
+                          : "w-full justify-start py-1 px-3"
+                      )}
+                      onClick={() => setCurrentView('templates')}
+                    >
+                      <Icons.layoutTemplate className="h-4 w-4" />
+                      {!isCollapsed && t("sidebar.tooltip.templates")}
+                    </Button>
+                  </TooltipTrigger>
+                  {isCollapsed && (
+                    <TooltipContent side="right">
+                      {t("sidebar.tooltip.templates")}
+                    </TooltipContent>
+                  )}
+                </Tooltip>
+              </TooltipProvider>
+
               {isDev && (
                 <TooltipProvider delayDuration={100}>
                   <Tooltip>

@@ -139,3 +139,35 @@ export interface CloudFileInfo {
   lastModified: string;
   path: string;
 }
+
+export interface TemplateCategory {
+  id: string;
+  name_zh: string;
+  name_en: string;
+  description_zh?: string;
+  description_en?: string;
+  icon?: string;
+  sort_order: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PromptTemplate {
+  id: string;
+  category_id: string;
+  title_zh: string;
+  title_en: string;
+  content_zh: string;
+  content_en: string;
+  description_zh?: string;
+  description_en?: string;
+  tags: string[];
+  version: number;
+  sort_order: number;
+  is_active: boolean;
+  is_featured: boolean;
+  usage_count: number;
+  created_at: string;
+  updated_at: string;
+}

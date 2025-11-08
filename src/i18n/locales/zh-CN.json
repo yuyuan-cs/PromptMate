@@ -211,6 +211,7 @@
       "favoritePrompts": "收藏提示词",
       "categoryPrompts": "分类提示词",
       "recommendedPrompts": "推荐提示词",
+      "templates": "提示词模版",
       "manageCategories": "管理分类",
       "workflows": "工作流"
     },
@@ -1171,5 +1172,26 @@
     "saveChanges": "保存更改",
     "confirmDelete": "确认删除",
     "confirmDeleteDescription": "此操作将永久删除此提示词，该操作无法撤销。"
+  },
+  "template": {
+    "title": "提示词模版库",
+    "subtitle": "从云端获取最新的提示词模版，无需更新应用",
+    "searchPlaceholder": "搜索模版...",
+    "allCategories": "全部分类",
+    "featured": "精选推荐",
+    "content": "模版内容",
+    "version": "版本",
+    "copy": "复制",
+    "useTemplate": "使用模版",
+    "usageCount": "使用次数：{{count}}",
+    "noTemplates": "暂无模版",
+    "loadError": "加载模版失败",
+    "refreshSuccess": "刷新成功",
+    "refreshError": "刷新失败",
+    "copySuccess": "已复制到剪贴板",
+    "copyError": "复制失败",
+    "useSuccess": "模版已添加到提示词",
+    "addedToPrompts": "模版已成功添加到提示词库",
+    "addError": "添加模版失败"
   }
 }
