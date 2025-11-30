@@ -46,6 +46,9 @@ import { CardContent } from "./ui/card";
 import { useTranslation } from 'react-i18next';
 import { MCPSettingsPanel } from '@/components/promptx/MCPSettingsPanel';
 import { CloudStorageSettings } from "./CloudStorageSettings";
+import { AuthDialog } from "./AuthDialog";
+import { TemplateUploadDialog } from "./TemplateUploadDialog";
+import { AuthService } from "@/services/authService";
 
 // 侧边栏显示模式类型
 type SidebarMode = "expanded" | "collapsed";
@@ -106,6 +109,9 @@ export function Sidebar({ className }: { className?: string }) {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showNewPromptDialog, setShowNewPromptDialog] = useState(false);
   const [newPromptCategoryId, setNewPromptCategoryId] = useState<string | null>(null);
+  const [showAuthDialog, setShowAuthDialog] = useState(false);
+  const [showUploadDialog, setShowUploadDialog] = useState(false);
+  const [currentUser, setCurrentUser] = useState<any>(null);
 
   // 处理点击全部提示词
   const handleAllPromptsClick = useCallback(() => {
@@ -138,6 +144,22 @@ export function Sidebar({ className }: { className?: string }) {
     };
     window.addEventListener('open-settings-panel' as any, handler);
     return () => window.removeEventListener('open-settings-panel' as any, handler);
+  }, []);
+
+  // 监听用户认证状态
+  useEffect(() => {
+    const loadUser = async () => {
+      const user = await AuthService.getCurrentUser();
+      setCurrentUser(user);
+    };
+    
+    loadUser();
+    
+    const { unsubscribe } = AuthService.onAuthStateChange((user) => {
+      setCurrentUser(user);
+    });
+    
+    return () => unsubscribe();
   }, []);
 
   // 同步用户偏好设置的变化
@@ -1048,6 +1070,99 @@ export function Sidebar({ className }: { className?: string }) {
             <TooltipContent side="right">{t('prompts.createNew')}</TooltipContent>
           </Tooltip>
         </TooltipProvider>
+
+        {/* 上传模板 */}
+        <TooltipProvider delayDuration={100}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => {
+                  if (currentUser) {
+                    setShowUploadDialog(true);
+                  } else {
+                    setShowAuthDialog(true);
+                    toast.error(t('auth.pleaseLoginFirst'));
+                  }
+                }}
+                className={cn(
+                  "rounded-full h-8 w-8 hover:scale-95 transition-transform",
+                  isCollapsed ? "mx-auto" : ""
+                )}
+              >
+                <Icons.upload className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="right">
+              {t('template.uploadTemplate')}
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+
+        {/* 登录/用户 */}
+        <TooltipProvider delayDuration={100}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={cn(
+                      "rounded-full h-8 w-8 hover:scale-95 transition-transform",
+                      isCollapsed ? "mx-auto" : ""
+                    )}
+                  >
+                    <Icons.user className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {currentUser ? (
+                    <>
+                      <div className="px-2 py-1.5 text-sm font-semibold">
+                        {t('auth.currentUser')}
+                      </div>
+                      <div className="px-2 py-1.5 text-sm text-muted-foreground">
+                        {currentUser.email}
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={async () => {
+                          const { error } = await AuthService.signOut();
+                          if (error) {
+                            toast.error(t('auth.logoutFailed'));
+                          } else {
+                            toast.success(t('auth.logoutSuccess'));
+                            setCurrentUser(null);
+                          }
+                        }}
+                        className="w-full justify-start"
+                      >
+                        <Icons.logOut className="mr-2 h-4 w-4" />
+                        {t('auth.logout')}
+                      </Button>
+                    </>
+                  ) : (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowAuthDialog(true)}
+                      className="w-full justify-start"
+                    >
+                      <Icons.logIn className="mr-2 h-4 w-4" />
+                      {t('auth.login')}
+                    </Button>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </TooltipTrigger>
+            <TooltipContent side="right">
+              {currentUser ? t('auth.currentUser') : t('auth.notLoggedIn')}
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
         
         
         {/* 设置 */}
@@ -1340,6 +1455,25 @@ export function Sidebar({ className }: { className?: string }) {
             setShowNewPromptDialog(false);
             setNewPromptCategoryId(null);
           }
+        }}
+      />
+
+      {/* 认证对话框 */}
+      <AuthDialog
+        open={showAuthDialog}
+        onOpenChange={setShowAuthDialog}
+        onSuccess={async () => {
+          const user = await AuthService.getCurrentUser();
+          setCurrentUser(user);
+        }}
+      />
+
+      {/* 模板上传对话框 */}
+      <TemplateUploadDialog
+        open={showUploadDialog}
+        onOpenChange={setShowUploadDialog}
+        onSuccess={() => {
+          toast.success(t('template.uploadSuccess'));
         }}
       />
 

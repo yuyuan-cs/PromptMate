@@ -73,7 +73,10 @@ import {
   HardDrive,
   Server,
   Puzzle,
-  Lightbulb
+  Lightbulb,
+  User,
+  LogIn,
+  LogOut
 } from "lucide-react";
 
 export const Icons = {
@@ -154,5 +157,8 @@ export const Icons = {
   dropbox: HardDrive,
   microsoft: Server,
   puzzle: Puzzle,
-  lightbulb: Lightbulb
+  lightbulb: Lightbulb,
+  user: User,
+  logIn: LogIn,
+  logOut: LogOut
 }; 

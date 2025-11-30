@@ -173,4 +173,120 @@ export class TemplateService {
       this.getTemplates(true)
     ]);
   }
+
+  static async createTemplate(template: Omit<PromptTemplate, 'id' | 'created_at' | 'updated_at' | 'usage_count'>): Promise<{ data: PromptTemplate | null; error: Error | null }> {
+    if (!isSupabaseEnabled || !supabase) {
+      return {
+        data: null,
+        error: new Error('Supabase is not enabled'),
+      };
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('prompt_templates')
+        .insert([{
+          ...template,
+          usage_count: 0,
+        }])
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error creating template:', error);
+        return { data: null, error: new Error(error.message) };
+      }
+
+      this.clearCache();
+      await this.getTemplates(true);
+
+      return { data, error: null };
+    } catch (error) {
+      console.error('Error in createTemplate:', error);
+      return { data: null, error: error as Error };
+    }
+  }
+
+  static async updateTemplate(id: string, updates: Partial<Omit<PromptTemplate, 'id' | 'created_at' | 'updated_at'>>): Promise<{ data: PromptTemplate | null; error: Error | null }> {
+    if (!isSupabaseEnabled || !supabase) {
+      return {
+        data: null,
+        error: new Error('Supabase is not enabled'),
+      };
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('prompt_templates')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error updating template:', error);
+        return { data: null, error: new Error(error.message) };
+      }
+
+      this.clearCache();
+      await this.getTemplates(true);
+
+      return { data, error: null };
+    } catch (error) {
+      console.error('Error in updateTemplate:', error);
+      return { data: null, error: error as Error };
+    }
+  }
+
+  static async deleteTemplate(id: string): Promise<{ error: Error | null }> {
+    if (!isSupabaseEnabled || !supabase) {
+      return {
+        error: new Error('Supabase is not enabled'),
+      };
+    }
+
+    try {
+      const { error } = await supabase
+        .from('prompt_templates')
+        .delete()
+        .eq('id', id);
+
+      if (error) {
+        console.error('Error deleting template:', error);
+        return { error: new Error(error.message) };
+      }
+
+      this.clearCache();
+      await this.getTemplates(true);
+
+      return { error: null };
+    } catch (error) {
+      console.error('Error in deleteTemplate:', error);
+      return { error: error as Error };
+    }
+  }
+
+  static async getUserTemplates(userId: string): Promise<PromptTemplate[]> {
+    if (!isSupabaseEnabled || !supabase) {
+      return [];
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('prompt_templates')
+        .select('*')
+        .eq('created_by', userId)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching user templates:', error);
+        return [];
+      }
+
+      return data || [];
+    } catch (error) {
+      console.error('Error in getUserTemplates:', error);
+      return [];
+    }
+  }
 }
